@@ -15,15 +15,19 @@
     - [x] USER_MODE — enforce CRUD/FLS strictly; fail on violations with clear errors.
     - [x] SYSTEM_MODE — skip CRUD/FLS checks (still subject to validation rules)
     - [x] stripInaccessible (?) — SANITIZE mode: apply Security.stripInaccessible(CREATABLE/UPDATABLE, records); record stripped fields in results.
-    - [ ] Unit Tests
+- [ ] Unit Tests
 - [ ] Configurable Sharing Mode
     - [x] Inherited sharing by default — keep DML.cls as inherited sharing
     - [x] with sharing
     - [x] without sharing
     - [ ] Sharing mode configurable per operation (?)
 - [ ] Relatonships
-    - [ ] Explicit dependency ordering — guarantee parents insert before children; deletes run child-first. Accept/derive a type order graph (parents → children) so inserts/upserts happen in safe sequence even if registered out of order; apply lookup values just-in-time before child insert/upsert.
+    - [ ] Explicit dependency ordering 
+        - [ ] guarantee parents insert before children; 
+        - [ ] deletes run child-first. Accept/derive a type order graph (parents → children) so inserts/upserts happen in safe sequence even if registered out of order; 
+        - [ ] apply lookup values just-in-time before child insert/upsert.
 - [ ] Preview mode or debug mode (?) - dry-run uow.preview() shows per-type op counts, fields to mutate, effective chunk size/allOrNone/security mode, and pending relationships; no DML.
+ the same structure as to DML.before hook
 - [ ] Retry strategy — optional, 
     - [ ] bounded retry on UNABLE_TO_LOCK_ROW, 
     - [ ] splitting chunks when retried; record retry trace in results.
@@ -54,7 +58,7 @@ dml.withRetryPolicy(new RetryPolicy()
 - [] Commit hooks - `DML.Hook`
     - [x] Before commit hook — pure in-memory prep (e.g., finalize patches) before any DML.
     - [x] After commit hook — enqueue async work / notifications; fires only if commit succeeds.
-    - [ ] before hook should got the list of records to be inserted
+    - [ ] before hook should got the list of records to be inserted - registry (DML.Registry - Map<Operation, Records>)
     - [ ] after hook should get the results
 - [ ] 100% code coverage — tests for happy/error paths, CRUD/FLS modes, DmlOptions, chunking, lock-retry, preview, hooks, mocking registries, and relationship ordering.
 - [ ] Trigger bypass (optional) — opt-in static context flag toggled around commit; triggers must check it; default OFF.
@@ -83,11 +87,12 @@ class UowResult {
 ```
 - [ ] Discard changes after commitWork()
 - [ ] Connector to SOQL Lib — inject selectors/repositories for any reads inside commit (dedupe, external-id resolution); selectors honor chosen sharing mode.
-- [ ] Dedupling registration — when records with the same Id are registered and modify the same field: policy LAST_WINS | THROW; track warnings when deduping occurs.
+- [ ] Dedupling registration — when records with the same Id are registered and modify the same field: policy LAST_WINS | THROW | MERGE_TO_FIRST | MERGE_TO_LAST; track warnings when deduping occurs.
 - [ ] Observability hooks — uow.withLogger(ILogger) to emit timings, limits, retries, per-op summaries; keep lightweight to avoid CPU spikes.
 - [ ] Dependency graph
     - [ ] Try to do as less DMLs as possible
     - [ ] Try to build dependency graph between objects (tree?)
+- [ ] custom order - maybe to order how trigger etc will be executed
 
 ---
 
@@ -109,3 +114,29 @@ dml.toInsert(record);
 DML.Commitable db = new DML();
 
 ```
+
+```java
+DML db = new DML();
+
+Account contactParent = new Account(Name = 'Account');
+Account accountParent = new Account(Name = 'Parent')
+Contact contact = new Contat(LastName = 'Contact');
+
+// This can be not in order and it still should work.
+db.toInsert(accountParent)
+  .toInsert(DML.Record(accountParent).withRelationship(Account.ParentId, accountParent))
+  .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, contactParent))
+  .toUpdate(.
+```
+
+dependency 
+1. Insert first 
+    1.1. Insert records without relationships
+    accountParent,
+    contactParent,
+    contact
+2. Upsert
+
+dependency 
+    - recordHash/referenceId
+    
