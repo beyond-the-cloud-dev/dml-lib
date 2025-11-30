@@ -117,6 +117,7 @@ public inherited sharing class DML implements Commitable {
 		Commitable allowPartialSuccess();
 		Commitable skipDuplicateRules();
 		Commitable options(Database.DmlOptions options);
+		Commitable discardWork();
 		Commitable commitHook(DML.Hook callback);
 		// Save
 		Result dryRun();
@@ -527,6 +528,11 @@ public inherited sharing class DML implements Commitable {
 
 	public Commitable options(Database.DmlOptions options) {
 		this.configuration.options(options);
+		return this;
+	}
+
+	public Commitable discardWork() {
+		this.reset();
 		return this;
 	}
 

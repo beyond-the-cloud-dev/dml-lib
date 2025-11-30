@@ -3243,6 +3243,35 @@ private class DML_Test {
 		Assert.areEqual('Only the following types can be registered: (Account, Contact)', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
+	@IsTest
+	static void discardWork() {
+		// Setup
+		Account account = getAccount(1);
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toInsert(account)
+				.discardWork()
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'DML statements should be 0, because work was discarded.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should not be inserted.');
+
+		Assert.areEqual(0, result.inserts().size(), 'Result should contain 0 insert operation results.');
+		Assert.areEqual(0, result.updates().size(), 'Result should contain 0 update operation results.');
+		Assert.areEqual(0, result.upserts().size(), 'Result should contain 0 upsert operation results.');
+		Assert.areEqual(0, result.deletes().size(), 'Result should contain 0 delete operation results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Result should contain 0 undelete operation results.');
+		Assert.areEqual(0, result.events().size(), 'Result should contain 0 publish operation results.');
+	}
+
 	// RECORD
 
 	@IsTest
