@@ -190,7 +190,7 @@ List<Contact> contacts = new List<Contact>{
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Records(contacts).with(Contact.AccountId, account))
+    .toInsert(DML.Records(contacts).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
