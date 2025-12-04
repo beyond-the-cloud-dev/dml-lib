@@ -3096,7 +3096,33 @@ private class DML_Test {
 		DML.Result result = DML.retrieveResultFor('dmlMockId');
 
 		// Verify
-		// Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+		Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
+		Assert.areEqual(FlowOrchestrationEvent.SObjectType, result.eventsOf(FlowOrchestrationEvent.SObjectType).objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
+		Assert.areEqual(DML.OperationType.PUBLISH_DML, result.eventsOf(FlowOrchestrationEvent.SObjectType).operationType(), 'Published operation result should contain publish type.');
+		Assert.areEqual(1, result.eventsOf(FlowOrchestrationEvent.SObjectType).records().size(), 'Published operation result should contain the published record.');
+		Assert.areEqual(1, result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults().size(), 'Published operation result should contain the published record results.');
+		Assert.isTrue(result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults()[0].isSuccess(), 'Published operation result should contain a successful record result.');
+		Assert.isNotNull(result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults()[0].id(), 'Published operation result should contain a mocked record Id.');
+	}
+
+	@IsTest
+	static void toPublishSingleRecordWithMockingSpecificSObjectType() {
+		// Setup
+		FlowOrchestrationEvent event = new FlowOrchestrationEvent();
+
+		DML.mock('dmlMockId').publishesFor(FlowOrchestrationEvent.SObjectType);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toPublish(event)
+				.identifier('dmlMockId')
+				.commitWork();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
 		Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
 		Assert.areEqual(FlowOrchestrationEvent.SObjectType, result.eventsOf(FlowOrchestrationEvent.SObjectType).objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
 		Assert.areEqual(DML.OperationType.PUBLISH_DML, result.eventsOf(FlowOrchestrationEvent.SObjectType).operationType(), 'Published operation result should contain publish type.');
@@ -3173,6 +3199,51 @@ private class DML_Test {
 	}
 
 	// CONFIGURATION
+
+	@IsTest
+	static void commitTransaction() {
+		// Setup
+		Account account = getAccount(1);
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toInsert(account)
+				.commitTransaction();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.isTrue(dmlStatementsAfter - dmlStatementsBefore >= 3, 'DML statements should be greater than or equal to 3, because savepoint was set and rollback was called.');
+	}
+
+	@IsTest
+	static void commitTransactionWhenAllOrNoneIsFalse() {
+		// Setup
+		Account account = getAccount(1);
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+
+			try {
+				new DML()
+					.toInsert(account)
+					.allowPartialSuccess()
+					.commitTransaction();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception should be thrown.');
+		Assert.areEqual('commitTransaction() is not supported when allOrNone=false', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
 	
 	@IsTest
 	static void executionOrder() {
@@ -3378,6 +3449,46 @@ private class DML_Test {
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
 		Assert.areEqual('No result found for dml identifier: dmlMockId', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void mockAllDmls() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		Contact contact1 = getContact(1);
+		contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+		Opportunity opportunity1 = getOpportunity(1);
+		opportunity1.Id = DML.randomIdGenerator.get(Opportunity.SObjectType);
+
+		DML.mock('dmlMockId').allDmls();
+		
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(account1)
+				.toUpdate(contact1)
+				.toDelete(opportunity1)
+				.identifier('dmlMockId')
+				.commitWork();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should be inserted to the database.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'No records should be deleted from the database.');
+		Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 2 results.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
+		Assert.areEqual(Account.SObjectType, result.insertsOf(Account.SObjectType).objectType(), 'Inserted operation result should contain Account object type.');
+		Assert.areEqual(Contact.SObjectType, result.updatesOf(Contact.SObjectType).objectType(), 'Updated operation result should contain Contact object type.');
+		Assert.areEqual(Opportunity.SObjectType, result.deletesOf(Opportunity.SObjectType).objectType(), 'Deleted operation result should contain Opportunity object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, result.insertsOf(Account.SObjectType).operationType(), 'Inserted operation result should contain insert type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, result.updatesOf(Contact.SObjectType).operationType(), 'Updated operation result should contain update type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, result.deletesOf(Opportunity.SObjectType).operationType(), 'Deleted operation result should contain delete type.');
 	}
 
 	// RESULT
