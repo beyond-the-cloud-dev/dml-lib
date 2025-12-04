@@ -3837,8 +3837,10 @@ private class DML_Test {
 			beforeCalled = true;
 		}
 
-		public void after() {
+		public void after(DML.Result result) {
 			afterCalled = true;
+			
+			Assert.isNotNull(result, 'Result should not be null.');
 		}
     }
 

@@ -10,7 +10,7 @@
 - [ ] General and per-operation overrides e.g. new DML(options), registerInsert(..., options) 
 - [ ] allow allOrNone, DMLOptions, and SecurityMode per op; merge overrides over UoW defaults.
 - [x] Update list of records at once e.g accounts.with(Account.Unit, 'test') - DML.Records(records).with(field, value)
-- [ ] Static DML eg. DML.Global.toInsert(); DML.Global.commitWork(); DML.Shared.toInsert();
+- [x] Static DML eg. DML.Global.toInsert(); DML.Global.commitWork(); DML.Shared.toInsert();
 - [x] Field-Level Security
     - [x] USER_MODE — enforce CRUD/FLS strictly; fail on violations with clear errors.
     - [x] SYSTEM_MODE — skip CRUD/FLS checks (still subject to validation rules)
@@ -22,7 +22,7 @@
     - [x] without sharing
     - [ ] Sharing mode configurable per operation (?)
 - [ ] Relationships
-    - [ ] Deferred relationship resolution — resolve lookups just-in-time during commit (like fflib), not at registration time.
+    - [x] Deferred relationship resolution — resolve lookups just-in-time during commit (like fflib), not at registration time.
     - [ ] Automatic dependency ordering — parents insert before children; deletes child-first; derive order from relationships if not explicit.
 - [ ] Preview mode or debug mode (?) - dry-run uow.preview() shows per-type op counts, fields to mutate, effective chunk size/allOrNone/security mode, and pending relationships; no DML.
 - [ ] Retry strategy — optional, 
@@ -36,8 +36,8 @@ dml.withRetryPolicy(new RetryPolicy()
   .splitOnRetry(true)); // split chunk into smaller pieces when retrying
 ```
 - [ ] Mocking
-    - [ ] Mock Ids — generator produces valid 18-char Ids with correct key prefix; assign only in fake provider.
-    - [ ] Registry of number of inserted records — per type & per batch counters.
+    - [x] Mock Ids — generator produces valid 18-char Ids with correct key prefix; assign only in fake provider.
+    - [x] Registry of number of inserted records — per type & per batch counters.
     - [ ] Registry of issued DML for each operation — capture exact batches for insert/update/upsert/delete/etc.
     - [ ] DML Counter — total DML statements and rows processed; expose via results.
     - [ ] Mock Errors - mock different DML errors.
@@ -60,12 +60,12 @@ dml.withRetryPolicy(new RetryPolicy()
     - [ ] hardDelete (delete + Database.emptyRecycleBin)
     - [ ] merge (Database.merge → MergeResult[])
     - [ ] convertLead (Database.convertLead → LeadConvertResult[])
-- [ ] Return Database.Result or some other wrapper — return UowResult with per-op DmlOutcome, raw SaveResult[]/DeleteResult[]/MergeResult[], limits snapshot, events, retries.
-- [] Commit hooks - `DML.Hook`
+- [x] Return Database.Result or some other wrapper — return UowResult with per-op DmlOutcome, raw SaveResult[]/DeleteResult[]/MergeResult[], limits snapshot, events, retries.
+- [ ] Commit hooks - `DML.Hook`
     - [x] Before commit hook — pure in-memory prep (e.g., finalize patches) before any DML.
     - [x] After commit hook — enqueue async work / notifications; fires only if commit succeeds.
     - [ ] before hook should got the list of records to be inserted
-    - [ ] after hook should get the results
+    - [x] after hook should get the results
 - [ ] 100% code coverage — tests for happy/error paths, CRUD/FLS modes, DmlOptions, chunking, lock-retry, preview, hooks, mocking registries, and relationship ordering.
 - [ ] Trigger bypass adapter(optional) — new apex class DML.Bypass interface that will get sobjectType and based on it can have logic to bypass different triggers
 - [ ] Chunk Size — protect against DML row/CPU limits. uow.withChunkSize(200) (default 200) to mimic trigger batch sizes and reduce recursion; auto-downshift on retries if enabled.

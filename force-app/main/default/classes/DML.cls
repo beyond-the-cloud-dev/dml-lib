@@ -229,7 +229,7 @@ public inherited sharing class DML implements Commitable {
 
 	public interface Hook {
 		void before();
-		void after();
+		void after(Result result);
 	}
 
 	// Implementation
@@ -551,7 +551,7 @@ public inherited sharing class DML implements Commitable {
 
 			DMLResult result = this.executeOperations();
 
-			this.hook?.after();
+			this.hook?.after(result);
 
 			return result;
 		} catch (Exception e) {
@@ -572,7 +572,7 @@ public inherited sharing class DML implements Commitable {
 
 			dmlIdentifierToResult.put(this.configuration.dmlIdentifier, result);
 
-			this.hook?.after();
+			this.hook?.after(result);
 		} catch (Exception e) {
 			throw e;
 		} finally {
