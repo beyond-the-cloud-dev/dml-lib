@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v1.8.0
+ * v1.9.0
  *
  * PMD False Positives:
  * - MethodNamingConventions - Some methods are uppercase to indicate that they are "constructors" of othere internal classes
@@ -17,10 +17,11 @@
  * - NcssTypeCount: The class is a library and we tried to put everything into ONE class
  * - PropertyNamingConventions: Some properties are PascalCase to indicate that they are "constructors" of other internal classes
  * - FieldNamingConventions: Some fields has not standard naming convention on purpose
+ * - AvoidGlobalModifier - DML has package version
  **/
-@SuppressWarnings('PMD.MethodNamingConventions,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions')
-public inherited sharing class DML implements Commitable {
-	public static Commitable Shared {
+@SuppressWarnings('PMD.MethodNamingConventions,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions,PMD.AvoidGlobalModifier')
+global inherited sharing class DML implements Commitable {
+	global static Commitable Shared {
 		get {
 			if (Shared == null) {
 				Shared = new DML();
@@ -30,23 +31,23 @@ public inherited sharing class DML implements Commitable {
 		private set;
 	}
 
-	public static Record Record(SObject record) {
+	global static Record Record(SObject record) {
 		return new DmlRecord(record);
 	}
 
-	public static Record Record(Id recordId) {
+	global static Record Record(Id recordId) {
 		return new DmlRecord(recordId);
 	}
 
-	public static Records Records(List<SObject> records) {
+	global static Records Records(List<SObject> records) {
 		return new DmlRecords(records);
 	}
 
-	public static Records Records(Iterable<Id> recordIds) {
+	global static Records Records(Iterable<Id> recordIds) {
 		return new DmlRecords(recordIds);
 	}
 
-	public interface Commitable {
+	global interface Commitable {
 		// Insert
 		Commitable toInsert(SObject record);
 		Commitable toInsert(DML.Record record);
@@ -125,16 +126,16 @@ public inherited sharing class DML implements Commitable {
 		Result commitTransaction(); // make a savepoint and rollback on exception
 	}
 
-	public interface Record {
+	global interface Record {
 		Record with(SObjectField field, Object value); 
 		Record withRelationship(SObjectField targetField, SObject relatedRecord);
 		Record withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
-		
+
 		// for internal use only
 		EnhancedRecord get();
 	}
 
-	public interface Records {
+	global interface Records {
 		Records with(SObjectField field, Object value); 
 		Records withRelationship(SObjectField targetField, SObject relatedRecord);
 		Records withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
@@ -143,7 +144,7 @@ public inherited sharing class DML implements Commitable {
 		List<Record> get();
 	}
 
-	public interface Result {
+	global interface Result {
 		List<OperationResult> all();
 		// Per Operation
 		List<OperationResult> inserts();
@@ -161,9 +162,9 @@ public inherited sharing class DML implements Commitable {
 		OperationResult eventsOf(Schema.SObjectType objectType);
 	}
 
-	public interface OperationResult {
+	global interface OperationResult {
 		// Metadata
-		OperationType operationType();
+		DML.OperationType operationType();
 		Schema.SObjectType objectType();
 		Boolean hasFailures();
 		// Errors
@@ -176,14 +177,14 @@ public inherited sharing class DML implements Commitable {
 		List<RecordResult> recordResults();
 	}
 
-	public interface RecordResult {
+	global interface RecordResult {
 		Id id();
 		SObject record();
 		Boolean isSuccess();
 		List<Error> errors();
 	}
 
-	public interface Error {
+	global interface Error {
 		String message();
 		System.StatusCode statusCode();
 		List<String> fields();
@@ -191,23 +192,21 @@ public inherited sharing class DML implements Commitable {
 
 	// Mocking
 
-	@TestVisible
-	private static DML.Mockable mock(String dmlIdentifier) {
+	global static DML.Mockable mock(String dmlIdentifier) {
 		if (!dmlIdentifierToMock.containsKey(dmlIdentifier)) {
 			dmlIdentifierToMock.put(dmlIdentifier, new DmlMock());
 		}
 		return dmlIdentifierToMock.get(dmlIdentifier);
 	}
 
-	@TestVisible
-	private static DML.Result retrieveResultFor(String dmlIdentifier) {
+	global static DML.Result retrieveResultFor(String dmlIdentifier) {
 		if (!dmlIdentifierToResult.containsKey(dmlIdentifier)) {
 			throw new DmlException('No result found for dml identifier: ' + dmlIdentifier);
 		}
 		return dmlIdentifierToResult.get(dmlIdentifier);
 	}
 
-	public interface Mockable {
+	global interface Mockable {
 		Mockable allDmls();
 		// Per Operation
 		Mockable allInserts();
@@ -227,7 +226,7 @@ public inherited sharing class DML implements Commitable {
 
 	// Hooks
 
-	public interface Hook {
+	global interface Hook {
 		void before();
 		void after(Result result);
 	}
@@ -236,7 +235,7 @@ public inherited sharing class DML implements Commitable {
 
 	private Configuration configuration = new Configuration();
 
-	public enum OperationType { INSERT_DML, UPDATE_DML, UPSERT_DML, DELETE_DML, UNDELETE_DML, PUBLISH_DML }
+	global enum OperationType { INSERT_DML, UPDATE_DML, UPSERT_DML, DELETE_DML, UNDELETE_DML, PUBLISH_DML }
 
 	private Map<OperationType, DmlOperation> operationsByType = new Map<OperationType, DmlOperation>();
 
@@ -247,11 +246,11 @@ public inherited sharing class DML implements Commitable {
 	private static final Map<String, Result> dmlIdentifierToResult = new Map<String, Result>();
 	private static final Map<String, DmlMock> dmlIdentifierToMock = new Map<String, DmlMock>();
 
-	public DML() {
+	global DML() {
 		this.initializeOperations();
 	}
 
-	public DML(List<SObjectType> customExecutionOrder) {
+	global DML(List<SObjectType> customExecutionOrder) {
 		this();
 		this.configuration.executionOrder(customExecutionOrder);
 	}
@@ -1137,25 +1136,25 @@ public inherited sharing class DML implements Commitable {
 	}
 
 	private class OperationSummary implements OperationResult {
-		public SObjectType objectType;
 		private OperationType type;
-		public List<RecordResult> recordResults = new List<RecordResult>();
-		public List<SObject> records = new List<SObject>();
+		private SObjectType objectType;
+		private List<RecordResult> recordResults = new List<RecordResult>();
+		private List<SObject> records = new List<SObject>();
 
 		private List<SObject> cachedSuccesses;
 		private List<SObject> cachedFailures;
 
-		public OperationSummary(SObjectType objectType, OperationType type) {
+		private OperationSummary(SObjectType objectType, OperationType type) {
 			this.objectType = objectType;
 			this.type = type;
 		}
 
-		public OperationSummary setRecords(List<SObject> records) {
+		private OperationSummary setRecords(List<SObject> records) {
 			this.records = records;
 			return this;
 		}
 
-		public OperationSummary setRecordResults(List<RecordResult> recordResults) {
+		private OperationSummary setRecordResults(List<RecordResult> recordResults) {
 			this.recordResults = recordResults;
 			return this;
 		}
@@ -1224,10 +1223,10 @@ public inherited sharing class DML implements Commitable {
 	}
 
 	private class RecordSummary implements RecordResult {
-		public Id recordId;
-		public SObject record;
-		public Boolean isSuccess = false;
-		public List<Error> errors = new List<Error>();
+		private Id recordId;
+		private SObject record;
+		private Boolean isSuccess = false;
+		private List<Error> errors = new List<Error>();
 
 		public Id id() {
 			return this.recordId;
@@ -1270,11 +1269,11 @@ public inherited sharing class DML implements Commitable {
 	}
 
 	private class RecordProcessingError implements Error {
-		public String message;
-		public System.StatusCode statusCode;
-		public List<String> fields;
+		private String message;
+		private System.StatusCode statusCode;
+		private List<String> fields;
 
-		public RecordProcessingError(Database.Error error) {
+		private RecordProcessingError(Database.Error error) {
 			this.message = error.getMessage();
 			this.statusCode = error.getStatusCode();
 			this.fields = error.getFields();
@@ -1338,7 +1337,7 @@ public inherited sharing class DML implements Commitable {
 			return this.thenMockDml(OperationType.PUBLISH_DML);
 		}
 
-		private Mockable thenMockDml(OperationType dmlType) {
+		public Mockable thenMockDml(OperationType dmlType) {
 			this.mockedDmlTypes.add(dmlType);
 			return this;
 		}
@@ -1372,7 +1371,7 @@ public inherited sharing class DML implements Commitable {
 			return this;
 		}
 
-		public Boolean shouldBeMocked(OperationType dmlType, SObjectType objectType) {
+		private Boolean shouldBeMocked(OperationType dmlType, SObjectType objectType) {
 			return this.mockedDmlTypes.contains(dmlType) || this.mockedObjectTypesByDmlType.get(dmlType).contains(objectType);
 		}
 	}
@@ -1384,11 +1383,11 @@ public inherited sharing class DML implements Commitable {
 		private List<ParentRelationship> parentRelationships = new List<ParentRelationship>();
 		private List<ExternalRelationship> externalRelationships = new List<ExternalRelationship>();
 
-		public DmlRecords(List<SObject> records) {
+		private DmlRecords(List<SObject> records) {
 			this.recordsToProcess = records;
 		}
 
-		public DmlRecords(Iterable<Id> recordIds) {
+		private DmlRecords(Iterable<Id> recordIds) {
 			SObjectType objectType = recordIds.iterator().next()?.getSObjectType();
 
 			for (Id recordId : recordIds) {
@@ -1450,11 +1449,11 @@ public inherited sharing class DML implements Commitable {
 	private class DmlRecord implements Record {
 		private EnhancedRecord enhancedRecord;
 
-		public DmlRecord(SObject record) {
+		private DmlRecord(SObject record) {
 			this.enhancedRecord = new EnhancedRecord(record);
 		}
 
-		public DmlRecord(Id recordId) {
+		private DmlRecord(Id recordId) {
 			this.enhancedRecord = new EnhancedRecord(recordId);
 		}
 
@@ -1478,17 +1477,17 @@ public inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private class EnhancedRecord {
+	global class EnhancedRecord {
 		private SObject currentRecord;
 
 		private List<ParentRelationship> parentRelationships = new List<ParentRelationship>();
 		private List<ExternalRelationship> externalRelationships = new List<ExternalRelationship>();
 
-		public EnhancedRecord(SObject currentRecord) {
+		private EnhancedRecord(SObject currentRecord) {
 			this.currentRecord = currentRecord;
 		}
 
-		public EnhancedRecord(Id currentRecordId) {
+		private EnhancedRecord(Id currentRecordId) {
 			if (currentRecordId == null) {
 				return;
 			}
@@ -1496,19 +1495,19 @@ public inherited sharing class DML implements Commitable {
 			this.currentRecord = currentRecordId.getSObjectType().newSObject(currentRecordId);
 		}
 
-		public void with(SObjectField field, Object value) {
+		private void with(SObjectField field, Object value) {
 			this.currentRecord.put(field, value);
 		}
 
-		public void withRelationship(ParentRelationship parentRelationship) {
+		private void withRelationship(ParentRelationship parentRelationship) {
 			this.parentRelationships.add(parentRelationship);
 		}
 
-		public void withRelationship(ExternalRelationship externalRelationship) {
+		private void withRelationship(ExternalRelationship externalRelationship) {
 			this.externalRelationships.add(externalRelationship);
 		}
 
-		public void resolveRecordRelationships() {
+		private void resolveRecordRelationships() {
 			this.resolveRelationships();
 			this.resolveExternalRelationships();
 		}
@@ -1525,19 +1524,19 @@ public inherited sharing class DML implements Commitable {
 			}
 		}
 
-		public SObjectType getSObjectType() {
+		private SObjectType getSObjectType() {
 			return this.currentRecord?.getSObjectType();
 		}
 
-		public Boolean doesRecordHaveIdSpecified() {
+		private Boolean doesRecordHaveIdSpecified() {
 			return String.isNotBlank(this.getRecordId());
 		}
 
-		public SObject getRecord() {
+		private SObject getRecord() {
 			return this.currentRecord;
 		}
 
-		public Id getRecordId() {
+		private Id getRecordId() {
 			return this.currentRecord?.Id;
 		}
 	}
@@ -1546,14 +1545,14 @@ public inherited sharing class DML implements Commitable {
 		private SObject relatedToRecord;
 		private SObjectField relationshipField;
 
-		public ParentRelationship(SObjectField relationshipField, SObject relatedToRecord) {
+		private ParentRelationship(SObjectField relationshipField, SObject relatedToRecord) {
 			this.validateRelationshipField(relationshipField);
 
 			this.relationshipField = relationshipField;
 			this.relatedToRecord = relatedToRecord;
 		}
 
-		public void resolve(SObject currentRecord) {
+		private void resolve(SObject currentRecord) {
 			currentRecord.put(this.relationshipField, this.relatedToRecord.Id);
 		}
 
@@ -1565,12 +1564,12 @@ public inherited sharing class DML implements Commitable {
 	}
 
 	private class ExternalRelationship { 
-		public SObjectField relationshipField;
-		public SObjectField externalIdField;
-		public SObjectType relatedToType;
-		public Object relatedRecordExternalId;
+		private SObjectField relationshipField;
+		private SObjectField externalIdField;
+		private SObjectType relatedToType;
+		private Object relatedRecordExternalId;
 
-		public ExternalRelationship(SObjectField relationshipField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId) {
+		private ExternalRelationship(SObjectField relationshipField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId) {
 			this.validateRelatedToField(relationshipField);
 			this.validateExternalIdField(relationshipField, relatedObjectExternalIdField);
 
@@ -1580,7 +1579,7 @@ public inherited sharing class DML implements Commitable {
 			this.relatedRecordExternalId = relatedRecordExternalId;
 		}  
 
-		public void resolve(SObject currentRecord) {
+		private void resolve(SObject currentRecord) {
 			SObject relationshipObject = this.relatedToType.newSObject();
 			relationshipObject.put(this.externalIdField.getDescribe().getName(), this.relatedRecordExternalId);
 
@@ -1616,7 +1615,7 @@ public inherited sharing class DML implements Commitable {
 			return get(objectType.getDescribe().getKeyPrefix());
 		}
 
-		public Id get(String prefix) {
+		private Id get(String prefix) {
 			return Id.valueOf(prefix + '0'.repeat(12 - prefix.length()) + String.valueOf(Math.abs(Crypto.getRandomInteger())).left(3));
 		}
 	}

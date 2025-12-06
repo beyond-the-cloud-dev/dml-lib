@@ -1,12 +1,21 @@
 {
   "packageDirectories": [
     {
+      "versionName": "ver 1,9",
+      "versionNumber": "1.9.0.NEXT",
       "path": "force-app",
-      "default": true
+      "default": true,
+      "package": "DML Lib",
+      "versionDescription": ""
     }
   ],
   "name": "dml-lib",
-  "namespace": "",
+  "namespace": "btcdev",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "65.0"
+  "sourceApiVersion": "65.0",
+  "packageAliases": {
+    "DML Lib": "0HoP600000001IfKAI",
+    "DML Lib@0.1.0-1": "04tP6000002A7BxIAK",
+    "DML Lib@1.8.0-1": "04tP6000002A7OrIAK"
+  }
 }
