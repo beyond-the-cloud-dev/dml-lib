@@ -103,7 +103,7 @@ private class DML_Test {
 			Exception expectedException = null;
 
 			try {
-            new DML()
+            	new DML()
 					.toInsert(newAccount)
 					.toInsert(DML.Record(newContact).withRelationship(Contact.LastName, newAccount))
 					.commitWork();
@@ -114,7 +114,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Invalid argument: relationshipField. Field supplied is not a relationship field.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Invalid argument: LastName. Field supplied is not a relationship field.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -278,7 +278,7 @@ private class DML_Test {
 
         // Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Invalid argument: relationshipField. Field supplied is not a relationship field.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Invalid argument: LastName. Field supplied is not a relationship field.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -3911,6 +3911,28 @@ private class DML_Test {
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
 		Assert.isTrue(expectedException.getMessage().contains('Required fields are missing: [Name]'), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void addInRandomOrder() {
+		// Setup
+		Account account1 = getAccount(1);
+		Contact contact1 = getContact(1);
+		Opportunity opportunity1 = getOpportunity(1);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+				.toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
+				.toInsert(account1)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
 	}
 
 	// SHARED

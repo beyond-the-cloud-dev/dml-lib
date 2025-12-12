@@ -767,6 +767,7 @@ global inherited sharing class DML implements Commitable {
 	public abstract class DmlOperation {
 		protected Map<SObjectType, RecordsContainer> recordsProcessContainerByType = new Map<SObjectType, RecordsContainer>();
 		protected Configuration globalConfiguration;
+		protected OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph();
 
 		public DmlOperation(Configuration configuration) {
 			this.globalConfiguration = configuration;
@@ -789,6 +790,8 @@ global inherited sharing class DML implements Commitable {
 
 			this.addNewRecordToProcess(typeName, enhancedRecord);
 			
+			enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
+
 			return this;
 		}
 
@@ -823,7 +826,7 @@ global inherited sharing class DML implements Commitable {
 				return this.process(this.globalConfiguration.customExecutionOrder);
 			} 
 
-			return this.process(this.recordsProcessContainerByType.keySet());
+			return this.process(this.orderDependencyGraph.getTopologicalOrder());
 		}
 
 		private List<OperationResult> process(Iterable<SObjectType> objectTypesOrder) {
@@ -1507,6 +1510,14 @@ global inherited sharing class DML implements Commitable {
 			this.externalRelationships.add(externalRelationship);
 		}
 
+		private void addToDependencyGraph(OrderDependencyGraph orderDependencyGraph) {
+			orderDependencyGraph.registerType(this.getSObjectType());
+
+			for (ParentRelationship parentRelationship : this.parentRelationships) {
+				orderDependencyGraph.addDependency(parentRelationship.getRelatedToType(), this.getSObjectType());
+			}
+		}
+
 		private void resolveRecordRelationships() {
 			this.resolveRelationships();
 			this.resolveExternalRelationships();
@@ -1552,13 +1563,17 @@ global inherited sharing class DML implements Commitable {
 			this.relatedToRecord = relatedToRecord;
 		}
 
+		private SObjectType getRelatedToType() {
+			return this.relatedToRecord.getSObjectType();
+		}
+
 		private void resolve(SObject currentRecord) {
 			currentRecord.put(this.relationshipField, this.relatedToRecord.Id);
 		}
 
 		private void validateRelationshipField(SObjectField relationshipField) {            
 			if (String.isBlank(relationshipField.getDescribe().getRelationshipName())) {
-				throw new DmlException('Invalid argument: relationshipField. Field supplied is not a relationship field.');
+				throw new DmlException('Invalid argument: ' + relationshipField.toString() + '. Field supplied is not a relationship field.');
 			}
 		}
 	}
@@ -1607,6 +1622,66 @@ global inherited sharing class DML implements Commitable {
 			if (!relatedHasExternalIdField) {
 				throw new DmlException('Invalid argument: externalIdField. Field supplied is not a known field on the target sObject.');
 			}
+		}
+	}
+
+	private class OrderDependencyGraph {
+		private Map<SObjectType, Set<SObjectType>> childrenByType = new Map<SObjectType, Set<SObjectType>>();
+		private Map<SObjectType, Integer> parentsRemainingByType = new Map<SObjectType, Integer>();
+
+		public void registerType(SObjectType type) {
+			this.ensureTypeRegistered(type);
+		}
+
+		public void addDependency(SObjectType parentType, SObjectType childType) {
+			this.ensureTypeRegistered(parentType);
+			this.ensureTypeRegistered(childType);
+
+			if (this.childrenByType.get(parentType).add(childType)) {
+				this.parentsRemainingByType.put(childType, this.parentsRemainingByType.get(childType) + 1);
+			}
+		}
+
+		private void ensureTypeRegistered(SObjectType type) {
+			if (!this.childrenByType.containsKey(type)) {
+				this.childrenByType.put(type, new Set<SObjectType>());
+			}
+			if (!this.parentsRemainingByType.containsKey(type)) {
+				this.parentsRemainingByType.put(type, 0);
+			}
+		}
+
+		// Kahn’s sort algorithm
+		public List<SObjectType> getTopologicalOrder() {
+			List<SObjectType> typesExecutionOrder = new List<SObjectType>();
+			List<SObjectType> parentsTypesWithoutDependencies = new List<SObjectType>();
+
+			for (SObjectType type : this.parentsRemainingByType.keySet()) {
+				if (this.parentsRemainingByType.get(type) == 0) {
+					parentsTypesWithoutDependencies.add(type);
+				}
+			}
+
+			while (!parentsTypesWithoutDependencies.isEmpty()) {
+				SObjectType currentType = parentsTypesWithoutDependencies.remove(0);
+				
+				typesExecutionOrder.add(currentType);
+
+				for (SObjectType childType : this.childrenByType.get(currentType)) {
+					Integer remaining = this.parentsRemainingByType.get(childType) - 1;
+					this.parentsRemainingByType.put(childType, remaining);
+
+					if (remaining == 0) {
+						parentsTypesWithoutDependencies.add(childType);
+					}
+				}
+			}
+
+			if (typesExecutionOrder.size() < this.parentsRemainingByType.size()) {
+				throw new DmlException('Cyclic type dependencies detected during rgistration graph.');
+			}
+
+			return typesExecutionOrder;
 		}
 	}
 

@@ -1,4 +1,4 @@
-- [ ] Database.DmlOptions options to pass 
+- [x] Database.DmlOptions options to pass 
     — [x] support a global default (uow.options(opts)) 
     - [ ] support per-operation override (.withOptions(perOpOpts))
 - [x] Fluent Bulk records update without the loop e.g.
@@ -225,3 +225,23 @@ public interface Mockable {
 | 🟢 Nice | Chunk Size | Medium | Medium |
 | 🟢 Nice | Query Integration | Medium | Low |
 | 🟢 Nice | Lifecycle Hooks | Medium | Low |
+
+To hard delete.
+
+toHardDelete(Id recordId);
+toHardDelete(SObject record);
+toHardDelete(Iterable<Id> recordIds);
+toHardDelete(List<SObject> records);
+
+		Account account1 = new Account(Name = 'Account 1');
+		Contact contact1 = new Contact(LastName = 'Contact 1');
+		Opportunity opportunity1 = new Opportunity(Name = 'Opportunity 1');
+
+		new DML()
+			.toInsert(account1)
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+			.toInsert(DML.Record(opportunity1)
+				.withRelationship(Opportunity.AccountId, account1)
+				.withRelationship(Opportunity.Contact__c, contact1)
+			)
+			.commitWork();
