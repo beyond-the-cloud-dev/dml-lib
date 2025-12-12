@@ -23,7 +23,7 @@
     - [ ] Sharing mode configurable per operation (?)
 - [ ] Relationships
     - [x] Deferred relationship resolution — resolve lookups just-in-time during commit (like fflib), not at registration time.
-    - [ ] Automatic dependency ordering — parents insert before children; deletes child-first; derive order from relationships if not explicit.
+    - [x] Automatic dependency ordering — parents insert before children; deletes child-first; derive order from relationships if not explicit.
 - [ ] Preview mode or debug mode (?) - dry-run uow.preview() shows per-type op counts, fields to mutate, effective chunk size/allOrNone/security mode, and pending relationships; no DML.
 - [ ] Retry strategy — optional, 
     - [ ] bounded retry on UNABLE_TO_LOCK_ROW, 

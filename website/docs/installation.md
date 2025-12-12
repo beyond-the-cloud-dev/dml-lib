@@ -10,11 +10,11 @@
 
 Install the SOQL Lib unlocked package with `btcdev` namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP6000002A7OrIAK`
+`/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002A7OrIAK)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002A7OrIAK)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS)
 
 ## Install via Unmanaged Package
 
