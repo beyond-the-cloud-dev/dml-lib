@@ -788,7 +788,7 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	public abstract class DmlOperation {
+	private abstract class DmlOperation {
 		protected Map<SObjectType, RecordsContainer> recordsProcessContainerByType = new Map<SObjectType, RecordsContainer>();
 		protected Configuration globalConfiguration;
 		protected OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph();
@@ -797,7 +797,7 @@ global inherited sharing class DML implements Commitable {
 			this.globalConfiguration = configuration;
 		}
 
-		public DmlOperation register(Records records) {
+		private DmlOperation register(Records records) {
 			for (Record record : records.get()) {
 				this.register(record);
 			}
@@ -805,7 +805,7 @@ global inherited sharing class DML implements Commitable {
 			return this;
 		}
 
-		public DmlOperation register(Record record) {
+		private DmlOperation register(Record record) {
 			EnhancedRecord enhancedRecord = record.get();
 			SObjectType typeName = enhancedRecord.getSObjectType();
 
@@ -833,7 +833,7 @@ global inherited sharing class DML implements Commitable {
 			this.recordsProcessContainerByType.get(typeName).addNewRecordToProcess(enhancedRecord);
 		}
 
-		public void preview() {
+		private void preview() {
 			System.debug(LoggingLevel.ERROR,
 				'\n\n============ ' + this.getType() + ' Preview ============'
 				+ '\nRecords Process Container: ' + JSON.serializePretty(this.recordsProcessContainerByType)
@@ -841,11 +841,11 @@ global inherited sharing class DML implements Commitable {
 			);
 		}
 
-		public List<OperationResult> commitWork() {
+		private List<OperationResult> commitWork() {
 			return this.globalConfiguration.sharingExecutor.execute(this);
 		}
 
-		public List<OperationResult> execute() {
+		private List<OperationResult> execute() {
 			if (!this.globalConfiguration.customExecutionOrder.isEmpty()) {
 				return this.process(this.globalConfiguration.customExecutionOrder);
 			} 
@@ -1826,7 +1826,8 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	public class RandomIdGenerator {
+	@TestVisible
+	private class RandomIdGenerator {
 		public Id get(SObjectType objectType) {
 			return get(objectType.getDescribe().getKeyPrefix());
 		}
