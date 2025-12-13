@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v1.9.0
+ * v2.0.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -675,6 +675,128 @@ private class DML_Test {
 		Assert.isNotNull(contact1.Id, 'Contact should have mocked Id.');
     }
 
+	@IsTest
+	static void toInsertWithMockingException() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnInserts();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toInsert(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toInsertWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnInserts();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toInsert(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Result should contain insert type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toInsertWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnInsertsFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toInsert(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toInsertWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnInsertsFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toInsert(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Result should contain insert type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
     // UPDATE
 
     @IsTest
@@ -1269,6 +1391,132 @@ private class DML_Test {
 		Assert.isNotNull(result.updatesOf(Contact.SObjectType).recordResults()[0].id(), 'Updated operation result should contain a mocked record Id.');
 	}
 
+	@IsTest
+	static void toUpdateWithMockingException() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUpdates();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUpdate(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUpdateWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUpdates();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUpdate(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Result should contain update type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toUpdateWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUpdatesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUpdate(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUpdateWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUpdatesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUpdate(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Result should contain update type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
 	// UPSERT
 
 	@IsTest
@@ -1848,6 +2096,128 @@ private class DML_Test {
 		Assert.isNotNull(result.upsertsOf(Contact.SObjectType).recordResults()[0].id(), 'Upserted operation result should contain a mocked record Id.');
     }
 
+	@IsTest
+	static void toUpsertWithMockingException() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnUpserts();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUpsert(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUpsertWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnUpserts();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUpsert(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Result should contain upsert type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toUpsertWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnUpsertsFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUpsert(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUpsertWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		DML.mock('dmlMockId').exceptionOnUpsertsFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUpsert(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Result should contain upsert type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
     // DELETE
 
     @IsTest
@@ -2405,6 +2775,132 @@ private class DML_Test {
 		Assert.isNotNull(result.deletesOf(Account.SObjectType).recordResults()[0].id(), 'Deleted operation result should contain a mocked record Id.');
 		Assert.isNotNull(result.deletesOf(Contact.SObjectType).recordResults()[0].id(), 'Deleted operation result should contain a mocked record Id.');
     }
+
+	@IsTest
+	static void toDeleteWithMockingException() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnDeletes();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toDelete(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toDeleteWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnDeletes();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toDelete(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Result should contain delete type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toDeleteWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnDeletesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toDelete(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toDeleteWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnDeletesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toDelete(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Result should contain delete type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
 
     // UNDELETE
 
@@ -2965,6 +3461,132 @@ private class DML_Test {
 		Assert.isNotNull(result.undeletesOf(Contact.SObjectType).recordResults()[0].id(), 'Undeleted operation result should contain a mocked record Id.');
     }
 
+	@IsTest
+	static void toUndeleteWithMockingException() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUndeletes();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUndelete(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUndeleteWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUndeletes();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUndelete(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UNDELETE_DML, operationResult.operationType(), 'Result should contain undelete type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toUndeleteWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUndeletesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toUndelete(account1)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toUndeleteWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account account1 = getAccount(1);
+		account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnUndeletesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toUndelete(account1)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UNDELETE_DML, operationResult.operationType(), 'Result should contain undelete type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
     // PLATFORM EVENT
 
 	@IsTest
@@ -3161,6 +3783,128 @@ private class DML_Test {
 		Assert.isTrue(result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults()[1].isSuccess(), 'Published operation result should contain a successful record result.');
 		Assert.isNotNull(result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults()[0].id(), 'Published operation result should contain a mocked record Id.');
 		Assert.isNotNull(result.eventsOf(FlowOrchestrationEvent.SObjectType).recordResults()[1].id(), 'Published operation result should contain a mocked record Id.');
+	}
+
+	@IsTest
+	static void toPublishWithMockingException() {
+		// Setup
+		FlowOrchestrationEvent event = new FlowOrchestrationEvent();
+
+		DML.mock('dmlMockId').exceptionOnPublishes();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toPublish(event)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toPublishWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		FlowOrchestrationEvent event = new FlowOrchestrationEvent();
+
+		DML.mock('dmlMockId').exceptionOnPublishes();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toPublish(event)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.eventsOf(FlowOrchestrationEvent.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(FlowOrchestrationEvent.SObjectType, operationResult.objectType(), 'Result should contain FlowOrchestrationEvent object type.');
+		Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Result should contain publish type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toPublishWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		FlowOrchestrationEvent event = new FlowOrchestrationEvent();
+
+		DML.mock('dmlMockId').exceptionOnPublishesFor(FlowOrchestrationEvent.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toPublish(event)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toPublishWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		FlowOrchestrationEvent event = new FlowOrchestrationEvent();
+
+		DML.mock('dmlMockId').exceptionOnPublishesFor(FlowOrchestrationEvent.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toPublish(event)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.eventsOf(FlowOrchestrationEvent.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(FlowOrchestrationEvent.SObjectType, operationResult.objectType(), 'Result should contain FlowOrchestrationEvent object type.');
+		Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Result should contain publish type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
 	}
 
 	// DEBUG

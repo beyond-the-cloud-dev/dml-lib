@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v1.9.0
+ * v2.0.0
  *
  * PMD False Positives:
  * - MethodNamingConventions - Some methods are uppercase to indicate that they are "constructors" of othere internal classes
@@ -222,6 +222,20 @@ global inherited sharing class DML implements Commitable {
 		Mockable deletesFor(SObjectType objectType);
 		Mockable undeletesFor(SObjectType objectType);
 		Mockable publishesFor(SObjectType objectType);
+		// Errors
+		Mockable exceptionOnInserts();
+		Mockable exceptionOnUpdates();
+		Mockable exceptionOnUpserts();
+		Mockable exceptionOnDeletes();
+		Mockable exceptionOnUndeletes();
+		Mockable exceptionOnPublishes();
+		// Per Operation Type Per Object Type
+		Mockable exceptionOnInsertsFor(SObjectType objectType);
+		Mockable exceptionOnUpdatesFor(SObjectType objectType);
+		Mockable exceptionOnUpsertsFor(SObjectType objectType);
+		Mockable exceptionOnDeletesFor(SObjectType objectType);
+		Mockable exceptionOnUndeletesFor(SObjectType objectType);
+		Mockable exceptionOnPublishesFor(SObjectType objectType);
 	}
 
 	// Hooks
@@ -839,12 +853,10 @@ global inherited sharing class DML implements Commitable {
 
 				List<SObject> recordsToProcess = this.recordsProcessContainerByType.get(objectTypeName).getRecordsToProcess();
 
-				DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
-
 				List<RecordResult> recordResults;
 
-				if (dmlMock != null && dmlMock.shouldBeMocked(this.getType(), objectTypeName)) {
-					recordResults = this.getMockedRecordResults(recordsToProcess);
+				if (this.shouldBeMocked(objectTypeName)) {
+					recordResults = this.getMockedRecordResults(recordsToProcess, objectTypeName);
 				} else {
 					recordResults = getAdapter().getStandardizedResults(this.executeDml(recordsToProcess), recordsToProcess);
 				}
@@ -859,11 +871,37 @@ global inherited sharing class DML implements Commitable {
 			return operationResults;
 		}
 
-		private List<RecordResult> getMockedRecordResults(List<SObject> recordsToProcess) {
+		private Boolean shouldBeMocked(SObjectType objectType) {
+			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
+
+			return dmlMock != null && (dmlMock.shouldBeMocked(this.getType(), objectType) || dmlMock.shouldThrowException(this.getType(), objectType));
+		}
+
+		private List<RecordResult> getMockedRecordResults(List<SObject> recordsToProcess, SObjectType objectType) {
+			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
+
+			Boolean shouldThrowException = dmlMock.shouldThrowException(this.getType(), objectType);
+
+			if (shouldThrowException && this.globalConfiguration.allOrNone) {
+				throw new DmlException('Exception thrown for ' + this.getType() + ' operation.');
+			}
+
 			List<RecordResult> recordResults = new List<RecordResult>();
 
 			for (SObject record : recordsToProcess) {
-				recordResults.add(this.prepareMockedDml(record));
+				RecordSummary recordSummary = this.prepareMockedDml(record);
+			
+				if (shouldThrowException) {
+					RecordProcessingError error = new RecordProcessingError()
+						.setMessage('Exception thrown for ' + this.getType() + ' operation.')
+						.setStatusCode(System.StatusCode.ALREADY_IN_PROCESS)
+						.setFields(new List<String> { 'Id' });
+
+					recordSummary.isSuccess(false);
+					recordSummary.error(error);
+				}
+
+				recordResults.add(recordSummary);
 			}
 
 			return recordResults;
@@ -871,7 +909,7 @@ global inherited sharing class DML implements Commitable {
 
 		public abstract OperationType getType();
 		public abstract List<Object> executeDml(List<SObject> recordsToProcess);
-		public abstract RecordResult prepareMockedDml(SObject record);
+		public abstract RecordSummary prepareMockedDml(SObject record);
 		public abstract DmlResultAdapter getAdapter(); 
 
 		public virtual void validate(Record record) {
@@ -917,7 +955,7 @@ global inherited sharing class DML implements Commitable {
 			return Database.insert(recordsToProcess, this.globalConfiguration.options, this.globalConfiguration.accessMode);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			record.put('Id', randomIdGenerator.get(record.getSObjectType()));
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
@@ -946,7 +984,7 @@ global inherited sharing class DML implements Commitable {
 			return Database.update(recordsToProcess, this.globalConfiguration.options, this.globalConfiguration.accessMode);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
 
@@ -968,7 +1006,7 @@ global inherited sharing class DML implements Commitable {
 			return Database.upsert(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			if (record.Id == null) {
 				record.put('Id', randomIdGenerator.get(record.getSObjectType()));
 			}
@@ -999,7 +1037,7 @@ global inherited sharing class DML implements Commitable {
 			return Database.delete(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
 
@@ -1027,7 +1065,7 @@ global inherited sharing class DML implements Commitable {
 			return Database.undelete(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
 
@@ -1049,7 +1087,7 @@ global inherited sharing class DML implements Commitable {
 			return EventBus.publish(recordsToProcess);
 		}
 
-		public override RecordResult prepareMockedDml(SObject record) {
+		public override RecordSummary prepareMockedDml(SObject record) {
 			return new RecordSummary().isSuccess(true).recordId(randomIdGenerator.get(record.getSObjectType()));
 		}
 
@@ -1263,6 +1301,11 @@ global inherited sharing class DML implements Commitable {
 			return this;
 		}
 
+		public RecordSummary error(Error error) {
+			this.errors.add(error);
+			return this;
+		}
+
 		public RecordSummary errors(List<Database.Error> errors) {
 			for (Database.Error error : errors ?? new List<Database.Error>()) {
 				this.errors.add(new RecordProcessingError(error));
@@ -1276,10 +1319,27 @@ global inherited sharing class DML implements Commitable {
 		private System.StatusCode statusCode;
 		private List<String> fields;
 
+		private RecordProcessingError() {}
+
 		private RecordProcessingError(Database.Error error) {
 			this.message = error.getMessage();
 			this.statusCode = error.getStatusCode();
 			this.fields = error.getFields();
+		}
+
+		public RecordProcessingError setMessage(String message) {
+			this.message = message;
+			return this;
+		}
+
+		public RecordProcessingError setStatusCode(System.StatusCode statusCode) {
+			this.statusCode = statusCode;
+			return this;
+		}
+
+		public RecordProcessingError setFields(List<String> fields) {
+			this.fields = fields;
+			return this;
 		}
 
 		public String message() {
@@ -1297,7 +1357,18 @@ global inherited sharing class DML implements Commitable {
 
 	private class DmlMock implements Mockable {
 		private Set<OperationType> mockedDmlTypes = new Set<OperationType>();
+		private Set<OperationType> thrownExceptionDmlTypes = new Set<OperationType>();
+
 		private Map<OperationType, Set<SObjectType>> mockedObjectTypesByDmlType = new Map<OperationType, Set<SObjectType>>{
+			OperationType.INSERT_DML => new Set<SObjectType>(),
+			OperationType.UPDATE_DML => new Set<SObjectType>(),
+			OperationType.UPSERT_DML => new Set<SObjectType>(),
+			OperationType.DELETE_DML => new Set<SObjectType>(),
+			OperationType.UNDELETE_DML => new Set<SObjectType>(),
+			OperationType.PUBLISH_DML => new Set<SObjectType>()
+		};
+
+		private Map<OperationType, Set<SObjectType>> thrownExceptionDmlTypesByObjectTypes = new Map<OperationType, Set<SObjectType>>{
 			OperationType.INSERT_DML => new Set<SObjectType>(),
 			OperationType.UPDATE_DML => new Set<SObjectType>(),
 			OperationType.UPSERT_DML => new Set<SObjectType>(),
@@ -1369,6 +1440,64 @@ global inherited sharing class DML implements Commitable {
 			return this.thenMockDmlFor(OperationType.PUBLISH_DML, objectType);
 		}
 
+		public Mockable exceptionOnInserts() {
+			return this.thenExceptionOn(OperationType.INSERT_DML);
+		}
+
+		public Mockable exceptionOnUpdates() {
+			return this.thenExceptionOn(OperationType.UPDATE_DML);
+		}
+
+		public Mockable exceptionOnUpserts() {
+			return this.thenExceptionOn(OperationType.UPSERT_DML);
+		}
+
+		public Mockable exceptionOnDeletes() {
+			return this.thenExceptionOn(OperationType.DELETE_DML);
+		}
+
+		public Mockable exceptionOnUndeletes() {
+			return this.thenExceptionOn(OperationType.UNDELETE_DML);
+		}
+
+		public Mockable exceptionOnPublishes() {
+			return this.thenExceptionOn(OperationType.PUBLISH_DML);
+		}
+
+		private Mockable thenExceptionOn(OperationType dmlType) {
+			this.thrownExceptionDmlTypes.add(dmlType);
+			return this;
+		}
+
+		public Mockable exceptionOnInsertsFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.INSERT_DML, objectType);
+		}
+
+		public Mockable exceptionOnUpdatesFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.UPDATE_DML, objectType);
+		}
+
+		public Mockable exceptionOnUpsertsFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.UPSERT_DML, objectType);
+		}
+
+		public Mockable exceptionOnDeletesFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.DELETE_DML, objectType);
+		}
+
+		public Mockable exceptionOnUndeletesFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.UNDELETE_DML, objectType);
+		}
+
+		public Mockable exceptionOnPublishesFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.PUBLISH_DML, objectType);
+		}
+
+		private Mockable thenExceptionOnFor(OperationType dmlType, SObjectType objectType) {
+			this.thrownExceptionDmlTypesByObjectTypes.get(dmlType).add(objectType);
+			return this;
+		}
+
 		private Mockable thenMockDmlFor(OperationType dmlType, SObjectType objectType) {
 			this.mockedObjectTypesByDmlType.get(dmlType).add(objectType);
 			return this;
@@ -1376,6 +1505,10 @@ global inherited sharing class DML implements Commitable {
 
 		private Boolean shouldBeMocked(OperationType dmlType, SObjectType objectType) {
 			return this.mockedDmlTypes.contains(dmlType) || this.mockedObjectTypesByDmlType.get(dmlType).contains(objectType);
+		}
+
+		private Boolean shouldThrowException(OperationType dmlType, SObjectType objectType) {
+			return this.thrownExceptionDmlTypes.contains(dmlType) || this.thrownExceptionDmlTypesByObjectTypes.get(dmlType).contains(objectType);
 		}
 	}
 

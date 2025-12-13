@@ -21,7 +21,7 @@
     - [x] with sharing
     - [x] without sharing
     - [ ] Sharing mode configurable per operation (?)
-- [ ] Relationships
+- [x] Relationships
     - [x] Deferred relationship resolution — resolve lookups just-in-time during commit (like fflib), not at registration time.
     - [x] Automatic dependency ordering — parents insert before children; deletes child-first; derive order from relationships if not explicit.
 - [ ] Preview mode or debug mode (?) - dry-run uow.preview() shows per-type op counts, fields to mutate, effective chunk size/allOrNone/security mode, and pending relationships; no DML.
@@ -96,18 +96,18 @@ class UowResult {
 }
 ```
 - [x] discardWork() — clear all pending operations without committing.
-- [ ] Clear internal state after commitWork() — prevent re-commit of same operations.
+- [x] Clear internal state after commitWork() — prevent re-commit of same operations.
 - [ ] Query operations — query(), countQuery(), getQueryLocator(), getCursor() with same access/sharing mode.
 - [ ] Connector to SOQL Lib — inject selectors for reads; honor chosen sharing mode.
 - [ ] Dedupling registration — when records with the same Id are registered and modify the same field: policy LAST_WINS | THROW; track warnings when deduping occurs.
 - [ ] Observability hooks — uow.withLogger(ILogger) to emit timings, limits, retries, per-op summaries; keep lightweight to avoid CPU spikes.
 - [ ] DML optimization
     - [ ] Minimize DML statements — batch same-type operations.
-    - [ ] Build dependency graph — derive parent/child order from registered relationships.
+    - [x] Build dependency graph — derive parent/child order from registered relationships.
 - [x] insertImmediately, updateImmediately, etc.
 - [ ] Email integration — toSendEmail(Messaging.Email) sent during commit.
 - [ ] Custom work (IDoWork) — registerWork(DML.Work) for custom logic during commit.
-- [ ] Lifecycle hooks — onCommitWorkStarting(), onDMLFinished(), onCommitWorkFinished(success) for subclass overrides.
+
 ---
 
 ```java
