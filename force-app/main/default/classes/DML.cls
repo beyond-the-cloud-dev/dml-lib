@@ -856,7 +856,7 @@ global inherited sharing class DML implements Commitable {
 		private List<OperationResult> process(Iterable<SObjectType> objectTypesOrder) {
 			List<OperationResult> operationResults = new List<OperationResult>();
 
-			DmlResultAdapter adapter = this.getAdapter();
+			DmlResultAdapter operationResultAdapter = this.getAdapter();
 
 			for (SObjectType objectTypeName : objectTypesOrder) {
 				if (!this.recordsProcessContainerByType.containsKey(objectTypeName)) {
@@ -867,11 +867,13 @@ global inherited sharing class DML implements Commitable {
 
 				List<RecordResult> recordResults;
 
-				if (this.shouldBeMocked(objectTypeName)) {
-					recordResults = this.getMockedRecordResults(recordsToProcess, objectTypeName);
+				DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
+
+				if (dmlMock != null && dmlMock.shouldBeMocked(this.getType(), objectTypeName)) {
+					recordResults = dmlMock.getMockedRecordResults(this, objectTypeName, recordsToProcess);
 				} else {
-					recordResults = adapter.getStandardizedResults(this.executeDml(recordsToProcess), recordsToProcess);
-				}
+					recordResults = operationResultAdapter.get(this.executeDml(recordsToProcess), recordsToProcess);
+				}	
 
 				operationResults.add(
 					new OperationSummary(objectTypeName, this.getType())
@@ -881,42 +883,6 @@ global inherited sharing class DML implements Commitable {
 			}
 
 			return operationResults;
-		}
-
-		private Boolean shouldBeMocked(SObjectType objectType) {
-			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
-
-			return dmlMock != null && (dmlMock.shouldBeMocked(this.getType(), objectType) || dmlMock.shouldThrowException(this.getType(), objectType));
-		}
-
-		private List<RecordResult> getMockedRecordResults(List<SObject> recordsToProcess, SObjectType objectType) {
-			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
-
-			Boolean shouldThrowException = dmlMock.shouldThrowException(this.getType(), objectType);
-
-			if (shouldThrowException && this.globalConfiguration.allOrNone) {
-				throw new DmlException('Exception thrown for ' + this.getType() + ' operation.');
-			}
-
-			List<RecordResult> recordResults = new List<RecordResult>();
-
-			for (SObject record : recordsToProcess) {
-				RecordSummary recordSummary = this.prepareMockedDml(record);
-			
-				if (shouldThrowException) {
-					RecordProcessingError error = new RecordProcessingError()
-						.setMessage('Exception thrown for ' + this.getType() + ' operation.')
-						.setStatusCode(System.StatusCode.ALREADY_IN_PROCESS)
-						.setFields(new List<String> { 'Id' });
-
-					recordSummary.isSuccess(false);
-					recordSummary.error(error);
-				}
-
-				recordResults.add(recordSummary);
-			}
-
-			return recordResults;
 		}
 
 		protected abstract OperationType getType();
@@ -1131,7 +1097,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private abstract class DmlResultAdapter {
-		public List<RecordResult> getStandardizedResults(List<Object> dmlResults, List<SObject> processedRecords) {
+		public List<RecordResult> get(List<Object> dmlResults, List<SObject> processedRecords) {
 			List<RecordResult> recordResults = new List<RecordResult>();
 
 			for (Integer i = 0; i < dmlResults.size(); i++) {
@@ -1297,28 +1263,28 @@ global inherited sharing class DML implements Commitable {
 			return this.errors;
 		}
 
-		public RecordSummary recordId(Id recordId) {
+		private RecordSummary recordId(Id recordId) {
 			this.recordId = recordId;
 			return this;
 		}
 
-		public RecordSummary record(SObject record) {
+		private RecordSummary record(SObject record) {
 			this.record = record;
 			return this;
 		}
 
 		@SuppressWarnings('PMD.AvoidBooleanMethodParameters')
-		public RecordSummary isSuccess(Boolean isSuccess) {
+		private RecordSummary isSuccess(Boolean isSuccess) {
 			this.isSuccess = isSuccess;
 			return this;
 		}
 
-		public RecordSummary error(Error error) {
+		private RecordSummary error(Error error) {
 			this.errors.add(error);
 			return this;
 		}
 
-		public RecordSummary errors(List<Database.Error> errors) {
+		private RecordSummary errors(List<Database.Error> errors) {
 			for (Database.Error error : errors ?? new List<Database.Error>()) {
 				this.errors.add(new RecordProcessingError(error));
 			}
@@ -1339,17 +1305,17 @@ global inherited sharing class DML implements Commitable {
 			this.fields = error.getFields();
 		}
 
-		public RecordProcessingError setMessage(String message) {
+		private RecordProcessingError setMessage(String message) {
 			this.message = message;
 			return this;
 		}
 
-		public RecordProcessingError setStatusCode(System.StatusCode statusCode) {
+		private RecordProcessingError setStatusCode(System.StatusCode statusCode) {
 			this.statusCode = statusCode;
 			return this;
 		}
 
-		public RecordProcessingError setFields(List<String> fields) {
+		private RecordProcessingError setFields(List<String> fields) {
 			this.fields = fields;
 			return this;
 		}
@@ -1516,7 +1482,49 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private Boolean shouldBeMocked(OperationType dmlType, SObjectType objectType) {
-			return this.mockedDmlTypes.contains(dmlType) || this.mockedObjectTypesByDmlType.get(dmlType).contains(objectType);
+			return this.mockedDmlTypes.contains(dmlType) || this.mockedObjectTypesByDmlType.get(dmlType).contains(objectType) || this.shouldThrowException(dmlType, objectType);
+		}
+
+		private List<RecordResult> getMockedRecordResults(DmlOperation executor, SObjectType objectType, List<SObject> recordsToProcess) {
+			if (this.shouldThrowException(executor.getType(), objectType)) {
+				if (executor.globalConfiguration.allOrNone) {
+					throw new DmlException('Exception thrown for ' + executor.getType() + ' operation.');
+				}
+
+				// all or none is false, so we need to return a list of record results with errors
+				return this.getMockedRecordErrors(executor, objectType, recordsToProcess);
+			}
+
+			return this.getMockedRecordSuccesses(executor, objectType, recordsToProcess);
+		}
+
+		private List<RecordResult> getMockedRecordErrors(DmlOperation executor, SObjectType objectType, List<SObject> recordsToProcess) {
+			List<RecordResult> recordResults = new List<RecordResult>();
+
+			for (SObject record : recordsToProcess) {
+				RecordProcessingError error = new RecordProcessingError()
+					.setMessage('Exception thrown for ' + executor.getType() + ' operation.')
+					.setStatusCode(System.StatusCode.ALREADY_IN_PROCESS)
+					.setFields(new List<String> { 'Id' });
+
+				RecordSummary recordSummary = new RecordSummary()
+					.isSuccess(false)
+					.error(error);
+
+				recordResults.add(recordSummary);
+			}
+
+			return recordResults;
+		}
+
+		private List<RecordResult> getMockedRecordSuccesses(DmlOperation executor, SObjectType objectType, List<SObject> recordsToProcess) {
+			List<RecordResult> recordResults = new List<RecordResult>();
+
+			for (SObject record : recordsToProcess) {
+				recordResults.add(executor.prepareMockedDml(record));
+			}
+
+			return recordResults;
 		}
 
 		private Boolean shouldThrowException(OperationType dmlType, SObjectType objectType) {
