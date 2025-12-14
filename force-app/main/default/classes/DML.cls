@@ -60,6 +60,7 @@ global inherited sharing class DML implements Commitable {
 		Commitable toUpdate(DML.Records records);
 		// Upsert
 		Commitable toUpsert(SObject record);
+		Commitable toUpsert(SObject record, SObjectField externalIdField);
 		Commitable toUpsert(DML.Record record);
 		Commitable toUpsert(List<SObject> records);
 		Commitable toUpsert(DML.Records records);
@@ -251,7 +252,7 @@ global inherited sharing class DML implements Commitable {
 	private OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph(); //TODO Clear after commitWork()
 	private Orchestrator orchestrator = new Orchestrator();
 
-	global enum OperationType { INSERT_DML, UPDATE_DML, UPSERT_DML, DELETE_DML, UNDELETE_DML, PUBLISH_DML }
+	global enum OperationType { INSERT_DML, UPSERT_DML, UPDATE_DML, MERGE_DML, DELETE_DML, UNDELETE_DML, PUBLISH_DML }
 
 	private Map<OperationType, DmlOperation> operationsByType = new Map<OperationType, DmlOperation>();
 
@@ -287,7 +288,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toInsert(Record record) {
-		return this.registerOperation(new InsertCommand(record));
+		return this.registerOperation(new InsertCommand().register(record));
 	}
 
 	public Commitable toInsert(List<SObject> records) {
@@ -295,16 +296,7 @@ global inherited sharing class DML implements Commitable {
 	}
 	
 	public Commitable toInsert(Records records) {
-		return this.registerOperation(new InsertCommand(records));
-	}
-
-	private Commitable registerOperation(DmlCommand command) {
-		this.orchestrator.register(
-			command
-				.setGlobalConfiguration(this.configuration)
-				.setDependencyGraph(this.orderDependencyGraph)
-		);
-		return this;
+		return this.registerOperation(new InsertCommand().register(records));
 	}
 
 	public OperationResult insertImmediately(SObject record) {
@@ -330,7 +322,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toUpdate(Record record) {
-		return this.registerOperation(OperationType.UPDATE_DML, record);
+		return this.registerOperation(new UpdateCommand().register(record));
 	}
 
 	public Commitable toUpdate(List<SObject> records) {
@@ -338,7 +330,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toUpdate(Records records) {
-		return this.registerOperation(OperationType.UPDATE_DML, records);
+		return this.registerOperation(new UpdateCommand().register(records));
 	}
 
 	public OperationResult updateImmediately(SObject record) {
@@ -363,8 +355,12 @@ global inherited sharing class DML implements Commitable {
 		return this.toUpsert(Record(record));
 	}
 
+	public Commitable toUpsert(SObject record, SObjectField externalIdField) {
+		return this.registerOperation(new UpsertCommand().withExternalIdField(externalIdField).register(Record(record)));
+	}
+
 	public Commitable toUpsert(Record record) {
-		return this.registerOperation(OperationType.UPSERT_DML, record);
+		return this.registerOperation(new UpsertCommand().register(record));
 	}
 
 	public Commitable toUpsert(List<SObject> records) {
@@ -372,7 +368,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toUpsert(Records records) {
-		return this.registerOperation(OperationType.UPSERT_DML, records);
+		return this.registerOperation(new UpsertCommand().register(records));
 	}
 
 	public OperationResult upsertImmediately(SObject record) {
@@ -394,7 +390,7 @@ global inherited sharing class DML implements Commitable {
 	// Delete
 
 	public Commitable toDelete(Id recordId) {
-		return this.registerOperation(OperationType.DELETE_DML, Record(recordId));
+		return this.registerOperation(new DeleteCommand(Record(recordId)));
 	}
 
 	public Commitable toDelete(SObject record) {
@@ -402,11 +398,11 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toDelete(Iterable<Id> recordIds) {
-		return this.registerOperation(OperationType.DELETE_DML, Records(recordIds));
+		return this.registerOperation(new DeleteCommand(Records(recordIds)));
 	}
 
 	public Commitable toDelete(List<SObject> records) {
-		return this.registerOperation(OperationType.DELETE_DML, Records(records));
+		return this.registerOperation(new DeleteCommand(Records(records)));
 	}
 
 	public OperationResult deleteImmediately(Id recordId) {
@@ -428,7 +424,7 @@ global inherited sharing class DML implements Commitable {
 	// Undelete
 
 	public Commitable toUndelete(Id recordId) {
-		return this.registerOperation(OperationType.UNDELETE_DML, Record(recordId));
+		return this.registerOperation(new UndeleteCommand(Record(recordId)));
 	}
 
 	public Commitable toUndelete(SObject record) {
@@ -436,11 +432,11 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	public Commitable toUndelete(Iterable<Id> recordIds) {
-		return this.registerOperation(OperationType.UNDELETE_DML, Records(recordIds));
+		return this.registerOperation(new UndeleteCommand(Records(recordIds)));
 	}
 
 	public Commitable toUndelete(List<SObject> records) {
-		return this.registerOperation(OperationType.UNDELETE_DML, Records(records));
+		return this.registerOperation(new UndeleteCommand(Records(records)));
 	}
 
 	public OperationResult undeleteImmediately(Id recordId) {
@@ -462,17 +458,17 @@ global inherited sharing class DML implements Commitable {
 	// Merge
 
 	public Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
-		return this;// this.registerOperation(OperationType.MERGE_DML, Record(mergeToRecord), Records(duplicateRecords));
+		return this.registerOperation(new MergeCommand(mergeToRecord, duplicateRecords));
 	}
 
 	// Platform Event
 
 	public Commitable toPublish(SObject record) {
-		return this.registerOperation(OperationType.PUBLISH_DML, Record(record));
+		return this.registerOperation(new PlatformEventCommand(Record(record)));
 	}
 
 	public Commitable toPublish(List<SObject> records) {
-		return this.registerOperation(OperationType.PUBLISH_DML, Records(records));
+		return this.registerOperation(new PlatformEventCommand(Records(records)));
 	}
 
 	public OperationResult publishImmediately(SObject record) {
@@ -499,6 +495,15 @@ global inherited sharing class DML implements Commitable {
 
 	private OperationResult executeImmediately(DmlOperation operation, Records records) {
 		return operation.register(records).commitWork().get(0);
+	}
+
+	private Commitable registerOperation(DmlCommand command) {
+		this.orchestrator.register(
+			command
+				.setGlobalConfiguration(this.configuration)
+				.setDependencyGraph(this.orderDependencyGraph)
+		);
+		return this;
 	}
 
 	// Identifier
@@ -976,6 +981,15 @@ global inherited sharing class DML implements Commitable {
 			return this;
 		}
 
+		private void preview() {
+			System.debug(LoggingLevel.ERROR,
+				'\n\n============ ' + this.getOperationType() + ' Preview ============'
+				+ '\nObject Type: ' + this.objectType
+				+ '\nRecords: ' + JSON.serializePretty(this.records)
+				+ '\n=======================================\n'
+			);
+		}
+
 		private DmlCommand register(Records records) {
 			for (Record record : records.get()) {
 				this.register(record);
@@ -1000,16 +1014,23 @@ global inherited sharing class DML implements Commitable {
 		
 		private virtual OperationResult execute() {
 			// this.getAdapter();
-			OperationSummary operationSummary = new OperationSummary(this.objectType, this.getOperationType()).setRecords(this.records);
-			
+			List<SObject> recordsToProcess = this.recordsContainer.getRecordsToProcess();
+
+			OperationSummary operationSummary = new OperationSummary(this.objectType, this.getOperationType())
+				.setRecords(recordsToProcess);
+
 			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
 
 			if (dmlMock != null && dmlMock.shouldBeMocked(this.getOperationType(), this.objectType)) {
-				return operationSummary;
-				// recordResults = dmlMock.getMockedRecordResults(this, objectTypeName, recordsToProcess);
+				return null;//dmlMock.getMockedRecordResults(this, objectTypeName, recordsToProcess);
 			} 
 
-			return operationSummary;// this.getAdapter().get(this.executeDml(), this.records);
+			List<Object> dmlResults = this.executeDml();
+			List<RecordResult> recordResults = this.getAdapter().get(dmlResults, recordsToProcess);
+
+			operationSummary.setRecordResults(recordResults);
+
+			return operationSummary;
 		}
 
 		private virtual void combine(DmlCommand command) {
@@ -1018,6 +1039,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected abstract OperationType getOperationType();
+		protected abstract DmlResultAdapter getAdapter();
 		protected abstract List<Object> executeDml();
 
 		protected virtual void validate(SObject record) {
@@ -1032,19 +1054,11 @@ global inherited sharing class DML implements Commitable {
 	private inherited sharing class InsertCommand extends DmlCommand {
 		private List<SObject> records = new List<SObject>();
 
-		public InsertCommand(Record record) {
-			this.register(record);
-		}
-
-		public InsertCommand(Records records) {
-			this.register(records);
-		}
-
 		protected override OperationType getOperationType() {
 			return OperationType.INSERT_DML;
 		}
 
-		public DmlResultAdapter getAdapter() {
+		public override DmlResultAdapter getAdapter() {
 			return new SaveResultAdapter();
 		}
 
@@ -1062,26 +1076,17 @@ global inherited sharing class DML implements Commitable {
 	private inherited sharing class UpsertCommand extends DmlCommand {
 		private SObjectField externalIdField;
 
-		public UpsertCommand(Record record) {
-			// super(record);
-		}
-
-		public UpsertCommand(Records records) {
-			// super(records);
-		}
-
-		public UpsertCommand(Record record, SObjectField externalIdField) {
-			// super(record);
+		private UpsertCommand withExternalIdField(SObjectField externalIdField) {
 			this.externalIdField = externalIdField;
-		}
-
-		public UpsertCommand(Records records, SObjectField externalIdField) {
-			// super(records);
-			this.externalIdField = externalIdField;
+			return this;
 		}
 
 		protected override OperationType getOperationType() {
 			return OperationType.UPSERT_DML;
+		}
+
+		protected override DmlResultAdapter getAdapter() {
+			return new UpsertResultAdapter();
 		}
 
 		protected override String hashCode() {
@@ -1104,16 +1109,12 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class UpdateCommand extends DmlCommand {
-		public UpdateCommand(Record record) {
-			// super(record);
-		}
-
-		public UpdateCommand(Records records) {
-			// super(records);
-		}
-
 		protected override OperationType getOperationType() {
 			return OperationType.UPDATE_DML;
+		}
+
+		protected override DmlResultAdapter getAdapter() {
+			return new SaveResultAdapter();
 		}
 
 		protected override List<Object> executeDml() {
@@ -1138,6 +1139,10 @@ global inherited sharing class DML implements Commitable {
 			return super.hashCode() + '_' + this.mergeToRecord.Id;
 		}
 
+		protected override DmlResultAdapter getAdapter() {
+			return new SaveResultAdapter(); //TODO//MergeResultAdapter();
+		}
+
 		// todo merge to record should have id
 
 		protected override List<Object> executeDml() {
@@ -1159,6 +1164,10 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.DELETE_DML;
 		}
 
+		protected override DmlResultAdapter getAdapter() {
+			return new SaveResultAdapter();
+		}
+
 		protected override List<Object> executeDml() {
 			return Database.delete(this.records, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
@@ -1177,6 +1186,10 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.UNDELETE_DML;
 		}
 
+		protected override DmlResultAdapter getAdapter() {
+			return new SaveResultAdapter();
+		}
+
 		protected override List<Object> executeDml() {
 			return Database.undelete(this.records, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
@@ -1193,6 +1206,10 @@ global inherited sharing class DML implements Commitable {
 		
 		protected override OperationType getOperationType() {
 			return OperationType.PUBLISH_DML;
+		}
+
+		protected override DmlResultAdapter getAdapter() {
+			return new SaveResultAdapter();
 		}
 
 		protected override List<Object> executeDml() {
