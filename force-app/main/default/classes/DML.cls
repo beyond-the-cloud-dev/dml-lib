@@ -1134,7 +1134,7 @@ global inherited sharing class DML implements Commitable {
 	private class UndeleteResultAdapter extends DmlResultAdapter {
 		public override RecordSummary transform(Object result) {
 			Database.UndeleteResult undeleteResult = (Database.UndeleteResult) result;
-
+			
 			return new RecordSummary()
 				.isSuccess(undeleteResult.isSuccess())
 				.recordId(undeleteResult.getId())
@@ -1148,8 +1148,9 @@ global inherited sharing class DML implements Commitable {
 		private List<RecordResult> recordResults = new List<RecordResult>();
 		private List<SObject> records = new List<SObject>();
 
-		private List<SObject> cachedSuccesses;
-		private List<SObject> cachedFailures;
+		private List<SObject> cachedSuccesses = new List<SObject>();
+		private List<SObject> cachedFailures = new List<SObject>();
+		private List<Error> cachedErrors = new List<Error>();
 
 		private OperationSummary(SObjectType objectType, OperationType type) {
 			this.objectType = objectType;
@@ -1163,7 +1164,19 @@ global inherited sharing class DML implements Commitable {
 
 		private OperationSummary setRecordResults(List<RecordResult> recordResults) {
 			this.recordResults = recordResults;
+			this.flatResults();
 			return this;
+		}
+
+		private void flatResults() {
+			for (RecordResult recordResult : this.recordResults) {
+				if (recordResult.isSuccess()) {
+					this.cachedSuccesses.add(recordResult.record());
+				} else {
+					this.cachedErrors.addAll(recordResult.errors());
+					this.cachedFailures.add(recordResult.record());
+				}
+			}
 		}
 
 		public SObjectType objectType() {
@@ -1179,13 +1192,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		public List<Error> errors() {
-			List<Error> errors = new List<Error>();
-
-			for (RecordResult recordResult : this.recordResults) {
-				errors.addAll(recordResult.errors());
-			}
-			
-			return errors;
+			return this.cachedErrors;
 		}
 
 		public List<SObject> records() {
@@ -1193,34 +1200,10 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		public List<SObject> successes() {
-			if (this.cachedSuccesses != null) {
-				return this.cachedSuccesses;
-			}
-
-			this.cachedSuccesses = new List<SObject>();
-
-			for (RecordResult recordResult : this.recordResults) {
-				if (recordResult.isSuccess()) {
-					this.cachedSuccesses.add(recordResult.record());
-				}
-			}
-
 			return this.cachedSuccesses;
 		}
 
 		public List<SObject> failures() {
-			if (this.cachedFailures != null) {
-				return this.cachedFailures;
-			}
-
-			this.cachedFailures = new List<SObject>();
-			
-			for (RecordResult recordResult : this.recordResults) {
-				if (!recordResult.isSuccess()) {
-					this.cachedFailures.add(recordResult.record());
-				}
-			}
-
 			return this.cachedFailures;
 		}
 
@@ -1752,11 +1735,11 @@ global inherited sharing class DML implements Commitable {
 		private Map<SObjectType, Set<SObjectType>> childrenByType = new Map<SObjectType, Set<SObjectType>>();
 		private Map<SObjectType, Integer> parentsRemainingByType = new Map<SObjectType, Integer>();
 
-		public void registerType(SObjectType type) {
+		private void registerType(SObjectType type) {
 			this.ensureTypeRegistered(type);
 		}
 
-		public void addDependency(SObjectType parentType, SObjectType childType) {
+		private void addDependency(SObjectType parentType, SObjectType childType) {
 			this.ensureTypeRegistered(parentType);
 			this.ensureTypeRegistered(childType);
 
@@ -1775,15 +1758,9 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		// Kahn’s sort algorithm
-		public List<SObjectType> getTopologicalOrder() {
+		private List<SObjectType> getTopologicalOrder() {
+			List<SObjectType> parentsTypesWithoutDependencies = this.getTypesWithNoDependencies();
 			List<SObjectType> typesExecutionOrder = new List<SObjectType>();
-			List<SObjectType> parentsTypesWithoutDependencies = new List<SObjectType>();
-
-			for (SObjectType type : this.parentsRemainingByType.keySet()) {
-				if (this.parentsRemainingByType.get(type) == 0) {
-					parentsTypesWithoutDependencies.add(type);
-				}
-			}
 
 			while (!parentsTypesWithoutDependencies.isEmpty()) {
 				SObjectType currentType = parentsTypesWithoutDependencies.remove(0);
@@ -1805,6 +1782,18 @@ global inherited sharing class DML implements Commitable {
 			}
 
 			return typesExecutionOrder;
+		}
+
+		private List<SObjectType> getTypesWithNoDependencies() {
+			List<SObjectType> typesWithNoDependencies = new List<SObjectType>();
+
+			for (SObjectType type : this.parentsRemainingByType.keySet()) {
+				if (this.parentsRemainingByType.get(type) == 0) {
+					typesWithNoDependencies.add(type);
+				}
+			}
+
+			return typesWithNoDependencies;
 		}
 	}
 
