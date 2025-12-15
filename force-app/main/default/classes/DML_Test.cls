@@ -1555,7 +1555,6 @@ private class DML_Test {
 		Assert.isFalse(operationResult.hasFailures(), 'Upserted operation result should not have failures.');
     }
 
-
 	@IsTest
 	static void upsertImmediatelySingleRecord() {
 		// Setup
