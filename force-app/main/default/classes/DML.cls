@@ -70,6 +70,11 @@ global inherited sharing class DML implements Commitable {
 		Commitable toDelete(SObject record);
 		Commitable toDelete(Iterable<Id> recordIds);
 		Commitable toDelete(List<SObject> records);
+		// Hard Delete
+		Commitable toHardDelete(Id recordId);
+		Commitable toHardDelete(SObject record);
+		Commitable toHardDelete(Iterable<Id> recordIds);
+		Commitable toHardDelete(List<SObject> records);
 		// Undelete
 		Commitable toUndelete(Id recordId);
 		Commitable toUndelete(SObject record);
@@ -419,6 +424,24 @@ global inherited sharing class DML implements Commitable {
 
 	public OperationResult deleteImmediately(List<SObject> records) {
 		return this.executeImmediately(new DeleteCommand(Records(records)));
+	}
+
+	// Hard Delete
+
+	public Commitable toHardDelete(Id recordId) {
+		return this.registerOperation(new DeleteCommand(Record(recordId)).withHardDelete());
+	}
+
+	public Commitable toHardDelete(SObject record) {
+		return this.toHardDelete(record.Id);
+	}
+
+	public Commitable toHardDelete(Iterable<Id> recordIds) {
+		return this.registerOperation(new DeleteCommand(Records(recordIds)).withHardDelete());
+	}
+
+	public Commitable toHardDelete(List<SObject> records) {
+		return this.registerOperation(new DeleteCommand(Records(records)).withHardDelete());
 	}
 
 	// Undelete
@@ -1125,7 +1148,7 @@ global inherited sharing class DML implements Commitable {
 
 		public MergeCommand(Record mergeToRecord, Iterable<Id> duplicateRecordIds) {
 			super(mergeToRecord);
-			
+
 			SObjectType objectType = mergeToRecord.get().getSObjectType();
 
 			for (Id duplicateRecordId : duplicateRecordIds) {
@@ -1161,12 +1184,23 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class DeleteCommand extends DmlCommand {
+		private Boolean makeHardDelete = false;
+
 		public DeleteCommand(Record record) {
 			super(record);
 		}
 
 		public DeleteCommand(Records records) {
 			super(records);
+		}
+
+		private DeleteCommand withHardDelete() {
+			this.makeHardDelete = true;
+			return this;
+		}
+		
+		protected override String hashCode() {
+			return super.hashCode() + '_' + this.makeHardDelete;
 		}
 
 		protected override OperationType getOperationType() {
@@ -1184,7 +1218,13 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override List<Object> executeDml(List<SObject> recordsToProcess) {
-			return Database.delete(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
+			List<Object> dmlResults = Database.delete(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
+
+			if (this.makeHardDelete) {
+				System.Database.emptyRecycleBin(recordsToProcess);
+			}
+
+			return dmlResults;
 		}
 
 		protected override RecordSummary executeMockedDml(SObject record) {

@@ -254,10 +254,10 @@ Status | Priority | Feature | Effort | Impact |
 |------|----------|---------|--------|--------|
 | [x]  | 🔴 Critical | Deferred Relationship Resolution | High | Very High |
 | [x]  | 🔴 Critical | Automatic Dependency Ordering | High | Very High |
-| [ ]  | 🔴 Critical | Merge Operations | Medium | High |
-| [ ]  | 🔴 Critical | Hard Delete | Low | Medium |
+| [x]  | 🔴 Critical | Merge Operations | Medium | High |
+| [x]  | 🔴 Critical | Hard Delete | Low | Medium |
 | [x]  | 🔴 Critical | Discard Work | Low | Medium |
-| [ ]  | 🟡 Important | Upsert with External ID | Medium | High |
+| [x]  | 🟡 Important | Upsert with External ID | Medium | High |
 | [ ]  | 🟡 Important | Lead Conversion | Medium | Medium |
 | [ ]  | 🟡 Important | Per-Operation Overrides | High | High |
 | [ ]  | 🟡 Important | Email Integration | Medium | Medium |
@@ -266,4 +266,4 @@ Status | Priority | Feature | Effort | Impact |
 | [ ]  | 🟢 Nice | Retry Strategy | High | Medium |
 | [ ]  | 🟢 Nice | Chunk Size | Medium | Medium |
 | [ ]  | 🟢 Nice | Query Integration | Medium | Low |
-| [ ]  | 🟢 Nice | Lifecycle Hooks | Medium | Low |
+| [x]  | 🟢 Nice | Lifecycle Hooks | Medium | Low |
