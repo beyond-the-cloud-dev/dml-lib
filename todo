@@ -4,6 +4,7 @@
 - [x] Fluent Bulk records update without the loop e.g.
     - [x] DML.Records(opportunities).with(Opportunity.Status, 'Closed Won') — loop-free builder that batches field patches, applies FLS (per mode), then registers the op.
 - [ ] Bulk DMLs — group by SObjectType and operation; execute in chunked batches (default 200) to minimize statements and respect limits.
+- [ ] when the same record is added with the same id, avoid duplication, apply for update and upser
 - [ ] Savepoint + rollback — wrap commitWork() in a savepoint; 
     - [x] on error rollback everything;
     - [ ] clear internal state afterward.
@@ -235,13 +236,34 @@ toHardDelete(List<SObject> records);
 
 		Account account1 = new Account(Name = 'Account 1');
 		Contact contact1 = new Contact(LastName = 'Contact 1');
-		Opportunity opportunity1 = new Opportunity(Name = 'Opportunity 1');
+		Opportunity opportunity1 = new Opportunity(Name = 'Opportunity 1', StageName = 'Discovery', CloseDate = System.today());
 
 		new DML()
-			.toInsert(account1)
-			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
 			.toInsert(DML.Record(opportunity1)
 				.withRelationship(Opportunity.AccountId, account1)
 				.withRelationship(Opportunity.Contact__c, contact1)
 			)
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+			.toInsert(DML.Record(account1).withRelationship(Account.Contact__c, contact1))
 			.commitWork();
+
+
+--- 
+
+Status | Priority | Feature | Effort | Impact |
+|------|----------|---------|--------|--------|
+| [x]  | 🔴 Critical | Deferred Relationship Resolution | High | Very High |
+| [x]  | 🔴 Critical | Automatic Dependency Ordering | High | Very High |
+| [x]  | 🔴 Critical | Merge Operations | Medium | High |
+| [x]  | 🔴 Critical | Hard Delete | Low | Medium |
+| [x]  | 🔴 Critical | Discard Work | Low | Medium |
+| [x]  | 🟡 Important | Upsert with External ID | Medium | High |
+| [ ]  | 🟡 Important | Lead Conversion | Medium | Medium |
+| [ ]  | 🟡 Important | Per-Operation Overrides | High | High |
+| [ ]  | 🟡 Important | Email Integration | Medium | Medium |
+| [ ]  | 🟡 Important | Custom Work (IDoWork) | Low | Medium |
+| [ ]  | 🟢 Nice | Better Mock API with Errors | Medium | Medium |
+| [ ]  | 🟢 Nice | Retry Strategy | High | Medium |
+| [ ]  | 🟢 Nice | Chunk Size | Medium | Medium |
+| [ ]  | 🟢 Nice | Query Integration | Medium | Low |
+| [x]  | 🟢 Nice | Lifecycle Hooks | Medium | Low |

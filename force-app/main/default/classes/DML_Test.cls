@@ -41,7 +41,6 @@ private class DML_Test {
 		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
 		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
 
-
 		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
 
 		Assert.areEqual(1, operationResult.records().size(), 'Inserted operation result should contain the inserted record.');
@@ -267,10 +266,10 @@ private class DML_Test {
 			Exception expectedException = null;
 
 			try {
-            new DML()
+            	new DML()
 					.toInsert(newAccount)
 					.toInsert(DML.Records(contacts).withRelationship(Contact.LastName, newAccount))
-                .commitWork();
+                	.commitWork();
 			} catch (Exception e) {
 				expectedException = e;
 			}
@@ -1555,7 +1554,6 @@ private class DML_Test {
 		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Upserted operation result should contain upsert type.');
 		Assert.isFalse(operationResult.hasFailures(), 'Upserted operation result should not have failures.');
     }
-
 
 	@IsTest
 	static void upsertImmediatelySingleRecord() {
@@ -4675,8 +4673,15 @@ private class DML_Test {
 
 		// Verify
 		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact WHERE AccountId != null], 'Contact should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity WHERE AccountId != null], 'Opportunity should be inserted.');
+
+		Assert.isNotNull(contact1.Id, 'Contact should be inserted and have an Id.');
+		Assert.isNotNull(opportunity1.Id, 'Opportunity should be inserted and have an Id.');
+		Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
+
+		Assert.areEqual(account1.Id, contact1.AccountId, 'Contact should be related to Account.');
+		Assert.areEqual(account1.Id, opportunity1.AccountId, 'Opportunity should be related to Account.');
 	}
 
 	// SHARED
