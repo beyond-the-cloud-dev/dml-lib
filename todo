@@ -236,15 +236,15 @@ toHardDelete(List<SObject> records);
 
 		Account account1 = new Account(Name = 'Account 1');
 		Contact contact1 = new Contact(LastName = 'Contact 1');
-		Opportunity opportunity1 = new Opportunity(Name = 'Opportunity 1');
+		Opportunity opportunity1 = new Opportunity(Name = 'Opportunity 1', StageName = 'Discovery', CloseDate = System.today());
 
 		new DML()
-			.toInsert(account1)
-			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
 			.toInsert(DML.Record(opportunity1)
 				.withRelationship(Opportunity.AccountId, account1)
 				.withRelationship(Opportunity.Contact__c, contact1)
 			)
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+			.toInsert(DML.Record(account1).withRelationship(Account.Contact__c, contact1))
 			.commitWork();
 
 
