@@ -2900,6 +2900,278 @@ private class DML_Test {
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
 	}
 
+	// HARD DELETE
+
+	@IsTest
+	static void toHardDeleteSingleRecordById() {
+		// Setup
+		Account account = insertAccount();
+		
+		// Test
+		Test.startTest();
+			new DML()
+				.toHardDelete(account.Id)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+	}
+
+	@IsTest
+	static void toHardDeleteSingleRecord() {
+		// Setup
+		Account account1 = insertAccount();
+		
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toHardDelete(account1)
+				.commitWork();
+		Test.stopTest();
+		
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Hard deleted operation result should contain the deleted record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Hard deleted operation result should contain the deleted record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Hard deleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Hard deleted operation result should contain delete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Hard deleted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toHardDeleteMultipleRecords() {
+		// Setup
+		Account account1 = getAccount(1);
+		Account account2 = getAccount(2);
+
+		insert new List<Account>{ account1, account2 };
+		
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toHardDelete(account1)
+				.toHardDelete(account2)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+
+		Assert.areEqual(2, operationResult.records().size(), 'Hard deleted operation result should contain the deleted records.');
+		Assert.areEqual(2, operationResult.recordResults().size(), 'Hard deleted operation result should contain the deleted record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Hard deleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Hard deleted operation result should contain delete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Hard deleted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toHardDeleteListOfRecords() {
+		// Setup
+		List<Account> accounts = insertAccounts();
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toHardDelete(accounts)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+	}
+
+	@IsTest
+	static void toHardDeleteMultipleRecordsById() {
+		// Setup
+		List<Account> accounts = insertAccounts();
+
+		// Test
+		Test.startTest();
+			Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
+
+			new DML()
+				.toHardDelete(accountIds)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+	}
+
+	@IsTest
+	static void toHardDeleteMultipleRecordsTypes() {
+		// Setup
+		Account account1 = getAccount(1);
+		Opportunity opportunity1 = getOpportunity(1);
+		Lead lead1 = getLead(1);
+
+		insert new List<SObject>{ account1, opportunity1, lead1 };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toHardDelete(account1)
+				.toHardDelete(opportunity1)
+				.toHardDelete(lead1)
+				.commitWork();
+		Test.stopTest();   
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be hard deleted.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Opportunity should be hard deleted.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Lead should be hard deleted.');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(3, result.deletes().size(), 'Deleted operation result should contain 3 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult accountOperationResult = result.deletesOf(Account.SObjectType);
+
+		Assert.areEqual(1, accountOperationResult.records().size(), 'Hard deleted operation result should contain the deleted record.');
+		Assert.areEqual(1, accountOperationResult.recordResults().size(), 'Hard deleted operation result should contain the deleted record results.');
+		Assert.areEqual(Account.SObjectType, accountOperationResult.objectType(), 'Hard deleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, accountOperationResult.operationType(), 'Hard deleted operation result should contain delete type.');
+		Assert.isFalse(accountOperationResult.hasFailures(), 'Hard deleted operation result should not have failures.');
+
+		DML.OperationResult opportunityOperationResult = result.deletesOf(Opportunity.SObjectType);
+
+		Assert.areEqual(1, opportunityOperationResult.records().size(), 'Hard deleted operation result should contain the deleted record.');
+		Assert.areEqual(1, opportunityOperationResult.recordResults().size(), 'Hard deleted operation result should contain the deleted record results.');
+		Assert.areEqual(Opportunity.SObjectType, opportunityOperationResult.objectType(), 'Hard deleted operation result should contain Opportunity object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, opportunityOperationResult.operationType(), 'Hard deleted operation result should contain delete type.');
+		Assert.isFalse(opportunityOperationResult.hasFailures(), 'Hard deleted operation result should not have failures.');
+
+		DML.OperationResult leadOperationResult = result.deletesOf(Lead.SObjectType);
+
+		Assert.areEqual(1, leadOperationResult.records().size(), 'Hard deleted operation result should contain the deleted record.');
+		Assert.areEqual(1, leadOperationResult.recordResults().size(), 'Hard deleted operation result should contain the deleted record results.');
+		Assert.areEqual(Lead.SObjectType, leadOperationResult.objectType(), 'Hard deleted operation result should contain Lead object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, leadOperationResult.operationType(), 'Hard deleted operation result should contain delete type.');
+		Assert.isFalse(leadOperationResult.hasFailures(), 'Hard deleted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toHardDeleteWithoutExistingIds() {
+		// Setup
+		Account account = getAccount(1);
+		
+		DmlException expectedException = null;
+		
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toHardDelete(account)
+					.commitWork();
+			} catch (DmlException e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+		
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.areEqual('Only existing records can be registered as deleted.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void toHardDeleteWithPartialSuccess() {
+		// Setup
+		List<Account> accounts = new List<Account>{
+			getAccount(1),
+			getAccount(2)
+		};
+
+		insert accounts;
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toHardDelete(accounts)
+				.allowPartialSuccess()
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+	}
+
+	@IsTest
+	static void toHardDeleteWithUserMode() {
+		// Setup
+		Case newCase = getCase(1);
+		insert newCase;
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+		System.runAs(minimumAccessUser()) {
+			try {
+				new DML()
+					.toHardDelete(newCase)
+					.commitWork(); // user mode by default
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void toHardDeleteWithSystemMode() {
+		// Setup
+		Case newCase = getCase(1);
+		insert newCase;
+
+		// Test
+		Test.startTest();
+			System.runAs(minimumAccessUser()) {
+				new DML()
+					.toHardDelete(newCase)
+					.systemMode()
+					.withoutSharing()
+					.commitWork();
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be hard deleted.');
+		// No assertion with ALL ROWS, because there is Salesforce error
+	}
+
     // UNDELETE
 
     @IsTest
