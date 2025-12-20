@@ -796,6 +796,79 @@ private class DML_Test {
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
 	}
 
+	@IsTest
+	static void toInsertWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toInsert(new List<Account>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Inserted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Inserted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Inserted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Inserted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toInsertWithEmptyRecordWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allInserts();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toInsert(new List<Account>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 result.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Inserted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Inserted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Inserted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Inserted operation result should not have failures.');
+	}
+
     // UPDATE
 
     @IsTest
@@ -1516,6 +1589,79 @@ private class DML_Test {
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
 	}
 
+	@IsTest
+	static void toUpdateWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toUpdate(new List<Account>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be updated in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Updated operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Updated operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Updated operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Updated operation result should contain update type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Updated operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toUpdateWithEmptyRecordsWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allUpdates();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toUpdate(new List<Account>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be updated in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Updated operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Updated operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Updated operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Updated operation result should contain update type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Updated operation result should not have failures.');
+	}
+
 	// UPSERT
 
 	@IsTest
@@ -2214,6 +2360,79 @@ private class DML_Test {
 		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Result should contain upsert type.');
 		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toUpsertWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toUpsert(new List<Account>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be upserted in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Upserted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Upserted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Upserted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Upserted operation result should contain upsert type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Upserted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toUpsertWithEmptyRecordsWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allUpserts();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toUpsert(new List<Account>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be upserted in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Upserted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Upserted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Upserted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Upserted operation result should contain upsert type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Upserted operation result should not have failures.');
 	}
 
     // DELETE
@@ -3172,6 +3391,79 @@ private class DML_Test {
 		// No assertion with ALL ROWS, because there is Salesforce error
 	}
 
+	@IsTest
+	static void toDeleteWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toDelete(new List<Account>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be deleted from the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Deleted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Deleted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Deleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Deleted operation result should contain delete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Deleted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toDeleteWithEmptyRecordsWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allDeletes();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toDelete(new List<Account>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be deleted from the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Deleted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Deleted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Deleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Deleted operation result should contain delete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Deleted operation result should not have failures.');
+	}
+
     // UNDELETE
 
     @IsTest
@@ -3857,6 +4149,688 @@ private class DML_Test {
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
 	}
 
+	@IsTest
+	static void toUndeleteWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toUndelete(new List<Account>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be undeleted in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(1, result.undeletes().size(), 'Undeleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Undeleted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Undeleted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Undeleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UNDELETE_DML, operationResult.operationType(), 'Undeleted operation result should contain undelete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Undeleted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toUndeleteWithEmptyRecordsWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allUndeletes();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toUndelete(new List<Account>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be undeleted in the database.');
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(1, result.undeletes().size(), 'Undeleted operation result should contain 1 result.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Undeleted operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Undeleted operation result should contain 0 record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Undeleted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UNDELETE_DML, operationResult.operationType(), 'Undeleted operation result should contain undelete type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Undeleted operation result should not have failures.');
+	}
+
+	// MERGE
+
+	@IsTest
+	static void toMergeSingleDuplicateRecord() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterAccount, duplicateAccount)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+		Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeSingleDuplicateRecordById() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterAccount, duplicateAccount.Id)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+		Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
+
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeMultipleDuplicateRecords() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount1 = getAccount(2);
+		Account duplicateAccount2 = getAccount(3);
+		insert new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
+
+		List<Account> duplicateAccounts = new List<Account>{ duplicateAccount1, duplicateAccount2 };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterAccount, duplicateAccounts)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+		Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
+
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeMultipleDuplicateRecordsById() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount1 = getAccount(2);
+		Account duplicateAccount2 = getAccount(3);
+		insert new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
+
+		Set<Id> duplicateAccountIds = new Set<Id>{ duplicateAccount1.Id, duplicateAccount2.Id };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterAccount, duplicateAccountIds)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+		Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
+
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeWithRelatedRecords() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		Contact contactOnDuplicate = getContact(1);
+		contactOnDuplicate.AccountId = duplicateAccount.Id;
+		insert contactOnDuplicate;
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toMerge(masterAccount, duplicateAccount)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should still exist.');
+
+		Contact reparentedContact = [SELECT Id, AccountId FROM Contact WHERE Id = :contactOnDuplicate.Id];
+		Assert.areEqual(masterAccount.Id, reparentedContact.AccountId, 'Contact should be reparented to master account.');
+	}
+
+	@IsTest
+	static void toMergeWithoutExistingMasterRecord() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert duplicateAccount;
+
+		DmlException expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.commitWork();
+			} catch (DmlException e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.areEqual('Only existing records can be merged.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithoutExistingDuplicateRecord() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert masterAccount;
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithUserMode() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+		System.runAs(minimumAccessUser()) {
+			try {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.commitWork(); // user mode by default
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithSystemMode() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		// Test
+		Test.startTest();
+			System.runAs(minimumAccessUser()) {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.systemMode()
+					.withoutSharing()
+					.commitWork();
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+	}
+
+	@IsTest
+	static void toMergeLeads() {
+		// Setup
+		Lead masterLead = getLead(1);
+		Lead duplicateLead = getLead(2);
+		insert new List<Lead>{ masterLead, duplicateLead };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterLead, duplicateLead)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Only master lead should remain after merge.');
+		Assert.areEqual(masterLead.Id, [SELECT Id FROM Lead LIMIT 1].Id, 'Master lead should survive the merge.');
+
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.mergesOf(Lead.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Lead.SObjectType, operationResult.objectType(), 'Merged operation result should contain Lead object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeContacts() {
+		// Setup
+		Contact masterContact = getContact(1);
+		Contact duplicateContact = getContact(2);
+		insert new List<Contact>{ masterContact, duplicateContact };
+
+		// Test
+		Test.startTest();
+			DML.Result result = new DML()
+				.toMerge(masterContact, duplicateContact)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Only master contact should remain after merge.');
+		Assert.areEqual(masterContact.Id, [SELECT Id FROM Contact LIMIT 1].Id, 'Master contact should survive the merge.');
+
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.mergesOf(Contact.SObjectType);
+
+		Assert.areEqual(1, operationResult.records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(Contact.SObjectType, operationResult.objectType(), 'Merged operation result should contain Contact object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Merged operation result should contain merge type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Merged operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toMergeSingleRecordWithMocking() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').allMerges();
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toMerge(masterAccount, duplicateAccount)
+				.identifier('dmlMockId')
+				.commitWork();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be in the database.');
+		Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
+		Assert.areEqual(Account.SObjectType, result.mergesOf(Account.SObjectType).objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, result.mergesOf(Account.SObjectType).operationType(), 'Merged operation result should contain merge type.');
+		Assert.areEqual(1, result.mergesOf(Account.SObjectType).records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, result.mergesOf(Account.SObjectType).recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.isTrue(result.mergesOf(Account.SObjectType).recordResults()[0].isSuccess(), 'Merged operation result should contain a successful record result.');
+		Assert.isNotNull(result.mergesOf(Account.SObjectType).recordResults()[0].id(), 'Merged operation result should contain a mocked record Id.');
+	}
+
+	@IsTest
+	static void toMergeMultipleRecordTypesWithMocking() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		Lead masterLead = getLead(1);
+		Lead duplicateLead = getLead(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		masterLead.Id = DML.randomIdGenerator.get(Lead.SObjectType);
+		duplicateLead.Id = DML.randomIdGenerator.get(Lead.SObjectType);
+
+		DML.mock('dmlMockId').allMerges();
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toMerge(masterAccount, duplicateAccount)
+				.toMerge(masterLead, duplicateLead)
+				.identifier('dmlMockId')
+				.commitWork();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No Account records should be in the database.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'No Lead records should be in the database.');
+		Assert.areEqual(2, result.merges().size(), 'Merged operation result should contain 2 results.');
+		Assert.areEqual(Account.SObjectType, result.mergesOf(Account.SObjectType).objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(Lead.SObjectType, result.mergesOf(Lead.SObjectType).objectType(), 'Merged operation result should contain Lead object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, result.mergesOf(Account.SObjectType).operationType(), 'Merged operation result should contain merge type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, result.mergesOf(Lead.SObjectType).operationType(), 'Merged operation result should contain merge type.');
+		Assert.areEqual(1, result.mergesOf(Account.SObjectType).records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, result.mergesOf(Account.SObjectType).recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.areEqual(1, result.mergesOf(Lead.SObjectType).records().size(), 'Merged operation result should contain the merged record.');
+		Assert.areEqual(1, result.mergesOf(Lead.SObjectType).recordResults().size(), 'Merged operation result should contain the merged record results.');
+		Assert.isTrue(result.mergesOf(Account.SObjectType).recordResults()[0].isSuccess(), 'Merged operation result should contain a successful record result.');
+		Assert.isTrue(result.mergesOf(Lead.SObjectType).recordResults()[0].isSuccess(), 'Merged operation result should contain a successful record result.');
+	}
+
+	@IsTest
+	static void toMergeWithMockingSpecificSObjectType() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+		insert new List<Account>{ masterAccount, duplicateAccount };
+
+		Lead masterLead = getLead(1);
+		Lead duplicateLead = getLead(2);
+
+		masterLead.Id = DML.randomIdGenerator.get(Lead.SObjectType);
+		duplicateLead.Id = DML.randomIdGenerator.get(Lead.SObjectType);
+
+		DML.mock('dmlMockId').mergesFor(Lead.SObjectType);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toMerge(masterAccount, duplicateAccount)
+				.toMerge(masterLead, duplicateLead)
+				.identifier('dmlMockId')
+				.commitWork();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account merge should not be mocked.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Lead merge should be mocked.');
+		Assert.areEqual(2, result.merges().size(), 'Merged operation result should contain 2 results.');
+		Assert.areEqual(Account.SObjectType, result.mergesOf(Account.SObjectType).objectType(), 'Merged operation result should contain Account object type.');
+		Assert.areEqual(Lead.SObjectType, result.mergesOf(Lead.SObjectType).objectType(), 'Merged operation result should contain Lead object type.');
+	}
+
+	@IsTest
+	static void toMergeWithMockingException() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnMerges();
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithMockingExceptionWhenAllOrNoneIsSet() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnMerges();
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Result should contain merge type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toMergeWithMockingExceptionForSpecificSObjectType() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnMergesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+			try {
+				new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithMockingExceptionForSpecificSObjectTypeWhenAllOrNoneIsSet() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		Account duplicateAccount = getAccount(2);
+
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		duplicateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').exceptionOnMergesFor(Account.SObjectType);
+
+		Exception expectedException = null;
+		DML.Result result = null;
+
+		// Test
+		Test.startTest();
+			try {
+				result = new DML()
+					.toMerge(masterAccount, duplicateAccount)
+					.allowPartialSuccess()
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNull(expectedException, 'Expected exception to not be thrown.');
+
+		DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+		
+		Assert.areEqual(1, operationResult.records().size(), 'Result should contain 1 record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Result should contain 1 record result.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Result should contain merge type.');
+		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
+		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toMergeWithEmptyRecords() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		insert masterAccount;
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+
+			try {
+				new DML()
+					.toMerge(masterAccount, new List<Account>())
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('A single merge request must contain at least 1 records to merge, got none'), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void toMergeWithEmptyRecordsWhenMocking() {
+		// Setup
+		Account masterAccount = getAccount(1);
+		masterAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+		DML.mock('dmlMockId').allMerges();
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+
+			try {
+				new DML()
+					.toMerge(masterAccount, new List<Account>())
+					.identifier('dmlMockId')
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('A single merge request must contain at least 1 records to merge, got none'), 'Expected exception message should be thrown.');
+	}
+
     // PLATFORM EVENT
 
 	@IsTest
@@ -4175,6 +5149,77 @@ private class DML_Test {
 		Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Result should contain publish type.');
 		Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Result should contain a failed record result.');
 		Assert.isTrue(operationResult.hasFailures(), 'Result should have failures.');
+	}
+
+	@IsTest
+	static void toPublishWithEmptyRecords() {
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toPublish(new List<FlowOrchestrationEvent>())
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.eventsOf(FlowOrchestrationEvent.SObjectType);
+
+		Assert.areEqual(0, operationResult.records().size(), 'Published operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Published operation result should contain 0 record results.');
+		Assert.areEqual(FlowOrchestrationEvent.SObjectType, operationResult.objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
+		Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Published operation result should contain publish type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Published operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toPublishWithEmptyRecordsWhenMocking() {
+		// Setup
+		DML.mock('dmlMockId').allPublishes();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			new DML()
+				.toPublish(new List<FlowOrchestrationEvent>())
+				.identifier('dmlMockId')
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
+
+		DML.OperationResult operationResult = result.eventsOf(FlowOrchestrationEvent.SObjectType);
+		
+		Assert.areEqual(0, operationResult.records().size(), 'Published operation result should contain 0 records.');
+		Assert.areEqual(0, operationResult.recordResults().size(), 'Published operation result should contain 0 record results.');
+		Assert.areEqual(FlowOrchestrationEvent.SObjectType, operationResult.objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
+		Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Published operation result should contain publish type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Published operation result should not have failures.');
 	}
 
 	// DEBUG

@@ -164,6 +164,7 @@ global inherited sharing class DML implements Commitable {
 		List<OperationResult> upserts();
 		List<OperationResult> deletes();
 		List<OperationResult> undeletes();
+		List<OperationResult> merges();
 		List<OperationResult> events();
 		// Per Object OperationType
 		OperationResult insertsOf(Schema.SObjectType objectType);
@@ -171,6 +172,7 @@ global inherited sharing class DML implements Commitable {
 		OperationResult upsertsOf(Schema.SObjectType objectType);
 		OperationResult deletesOf(Schema.SObjectType objectType);
 		OperationResult undeletesOf(Schema.SObjectType objectType);
+		OperationResult mergesOf(Schema.SObjectType objectType);
 		OperationResult eventsOf(Schema.SObjectType objectType);
 	}
 
@@ -226,6 +228,7 @@ global inherited sharing class DML implements Commitable {
 		Mockable allUpserts();
 		Mockable allDeletes();
 		Mockable allUndeletes();
+		Mockable allMerges();
 		Mockable allPublishes();
 		// Per Object OperationType
 		Mockable insertsFor(SObjectType objectType);
@@ -233,6 +236,7 @@ global inherited sharing class DML implements Commitable {
 		Mockable upsertsFor(SObjectType objectType);
 		Mockable deletesFor(SObjectType objectType);
 		Mockable undeletesFor(SObjectType objectType);
+		Mockable mergesFor(SObjectType objectType);
 		Mockable publishesFor(SObjectType objectType);
 		// Errors
 		Mockable exceptionOnInserts();
@@ -240,6 +244,7 @@ global inherited sharing class DML implements Commitable {
 		Mockable exceptionOnUpserts();
 		Mockable exceptionOnDeletes();
 		Mockable exceptionOnUndeletes();
+		Mockable exceptionOnMerges();
 		Mockable exceptionOnPublishes();
 		// Per Operation Type Per Object Type
 		Mockable exceptionOnInsertsFor(SObjectType objectType);
@@ -247,6 +252,7 @@ global inherited sharing class DML implements Commitable {
 		Mockable exceptionOnUpsertsFor(SObjectType objectType);
 		Mockable exceptionOnDeletesFor(SObjectType objectType);
 		Mockable exceptionOnUndeletesFor(SObjectType objectType);
+		Mockable exceptionOnMergesFor(SObjectType objectType);
 		Mockable exceptionOnPublishesFor(SObjectType objectType);
 	}
 
@@ -481,19 +487,19 @@ global inherited sharing class DML implements Commitable {
 	// Merge
 
 	public Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
-		return this.registerOperation(new MergeCommand(Record(mergeToRecord), duplicateRecords));
+		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Records(duplicateRecords)));
 	}
 
 	public Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
-		return this.registerOperation(new MergeCommand(Record(mergeToRecord), duplicatedRecord));
+		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Record(duplicatedRecord)));
 	}
 
 	public Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
-		return this.registerOperation(new MergeCommand(Record(mergeToRecord), duplicatedRecordId));
+		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Record(duplicatedRecordId)));
 	}
 
 	public Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
-		return this.registerOperation(new MergeCommand(Record(mergeToRecord), duplicatedRecordIds));
+		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Records(duplicatedRecordIds)));
 	}
 
 	// Platform Event
@@ -660,16 +666,6 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class Orchestrator {
-		private final List<OperationType> EXECUTION_ORDER = new List<OperationType> {
-			OperationType.INSERT_DML,
-			OperationType.UPSERT_DML,
-			OperationType.UPDATE_DML,
-			OperationType.MERGE_DML,
-			OperationType.DELETE_DML,
-			OperationType.UNDELETE_DML,
-			OperationType.PUBLISH_DML
-		};
-
 		private Map<String, DmlCommand> commandsByHashCode = new Map<String, DmlCommand>();
 		private Map<OperationType, List<DmlCommand>> commandsByOperationType = new Map<OperationType, List<DmlCommand>>();
 		private Map<OperationType, OrderDependencyGraph> dependencyGraphsByOperationType = new Map<OperationType, OrderDependencyGraph>();
@@ -679,7 +675,7 @@ global inherited sharing class DML implements Commitable {
 		private Orchestrator(Configuration configuration) {
 			this.configuration = configuration;
 
-			for (OperationType operationType : this.EXECUTION_ORDER) {
+			for (OperationType operationType : OperationType.values()) {
 				this.commandsByOperationType.put(operationType, new List<DmlCommand>());
 				this.dependencyGraphsByOperationType.put(operationType, new OrderDependencyGraph());
 			}
@@ -702,11 +698,11 @@ global inherited sharing class DML implements Commitable {
 				return;
 			}
 
-			existingCommand.mergeWith(command);
+			existingCommand.combine(command);
 		}
 
 		private void preview() {
-			for (OperationType operationType : this.EXECUTION_ORDER) {
+			for (OperationType operationType : OperationType.values()) {
 				for (DmlCommand command : this.getSortedCommands(operationType)) {
 					command.preview();
 				}
@@ -716,7 +712,7 @@ global inherited sharing class DML implements Commitable {
 		private DmlResult execute() {
 			DmlResult result = new DmlResult();
 
-			for (OperationType operationType : this.EXECUTION_ORDER) {
+			for (OperationType operationType : OperationType.values()) {
 				for (DmlCommand command : this.getSortedCommands(operationType)) {
 					result.add(operationType, command.commitWork());
 				}
@@ -775,6 +771,10 @@ global inherited sharing class DML implements Commitable {
 			return this.getOperationResults(OperationType.UNDELETE_DML);
 		}
 
+		public List<OperationResult> merges() {
+			return this.getOperationResults(OperationType.MERGE_DML);
+		}
+
 		public List<OperationResult> events() {
 			return this.getOperationResults(OperationType.PUBLISH_DML);
 		}
@@ -797,6 +797,10 @@ global inherited sharing class DML implements Commitable {
 
 		public OperationResult undeletesOf(SObjectType objectType) {
 			return this.getOperationResult(OperationType.UNDELETE_DML, objectType);
+		}
+
+		public OperationResult mergesOf(SObjectType objectType) {
+			return this.getOperationResult(OperationType.MERGE_DML, objectType);
 		}
 
 		public OperationResult eventsOf(SObjectType objectType) {
@@ -998,7 +1002,7 @@ global inherited sharing class DML implements Commitable {
 			return recordsToProcess;
 		}
 
-		private virtual void mergeWith(DmlCommand command) {
+		private virtual void combine(DmlCommand command) {
 			// TODO: Avoid duplicate records based on Id when specified 
 			this.enhancedRecords.addAll(command.enhancedRecords);
 			this.recalculate();
@@ -1129,35 +1133,22 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class MergeCommand extends DmlCommand {
-		private SObject mergeToRecord;
 		private List<SObject> duplicateRecords = new List<SObject>();
 
-		public MergeCommand(Record mergeToRecord, SObject duplicateRecord) {
+		public MergeCommand(Record mergeToRecord, Record duplicateRecord) {
 			super(mergeToRecord);
-			this.duplicateRecords.add(duplicateRecord);
+			this.duplicateRecords.add(duplicateRecord.get().getRecord());
 		}
 
-		public MergeCommand(Record mergeToRecord, List<SObject> duplicateRecords) {
+		public MergeCommand(Record mergeToRecord, Records duplicateRecords) {
 			super(mergeToRecord);
-			this.duplicateRecords.addAll(duplicateRecords);
-		}
-
-		public MergeCommand(Record mergeToRecord, Id duplicateRecordId) {
-			this(mergeToRecord, mergeToRecord.get().getSObjectType().newSObject(duplicateRecordId));
-		}
-
-		public MergeCommand(Record mergeToRecord, Iterable<Id> duplicateRecordIds) {
-			super(mergeToRecord);
-
-			SObjectType objectType = mergeToRecord.get().getSObjectType();
-
-			for (Id duplicateRecordId : duplicateRecordIds) {
-				this.duplicateRecords.add(objectType.newSObject(duplicateRecordId));
+			for (Record duplicateRecord : duplicateRecords.get()) {
+				this.duplicateRecords.add(duplicateRecord.get().getRecord());
 			}
 		}
 
 		protected override String hashCode() {
-			return super.hashCode() + '_' + this.mergeToRecord.Id;
+			return super.hashCode() + '_' + this.enhancedRecords[0].getRecordId();
 		}
 
 		protected override OperationType getOperationType() {
@@ -1169,16 +1160,19 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (String.isBlank(enhancedRecord.getRecordId())) {
+			if (enhancedRecord.getRecordId() == null) {
 				throw new DmlException('Only existing records can be merged.');
 			}
 		}
 
 		protected override List<Object> executeDml(List<SObject> recordsToProcess) {
-			return Database.merge(this.mergeToRecord, recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
+			return Database.merge(recordsToProcess[0], this.duplicateRecords, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 		}
 
 		protected override RecordSummary executeMockedDml(SObject record) {
+			if (this.duplicateRecords.isEmpty()) {
+				throw new DmlException('A single merge request must contain at least 1 records to merge, got none');
+			}
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
 	}
@@ -1579,6 +1573,10 @@ global inherited sharing class DML implements Commitable {
 			return this.thenMockDml(OperationType.UNDELETE_DML);
 		}
 
+		public Mockable allMerges() {
+			return this.thenMockDml(OperationType.MERGE_DML);
+		}
+
 		public Mockable allPublishes() {
 			return this.thenMockDml(OperationType.PUBLISH_DML);
 		}
@@ -1606,6 +1604,10 @@ global inherited sharing class DML implements Commitable {
 
 		public Mockable undeletesFor(SObjectType objectType) {
 			return this.thenMockDmlFor(OperationType.UNDELETE_DML, objectType);
+		}
+
+		public Mockable mergesFor(SObjectType objectType) {
+			return this.thenMockDmlFor(OperationType.MERGE_DML, objectType);
 		}
 
 		public Mockable publishesFor(SObjectType objectType) {
@@ -1640,6 +1642,10 @@ global inherited sharing class DML implements Commitable {
 			return this.thenExceptionOn(OperationType.UNDELETE_DML);
 		}
 
+		public Mockable exceptionOnMerges() {
+			return this.thenExceptionOn(OperationType.MERGE_DML);
+		}
+
 		public Mockable exceptionOnPublishes() {
 			return this.thenExceptionOn(OperationType.PUBLISH_DML);
 		}
@@ -1667,6 +1673,10 @@ global inherited sharing class DML implements Commitable {
 
 		public Mockable exceptionOnUndeletesFor(SObjectType objectType) {
 			return this.thenExceptionOnFor(OperationType.UNDELETE_DML, objectType);
+		}
+
+		public Mockable exceptionOnMergesFor(SObjectType objectType) {
+			return this.thenExceptionOnFor(OperationType.MERGE_DML, objectType);
 		}
 
 		public Mockable exceptionOnPublishesFor(SObjectType objectType) {
