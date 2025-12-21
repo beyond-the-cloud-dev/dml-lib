@@ -132,7 +132,7 @@ global inherited sharing class DML implements Commitable {
 		Commitable options(Database.DmlOptions options);
 		Commitable discardWork();
 		Commitable commitHook(DML.Hook callback);
-		Commitable onDuplicateCombine();
+		Commitable combineOnDuplicate();
 		// Save
 		Result dryRun();
 		Result commitWork();
@@ -585,8 +585,8 @@ global inherited sharing class DML implements Commitable {
 		return this;
 	}
 
-	public Commitable onDuplicateCombine() {
-		this.configuration.onDuplicateCombine();
+	public Commitable combineOnDuplicate() {
+		this.configuration.combineOnDuplicate();
 		return this;
 	}
 
@@ -872,7 +872,7 @@ global inherited sharing class DML implements Commitable {
 			this.options.optAllOrNone = false;
 		}
 
-		public void onDuplicateCombine() {
+		public void combineOnDuplicate() {
 			this.duplicateCombineStrategy = new MergeDuplicateStrategy();
 		}
 
@@ -1395,7 +1395,7 @@ global inherited sharing class DML implements Commitable {
 		public void combine(DmlCommand mergeToCommand, DmlCommand duplicateCommand) {
 			for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
 				if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
-					throw new DmlException('Duplicate records found during registration. Fix the code or use the onDuplicateCombine() method.');
+					throw new DmlException('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.');
 				}
 			}
 

@@ -937,7 +937,7 @@ private class DML_Test {
 		
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Duplicate records found during registration. Fix the code or use the onDuplicateCombine() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -953,7 +953,7 @@ private class DML_Test {
 
 			DML db = new DML();
 			
-			db.onDuplicateCombine();
+			db.combineOnDuplicate();
 	
 			db.toUpdate(account1);
 	

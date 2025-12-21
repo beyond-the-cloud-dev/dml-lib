@@ -30,8 +30,10 @@ Register records for upsert. The actual DML is executed when `commitWork()` is c
 
 ```apex
 Commitable toUpsert(SObject record);
+Commitable toUpsert(SObject record, SObjectField externalIdField);
 Commitable toUpsert(DML.Record record);
-Commitable toUpsert(Iterable<SObject> records);
+Commitable toUpsert(List<SObject> records);
+Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
 Commitable toUpsert(DML.Records records);
 ```
 
@@ -121,6 +123,39 @@ Contact contact = new Contact(LastName = 'Doe');
 
 new DML()
     .toUpsert(DML.Record(contact).with(Contact.Email, 'john@example.com'))
+    .commitWork();
+```
+
+#### With External Id Field
+
+Upsert using a custom external ID field instead of the standard Id field.
+
+**Signature**
+
+```apex
+Commitable toUpsert(SObject record, SObjectField externalIdField);
+```
+
+**Standard DML**
+
+```apex
+Account account = new Account(
+    MyExternalId__c = 'EXT-001',
+    Name = 'Acme Corp'
+);
+Database.upsert(account, Account.MyExternalId__c);
+```
+
+**DML Lib**
+
+```apex
+Account account = new Account(
+    MyExternalId__c = 'EXT-001',
+    Name = 'Acme Corp'
+);
+
+new DML()
+    .toUpsert(account, Account.MyExternalId__c)
     .commitWork();
 ```
 
@@ -231,6 +266,39 @@ List<Contact> contacts = new List<Contact>{
 
 new DML()
     .toUpsert(DML.Records(contacts).with(Contact.LeadSource, 'Web'))
+    .commitWork();
+```
+
+#### With External Id Field
+
+Upsert multiple records using a custom external ID field instead of the standard Id field.
+
+**Signature**
+
+```apex
+Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
+```
+
+**Standard DML**
+
+```apex
+List<Account> accounts = new List<Account>{
+    new Account(MyExternalId__c = 'EXT-001', Name = 'Acme Corp'),
+    new Account(MyExternalId__c = 'EXT-002', Name = 'Global Inc')
+};
+Database.upsert(accounts, Account.MyExternalId__c);
+```
+
+**DML Lib**
+
+```apex
+List<Account> accounts = new List<Account>{
+    new Account(MyExternalId__c = 'EXT-001', Name = 'Acme Corp'),
+    new Account(MyExternalId__c = 'EXT-002', Name = 'Global Inc')
+};
+
+new DML()
+    .toUpsert(accounts, Account.MyExternalId__c)
     .commitWork();
 ```
 
