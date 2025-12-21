@@ -5,7 +5,7 @@
  * v2.0.0
  *
  * PMD False Positives:
- * - MethodNamingConventions - Some methods are uppercase to indicate that they are "constructors" of othere internal classes
+ * - MethodNamingConventions - Some methods are uppercase to indicate that they are "constructors" of other internal classes
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
  * - CognitiveComplexity: It is a library and we tried to put everything into ONE class
  * - ExcessivePublicCount: It is a library and we tried to put everything into ONE class
@@ -731,7 +731,7 @@ global inherited sharing class DML implements Commitable {
 
 		private List<DmlCommand> getSortedCommands(OperationType operationType) {
 			List<DmlCommand> operationCommands = this.commandsByOperationType.get(operationType);
-			operationCommands.sort(new DmlCommandComperator(this.getSObjectTypesExecutionOrder(operationType)));
+			operationCommands.sort(new DmlCommandComparator(this.getSObjectTypesExecutionOrder(operationType)));
 
 			return operationCommands;
 		}
@@ -841,7 +841,6 @@ global inherited sharing class DML implements Commitable {
 		private DmlSharing sharingExecutor = new InheritedSharing();
 		private DuplicateCombineStrategy duplicateCombineStrategy = new ThrownExceptionDuplicateStrategy();
 		private Boolean allOrNone = true;
-		private Boolean mergeOnDuplicate = false;
 		private String dmlIdentifier = null;
 
 		public Configuration() {
@@ -899,18 +898,15 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private class DmlCommandComperator implements System.Comparator<DmlCommand> {		
+	private class DmlCommandComparator implements System.Comparator<DmlCommand> {		
 		private List<SObjectType> sobjectExecutionOrder;
 
-		public DmlCommandComperator(List<SObjectType> sobjectExecutionOrder) {
+		public DmlCommandComparator(List<SObjectType> sobjectExecutionOrder) {
 			this.sobjectExecutionOrder = sobjectExecutionOrder;
 		}
 	
 		public Integer compare(DmlCommand a, DmlCommand b) {
-			SObjectType aObjectType = a.getObjectType();
-			SObjectType bObjectType = b.getObjectType();
-
-			return this.sobjectExecutionOrder.indexOf(aObjectType) - this.sobjectExecutionOrder.indexOf(bObjectType);
+			return this.sobjectExecutionOrder.indexOf(a.getObjectType()) - this.sobjectExecutionOrder.indexOf(b.getObjectType());
 		}
 	}
 
@@ -1050,7 +1046,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (String.isNotBlank(enhancedRecord.getRecordId())) {
+			if (enhancedRecord.hasId()) {
 				throw new DmlException('Only new records can be registered as new.');
 			}
 		}
@@ -1067,6 +1063,7 @@ global inherited sharing class DML implements Commitable {
 
 	private inherited sharing class UpsertCommand extends DmlCommand {
 		private SObjectField externalIdField;
+		
 		public UpsertCommand(Record record) {
 			super(record);
 		}
@@ -1081,7 +1078,8 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override String hashCode() {
-			return super.hashCode() + '_' + this.externalIdField ?? 'Id';
+			String externalId = this.externalIdField == null ? 'Id' : this.externalIdField.toString();
+			return super.hashCode() + '_' + externalId;
 		}
 
 		protected override OperationType getOperationType() {
@@ -1126,7 +1124,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (String.isBlank(enhancedRecord.getRecordId())) {
+			if (!enhancedRecord.hasId()) {
 				throw new DmlException('Only existing records can be updated.');
 			}
 		}
@@ -1145,11 +1143,13 @@ global inherited sharing class DML implements Commitable {
 
 		public MergeCommand(Record mergeToRecord, Record duplicateRecord) {
 			super(mergeToRecord);
+
 			this.duplicateRecords.add(duplicateRecord.get().getRecord());
 		}
 
 		public MergeCommand(Record mergeToRecord, Records duplicateRecords) {
 			super(mergeToRecord);
+
 			for (Record duplicateRecord : duplicateRecords.get()) {
 				this.duplicateRecords.add(duplicateRecord.get().getRecord());
 			}
@@ -1168,7 +1168,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (enhancedRecord.getRecordId() == null) {
+			if (!enhancedRecord.hasId()) {
 				throw new DmlException('Only existing records can be merged.');
 			}
 		}
@@ -1179,7 +1179,7 @@ global inherited sharing class DML implements Commitable {
 
 		protected override RecordSummary executeMockedDml(SObject record) {
 			if (this.duplicateRecords.isEmpty()) {
-				throw new DmlException('A single merge request must contain at least 1 records to merge, got none');
+				throw new DmlException('A single merge request must contain at least one record to merge, got none.');
 			}
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
@@ -1214,7 +1214,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (String.isBlank(enhancedRecord.getRecordId())) {
+			if (!enhancedRecord.hasId()) {
 				throw new DmlException('Only existing records can be registered as deleted.');
 			}
 		}
@@ -1252,7 +1252,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (String.isBlank(enhancedRecord.getRecordId())) {
+			if (!enhancedRecord.hasId()) {
 				throw new DmlException('Only deleted records can be undeleted.');
 			}
 		}
@@ -1395,7 +1395,7 @@ global inherited sharing class DML implements Commitable {
 		public void combine(DmlCommand mergeToCommand, DmlCommand duplicateCommand) {
 			for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
 				if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
-					throw new DmlException('Duplicate records found during registration. Fix the code or use the mergeOnDuplicate() method.');
+					throw new DmlException('Duplicate records found during registration. Fix the code or use the onDuplicateCombine() method.');
 				}
 			}
 
@@ -1753,16 +1753,17 @@ global inherited sharing class DML implements Commitable {
 
 		private List<RecordResult> getMockedRecordErrors(DmlCommand command, List<SObject> recordsToProcess) {
 			List<RecordResult> recordResults = new List<RecordResult>();
+			String errorMessage = 'Exception thrown for ' + command.getOperationType() + ' operation.';
 
 			for (SObject record : recordsToProcess) {
-				RecordProcessingError error = new RecordProcessingError()
-					.setMessage('Exception thrown for ' + command.getOperationType() + ' operation.')
-					.setStatusCode(System.StatusCode.ALREADY_IN_PROCESS)
-					.setFields(new List<String> { 'Id' });
-
 				RecordSummary recordSummary = new RecordSummary()
 					.isSuccess(false)
-					.error(error);
+					.error(
+						new RecordProcessingError()
+							.setMessage(errorMessage)
+							.setStatusCode(System.StatusCode.ALREADY_IN_PROCESS)
+							.setFields(new List<String> { 'Id' })
+					);
 
 				recordResults.add(recordSummary);
 			}
@@ -1797,10 +1798,8 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private DmlRecords(Iterable<Id> recordIds) {
-			SObjectType objectType = recordIds.iterator().next()?.getSObjectType();
-
 			for (Id recordId : recordIds) {
-				this.recordsToProcess.add(objectType.newSObject(recordId));
+				this.recordsToProcess.add(recordId.getSObjectType().newSObject(recordId));
 			}       
 		}
 
@@ -1937,19 +1936,19 @@ global inherited sharing class DML implements Commitable {
 			return this.currentRecord?.getSObjectType();
 		}
 
-		private Boolean doesRecordHaveIdSpecified() {
-			return String.isNotBlank(this.getRecordId());
-		}
-
 		private SObject getRecord() {
 			return this.currentRecord;
+		}
+
+		private Boolean hasId() {
+			return this.currentRecord?.Id != null;
 		}
 
 		private Id getRecordId() {
 			return this.currentRecord?.Id;
 		}
 
-		private Boolean equals(Object other) {
+		public Boolean equals(Object other) {
 			if (this.getRecordId() == null) {
 				return false;
 			}
@@ -2014,10 +2013,8 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private void validateExternalIdField(SObjectField relationshipField, SObjectField externalIdField) {
-			Boolean externalIdFieldIsValid = externalIdField.getDescribe().isExternalId();
-	
-			if (!externalIdFieldIsValid) {
-				throw new DmlException('Invalid argument: externalIdField. Field supplied is not a marked as an External Identifier.');
+			if (!externalIdField.getDescribe().isExternalId()) {
+				throw new DmlException('Invalid argument: externalIdField. Field supplied is not marked as an External Identifier.');
 			}
 	
 			SObjectType relatedObjectType = relationshipField.getDescribe().getReferenceTo()[0];

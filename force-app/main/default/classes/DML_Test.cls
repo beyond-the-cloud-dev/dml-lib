@@ -8,7 +8,7 @@
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
  * - CognitiveComplexity: It is a library and we tried to put everything into ONE class
  * - ApexUnitTestClassShouldHaveRunAs: System.runAs is used to test fls and sharing modes
- * - NcssMethodCount: Some methods are longer becasue of amount of assertions
+ * - NcssMethodCount: Some methods are longer because of amount of assertions
  * - NcssTypeCount: It is a library and we tried to put everything into ONE class
 **/
 @SuppressWarnings('PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ApexUnitTestClassShouldHaveRunAs,PMD.NcssMethodCount,PMD.NcssTypeCount')
@@ -163,7 +163,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Invalid argument: externalIdField. Field supplied is not a marked as an External Identifier.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Invalid argument: externalIdField. Field supplied is not marked as an External Identifier.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -333,7 +333,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Invalid argument: externalIdField. Field supplied is not a marked as an External Identifier.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Invalid argument: externalIdField. Field supplied is not marked as an External Identifier.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -937,7 +937,7 @@ private class DML_Test {
 		
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Duplicate records found during registration. Fix the code or use the mergeOnDuplicate() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+		Assert.areEqual('Duplicate records found during registration. Fix the code or use the onDuplicateCombine() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
 	@IsTest
@@ -979,6 +979,34 @@ private class DML_Test {
 		Assert.areEqual('Updated Test Account 2', account1.Name, 'Account should be updated.');
 		Assert.areEqual('https://www.updatedtestaccount.com', account1.Website, 'Account should be updated.');
 		Assert.areEqual('Updated Test Description', account1.Description, 'Account should be updated.');
+	}
+
+	@IsTest
+	static void toUpdateWithEmptyRecordIds() {
+		// Setup
+		List<Id> recordIds = new List<Id>();
+
+		// Test
+		Test.startTest();
+			Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+			DML.Result result = new DML()
+				.toUpdate(DML.Records(recordIds))
+				.commitWork();
+
+			Integer dmlStatementsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+		
+		// Verify
+		Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+
+		Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
 	}
 
     @IsTest
@@ -4854,30 +4882,6 @@ private class DML_Test {
 	}
 
 	@IsTest
-	static void toMergeWithEmptyRecords() {
-		// Setup
-		Account masterAccount = getAccount(1);
-		insert masterAccount;
-
-		// Test
-		Test.startTest();
-			Exception expectedException = null;
-
-			try {
-				new DML()
-					.toMerge(masterAccount, new List<Account>())
-					.commitWork();
-			} catch (Exception e) {
-				expectedException = e;
-			}
-		Test.stopTest();
-
-		// Verify
-		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.isTrue(expectedException.getMessage().contains('A single merge request must contain at least 1 records to merge, got none'), 'Expected exception message should be thrown.');
-	}
-
-	@IsTest
 	static void toMergeWithEmptyRecordsWhenMocking() {
 		// Setup
 		Account masterAccount = getAccount(1);
@@ -4901,7 +4905,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.isTrue(expectedException.getMessage().contains('A single merge request must contain at least 1 records to merge, got none'), 'Expected exception message should be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('A single merge request must contain at least one record to merge, got none'), 'Expected exception message should be thrown.');
 	}
 
     // PLATFORM EVENT
