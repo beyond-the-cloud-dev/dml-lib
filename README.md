@@ -19,7 +19,7 @@
 
 The DML Lib provides functional constructs for DML statements in Apex.
 
-DML Lib is part of [Apex Fluently](https://apexfluently.beyondthecloud.dev/), a suite of production-ready Salesforce libraries by Beyond the Cloud.
+DML Lib is part of [Apex Fluently](https://apexfluently.beyondthecloud.dev/), a suite of production-ready Salesforce libraries by [Beyond the Cloud](https://blog.beyondthecloud.dev/blog).
 
 For more details, please refer to the [documentation](https://dml.beyondthecloud.dev).
 
