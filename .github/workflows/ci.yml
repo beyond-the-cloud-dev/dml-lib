@@ -12,6 +12,7 @@ jobs:
     uses: beyond-the-cloud-dev/cicd-template/.github/workflows/salesforce-ci.yml@main
     with:
       node-version: '20'
+      sf-cli-version: 'latest'
       scratch-org-duration: 1
       test-level: 'RunLocalTests'
       upload-to-codecov: true
