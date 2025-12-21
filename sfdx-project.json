@@ -7,10 +7,6 @@
       "default": true,
       "package": "DML Lib",
       "versionDescription": ""
-    },
-    {
-      "path": "drafts",
-      "default": false
     }
   ],
   "name": "dml-lib",
