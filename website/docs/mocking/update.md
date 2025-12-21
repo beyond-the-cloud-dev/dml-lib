@@ -187,10 +187,113 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('AccountService.archiveAccount');
-    DML.OperationResult opResult = result.updatesOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
 
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.UPDATE_DML, opResult.operationType(), 'Should be UPDATE operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Should be UPDATE operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
+}
+```
+
+## Exception
+
+Simulate DML exceptions for update operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnUpdates
+
+Throw an exception for all update operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUpdates();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnUpdate() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUpdates();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUpdate(new Account(Id = accountId, Name = 'Updated Name'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Update failed'));
+    }
+}
+```
+
+### exceptionOnUpdatesFor
+
+Throw an exception only for update operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUpdatesFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForAccountUpdates() {
+    // Setup - Exception only for Account updates
+    DML.mock('myDmlId').exceptionOnUpdatesFor(Account.SObjectType);
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUpdate(new Account(Id = accountId, Name = 'Updated Name'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Update failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUpdates();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toUpdate(new Account(Id = accountId, Name = 'Updated Name'))
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```

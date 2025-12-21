@@ -210,18 +210,143 @@ static void shouldAccessMergeResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('MergeService.mergeAccounts');
-    DML.OperationResult opResult = result.mergesOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
 
     // Check operation metadata
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.MERGE_DML, opResult.operationType(), 'Should be MERGE operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.MERGE_DML, operationResult.operationType(), 'Should be MERGE operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
 
     // Check record results
-    List<DML.RecordResult> recordResults = opResult.recordResults();
+    List<DML.RecordResult> recordResults = operationResult.recordResults();
     Assert.areEqual(1, recordResults.size(), 'Should have 1 record result');
     Assert.isTrue(recordResults[0].isSuccess(), 'Record should be successful');
     Assert.isNotNull(recordResults[0].id(), 'Record should have mocked ID');
 }
 ```
 
+## Exception
+
+Simulate DML exceptions for merge operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnMerges
+
+Throw an exception for all merge operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnMerges();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnMerge() {
+    // Setup
+    Account master = new Account(
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
+        Name = 'Master'
+    );
+    Account duplicate = new Account(
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
+        Name = 'Duplicate'
+    );
+
+    DML.mock('myDmlId').exceptionOnMerges();
+
+    // Test & Verify
+    try {
+        new DML()
+            .toMerge(master, duplicate)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Merge failed'));
+    }
+}
+```
+
+### exceptionOnMergesFor
+
+Throw an exception only for merge operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnMergesFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForLeadMerges() {
+    // Setup - Exception only for Lead merges
+    Lead masterLead = new Lead(
+        Id = DML.randomIdGenerator.get(Lead.SObjectType),
+        LastName = 'Master',
+        Company = 'Test'
+    );
+    Lead dupLead = new Lead(
+        Id = DML.randomIdGenerator.get(Lead.SObjectType),
+        LastName = 'Duplicate',
+        Company = 'Test'
+    );
+
+    DML.mock('myDmlId').exceptionOnMergesFor(Lead.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toMerge(masterLead, dupLead)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Merge failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    Account master = new Account(
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
+        Name = 'Master'
+    );
+    Account duplicate = new Account(
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
+        Name = 'Duplicate'
+    );
+
+    DML.mock('myDmlId').exceptionOnMerges();
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toMerge(master, duplicate)
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.mergesOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
+}
+```

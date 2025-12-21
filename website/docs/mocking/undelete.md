@@ -183,10 +183,115 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('AccountService.restoreAccount');
-    DML.OperationResult opResult = result.undeletesOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
 
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.UNDELETE_DML, opResult.operationType(), 'Should be UNDELETE operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.UNDELETE_DML, operationResult.operationType(), 'Should be UNDELETE operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
+}
+```
+
+## Exception
+
+Simulate DML exceptions for undelete operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnUndeletes
+
+Throw an exception for all undelete operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUndeletes();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnUndelete() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUndeletes();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUndelete(accountId)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Undelete failed'));
+    }
+}
+```
+
+### exceptionOnUndeletesFor
+
+Throw an exception only for undelete operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUndeletesFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForAccountUndeletes() {
+    // Setup - Exception only for Account undeletes
+    DML.mock('myDmlId').exceptionOnUndeletesFor(Account.SObjectType);
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+    Id contactId = DML.randomIdGenerator.get(Contact.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUndelete(accountId)
+            .toUndelete(contactId)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Undelete failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUndeletes();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toUndelete(accountId)
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.undeletesOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```

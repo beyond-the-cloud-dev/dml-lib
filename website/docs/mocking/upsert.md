@@ -193,10 +193,108 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('AccountService.upsertAccount');
-    DML.OperationResult opResult = result.upsertsOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
 
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.UPSERT_DML, opResult.operationType(), 'Should be UPSERT operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Should be UPSERT operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
+}
+```
+
+## Exception
+
+Simulate DML exceptions for upsert operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnUpserts
+
+Throw an exception for all upsert operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUpserts();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnUpsert() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUpserts();
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUpsert(new Account(Name = 'Test Account'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Upsert failed'));
+    }
+}
+```
+
+### exceptionOnUpsertsFor
+
+Throw an exception only for upsert operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnUpsertsFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForContactUpserts() {
+    // Setup - Exception only for Contact upserts
+    DML.mock('myDmlId').exceptionOnUpsertsFor(Contact.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toUpsert(new Account(Name = 'Test Account'))
+            .toUpsert(new Contact(LastName = 'Doe'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Upsert failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnUpserts();
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toUpsert(new Account(Name = 'Test Account'))
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.upsertsOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```

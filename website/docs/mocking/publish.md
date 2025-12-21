@@ -186,9 +186,107 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('NotificationService.sendAlert');
-    DML.OperationResult opResult = result.eventsOf(AlertEvent__e.SObjectType);
+    DML.OperationResult operationResult = result.eventsOf(AlertEvent__e.SObjectType);
 
-    Assert.areEqual(AlertEvent__e.SObjectType, opResult.objectType(), 'Should be AlertEvent__e type');
-    Assert.areEqual(DML.OperationType.PUBLISH_DML, opResult.operationType(), 'Should be PUBLISH operation');
+    Assert.areEqual(AlertEvent__e.SObjectType, operationResult.objectType(), 'Should be AlertEvent__e type');
+    Assert.areEqual(DML.OperationType.PUBLISH_DML, operationResult.operationType(), 'Should be PUBLISH operation');
+}
+```
+
+## Exception
+
+Simulate exceptions for publish operations without actually publishing events.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnPublishes
+
+Throw an exception for all publish operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnPublishes();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnPublish() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnPublishes();
+
+    // Test & Verify
+    try {
+        new DML()
+            .toPublish(new MyEvent__e(Message__c = 'Test'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Publish failed'));
+    }
+}
+```
+
+### exceptionOnPublishesFor
+
+Throw an exception only for publish operations on a specific event type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnPublishesFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForOrderEvents() {
+    // Setup - Exception only for OrderEvent__e publishes
+    DML.mock('myDmlId').exceptionOnPublishesFor(OrderEvent__e.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toPublish(new OrderEvent__e(OrderId__c = '12345'))
+            .toPublish(new ShipmentEvent__e(TrackingNumber__c = 'ABC'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Publish failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnPublishes();
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toPublish(new MyEvent__e(Message__c = 'Test'))
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.eventsOf(MyEvent__e.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```

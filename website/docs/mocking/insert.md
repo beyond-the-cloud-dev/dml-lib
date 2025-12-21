@@ -195,17 +195,115 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('AccountService.createAccount');
-    DML.OperationResult opResult = result.insertsOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
 
     // Check operation metadata
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.INSERT_DML, opResult.operationType(), 'Should be INSERT operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Should be INSERT operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
 
     // Check record results
-    List<DML.RecordResult> recordResults = opResult.recordResults();
+    List<DML.RecordResult> recordResults = operationResult.recordResults();
     Assert.areEqual(1, recordResults.size(), 'Should have 1 record result');
     Assert.isTrue(recordResults[0].isSuccess(), 'Record should be successful');
     Assert.isNotNull(recordResults[0].id(), 'Record should have mocked ID');
+}
+```
+
+## Exception
+
+Simulate DML exceptions for insert operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnInserts
+
+Throw an exception for all insert operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnInserts();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnInsert() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnInserts();
+
+    // Test & Verify
+    try {
+        new DML()
+            .toInsert(new Account(Name = 'Test Account'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Insert failed'));
+    }
+}
+```
+
+### exceptionOnInsertsFor
+
+Throw an exception only for insert operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnInsertsFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForAccountInserts() {
+    // Setup - Exception only for Account inserts
+    DML.mock('myDmlId').exceptionOnInsertsFor(Account.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toInsert(new Account(Name = 'Test Account'))
+            .toInsert(new Contact(LastName = 'Doe'))
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Insert failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnInserts();
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toInsert(new Account(Name = 'Test Account'))
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```

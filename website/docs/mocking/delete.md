@@ -183,10 +183,115 @@ static void shouldAccessRecordResults() {
 
     // Verify
     DML.Result result = DML.retrieveResultFor('AccountService.deleteAccount');
-    DML.OperationResult opResult = result.deletesOf(Account.SObjectType);
+    DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
 
-    Assert.areEqual(Account.SObjectType, opResult.objectType(), 'Should be Account type');
-    Assert.areEqual(DML.OperationType.DELETE_DML, opResult.operationType(), 'Should be DELETE operation');
-    Assert.isFalse(opResult.hasFailures(), 'Should have no failures');
+    Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Should be Account type');
+    Assert.areEqual(DML.OperationType.DELETE_DML, operationResult.operationType(), 'Should be DELETE operation');
+    Assert.isFalse(operationResult.hasFailures(), 'Should have no failures');
+}
+```
+
+## Exception
+
+Simulate DML exceptions for delete operations without touching the database.
+
+::: tip allowPartialSuccess
+When `allowPartialSuccess()` is used, exceptions are **not thrown**. Instead, failures are recorded in the `Result` object. Use `hasFailures()` and `recordResults()` to check for errors.
+:::
+
+### exceptionOnDeletes
+
+Throw an exception for all delete operations.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnDeletes();
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnDelete() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnDeletes();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toDelete(accountId)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Delete failed'));
+    }
+}
+```
+
+### exceptionOnDeletesFor
+
+Throw an exception only for delete operations on a specific SObject type.
+
+**Signature**
+
+```apex
+DML.mock(String identifier).exceptionOnDeletesFor(SObjectType objectType);
+```
+
+**Test**
+
+```apex
+@IsTest
+static void shouldThrowExceptionOnlyForAccountDeletes() {
+    // Setup - Exception only for Account deletes
+    DML.mock('myDmlId').exceptionOnDeletesFor(Account.SObjectType);
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+    Id contactId = DML.randomIdGenerator.get(Contact.SObjectType);
+
+    // Test & Verify
+    try {
+        new DML()
+            .toDelete(accountId)
+            .toDelete(contactId)
+            .identifier('myDmlId')
+            .commitWork();
+        Assert.fail('Expected exception');
+    } catch (DmlException e) {
+        Assert.isTrue(e.getMessage().contains('Delete failed'));
+    }
+}
+```
+
+### allowPartialSuccess
+
+When using `allowPartialSuccess()`, failures are captured in the result instead of throwing an exception.
+
+**Test**
+
+```apex
+@IsTest
+static void shouldCaptureFailureInResult() {
+    // Setup
+    DML.mock('myDmlId').exceptionOnDeletes();
+
+    Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+    // Test - no exception thrown
+    DML.Result result = new DML()
+        .toDelete(accountId)
+        .allowPartialSuccess()
+        .identifier('myDmlId')
+        .commitWork();
+
+    // Verify
+    DML.OperationResult operationResult = result.deletesOf(Account.SObjectType);
+
+    Assert.isTrue(operationResult.hasFailures(), 'Should have failures');
+    Assert.isFalse(operationResult.recordResults()[0].isSuccess(), 'Record should be marked as failed');
 }
 ```
