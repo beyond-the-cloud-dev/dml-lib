@@ -10,21 +10,21 @@
 
 Install the SOQL Lib unlocked package with `btcdev` namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS`
+`/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002AvdNIAS)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK)
 
 ## Install via Unmanaged Package
 
 Install the DML Lib unmanaged package without namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP60000029Hmr`
+`/packaging/installPackage.apexp?p0=04tP60000029HoT`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP60000029Hmr)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP60000029HoT)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP60000029Hmr)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP60000029HoT)
 
 ## Deploy via Button
 

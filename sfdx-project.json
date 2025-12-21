@@ -1,8 +1,8 @@
 {
   "packageDirectories": [
     {
-      "versionName": "ver 2.0",
-      "versionNumber": "2.0.0.NEXT",
+      "versionName": "ver 2.1",
+      "versionNumber": "2.1.0.NEXT",
       "path": "force-app",
       "default": true,
       "package": "DML Lib",
@@ -17,6 +17,7 @@
     "DML Lib": "0HoP600000001IfKAI",
     "DML Lib@0.1.0-1": "04tP6000002A7BxIAK",
     "DML Lib@1.8.0-1": "04tP6000002A7OrIAK",
-    "DML Lib@1.9.0-1": "04tP6000002AvdNIAS"
+    "DML Lib@1.9.0-1": "04tP6000002AvdNIAS",
+    "DML Lib@2.0.0-1": "04tP6000002CeRxIAK"
   }
 }
