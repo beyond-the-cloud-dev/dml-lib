@@ -57,6 +57,7 @@ export default defineConfig({
         text: 'Mocking',
         collapsed: true,
         items: [
+          { text: 'Introduction', link: '/mocking/mocking' },
           { text: 'Insert', link: '/mocking/insert' },
           { text: 'Update', link: '/mocking/update' },
           { text: 'Upsert', link: '/mocking/upsert' },
