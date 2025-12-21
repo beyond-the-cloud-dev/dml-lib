@@ -132,6 +132,7 @@ global inherited sharing class DML implements Commitable {
 		Commitable options(Database.DmlOptions options);
 		Commitable discardWork();
 		Commitable commitHook(DML.Hook callback);
+		Commitable onDuplicateCombine();
 		// Save
 		Result dryRun();
 		Result commitWork();
@@ -584,6 +585,11 @@ global inherited sharing class DML implements Commitable {
 		return this;
 	}
 
+	public Commitable onDuplicateCombine() {
+		this.configuration.onDuplicateCombine();
+		return this;
+	}
+
 	public Commitable options(Database.DmlOptions options) {
 		this.configuration.options(options);
 		return this;
@@ -698,7 +704,9 @@ global inherited sharing class DML implements Commitable {
 				return;
 			}
 
-			existingCommand.combine(command);
+			this.configuration.duplicateCombineStrategy.combine(existingCommand, command);
+
+			existingCommand.recalculate();
 		}
 
 		private void preview() {
@@ -831,7 +839,9 @@ global inherited sharing class DML implements Commitable {
 		private System.AccessLevel accessMode = System.AccessLevel.USER_MODE;
 		private Database.DmlOptions options = new Database.DMLOptions();
 		private DmlSharing sharingExecutor = new InheritedSharing();
+		private DuplicateCombineStrategy duplicateCombineStrategy = new ThrownExceptionDuplicateStrategy();
 		private Boolean allOrNone = true;
+		private Boolean mergeOnDuplicate = false;
 		private String dmlIdentifier = null;
 
 		public Configuration() {
@@ -861,6 +871,10 @@ global inherited sharing class DML implements Commitable {
 		public void allowPartialSuccess() {
 			this.allOrNone = false;
 			this.options.optAllOrNone = false;
+		}
+
+		public void onDuplicateCombine() {
+			this.duplicateCombineStrategy = new MergeDuplicateStrategy();
 		}
 
 		public void options(Database.DmlOptions options) {
@@ -1000,12 +1014,6 @@ global inherited sharing class DML implements Commitable {
 			}
 
 			return recordsToProcess;
-		}
-
-		private virtual void combine(DmlCommand command) {
-			// TODO: Avoid duplicate records based on Id when specified 
-			this.enhancedRecords.addAll(command.enhancedRecords);
-			this.recalculate();
 		}
 
 		protected abstract OperationType getOperationType();
@@ -1376,6 +1384,41 @@ global inherited sharing class DML implements Commitable {
 				.isSuccess(undeleteResult.isSuccess())
 				.recordId(undeleteResult.getId())
 				.errors(undeleteResult.getErrors());
+		}
+	}
+	
+	private interface DuplicateCombineStrategy {
+		void combine(DmlCommand mergeToCommand, DmlCommand duplicateCommand);
+	}
+
+	private class ThrownExceptionDuplicateStrategy implements DuplicateCombineStrategy {
+		public void combine(DmlCommand mergeToCommand, DmlCommand duplicateCommand) {
+			for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
+				if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
+					throw new DmlException('Duplicate records found during registration. Fix the code or use the mergeOnDuplicate() method.');
+				}
+			}
+
+			mergeToCommand.enhancedRecords.addAll(duplicateCommand.enhancedRecords);
+		}
+	}
+
+	private class MergeDuplicateStrategy implements DuplicateCombineStrategy {
+		public void combine(DmlCommand mergeToCommand, DmlCommand duplicateCommand) {
+			for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
+				if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
+					Integer index = mergeToCommand.enhancedRecords.indexOf(newEnhancedRecord);
+
+					SObject existingRecord = mergeToCommand.enhancedRecords[index].getRecord();
+					SObject newRecord = newEnhancedRecord.getRecord();
+
+					for (String field : newRecord.getPopulatedFieldsAsMap().keySet()) {
+						existingRecord.put(field, newRecord.get(field));
+					}
+				} else {
+					mergeToCommand.enhancedRecords.add(newEnhancedRecord);
+				}
+			}
 		}
 	}
 
@@ -1904,6 +1947,14 @@ global inherited sharing class DML implements Commitable {
 
 		private Id getRecordId() {
 			return this.currentRecord?.Id;
+		}
+
+		private Boolean equals(Object other) {
+			if (this.getRecordId() == null) {
+				return false;
+			}
+
+			return this.getRecordId() == ((EnhancedRecord) other)?.getRecordId();
 		}
 	}
 

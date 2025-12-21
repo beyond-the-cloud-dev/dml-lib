@@ -100,7 +100,7 @@ class UowResult {
 - [x] Clear internal state after commitWork() — prevent re-commit of same operations.
 - [ ] Query operations — query(), countQuery(), getQueryLocator(), getCursor() with same access/sharing mode.
 - [ ] Connector to SOQL Lib — inject selectors for reads; honor chosen sharing mode.
-- [ ] Dedupling registration — when records with the same Id are registered and modify the same field: policy LAST_WINS | THROW; track warnings when deduping occurs.
+- [x] Dedupling registration — when records with the same Id are registered and modify the same field: policy LAST_WINS | THROW; track warnings when deduping occurs.
 - [ ] Observability hooks — uow.withLogger(ILogger) to emit timings, limits, retries, per-op summaries; keep lightweight to avoid CPU spikes.
 - [ ] DML optimization
     - [ ] Minimize DML statements — batch same-type operations.
@@ -262,6 +262,7 @@ Status | Priority | Feature | Effort | Impact |
 | [ ]  | 🟡 Important | Per-Operation Overrides | High | High |
 | [ ]  | 🟡 Important | Email Integration | Medium | Medium |
 | [ ]  | 🟡 Important | Custom Work (IDoWork) | Low | Medium |
+| [x]  | 🟢 Nice | Dedupling registration | Medium | Medium |
 | [ ]  | 🟢 Nice | Better Mock API with Errors | Medium | Medium |
 | [ ]  | 🟢 Nice | Retry Strategy | High | Medium |
 | [ ]  | 🟢 Nice | Chunk Size | Medium | Medium |
