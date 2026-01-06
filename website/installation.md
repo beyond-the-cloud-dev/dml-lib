@@ -5,16 +5,16 @@
 <!--
  sf package version create --package "DML Lib" --target-dev-hub beyondthecloud-prod --installation-key-bypass --wait 30 --code-coverage
 
- sf package version promote --package "DML Lib@1.9.0-1"  --target-dev-hub beyondthecloud-prod
+ sf package version promote --package "DML Lib@2.0.1-1"  --target-dev-hub beyondthecloud-prod
 --> 
 
 Install the SOQL Lib unlocked package with `btcdev` namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK`
+`/packaging/installPackage.apexp?p0=04tP6000002Hi6kIAC`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002Hi6kIAC)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002CeRxIAK)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000002Hi6kIAC)
 
 ## Install via Unmanaged Package
 

@@ -290,234 +290,234 @@ global inherited sharing class DML implements Commitable {
 	
 	// Insert
 
-	public Commitable toInsert(SObject record) {
+	global Commitable toInsert(SObject record) {
 		return this.toInsert(Record(record));
 	}
 
-	public Commitable toInsert(Record record) {
+	global Commitable toInsert(Record record) {
 		return this.registerOperation(new InsertCommand(record));
 	}
 
-	public Commitable toInsert(List<SObject> records) {
+	global Commitable toInsert(List<SObject> records) {
 		return this.toInsert(Records(records));
 	}
 	
-	public Commitable toInsert(Records records) {
+	global Commitable toInsert(Records records) {
 		return this.registerOperation(new InsertCommand(records));
 	}
 
-	public OperationResult insertImmediately(SObject record) {
+	global OperationResult insertImmediately(SObject record) {
 		return this.insertImmediately(Record(record));
 	}
 
-	public OperationResult insertImmediately(Record record) {
+	global OperationResult insertImmediately(Record record) {
 		return this.executeImmediately(new InsertCommand(record));
 	}
 
-	public OperationResult insertImmediately(List<SObject> records) {
+	global OperationResult insertImmediately(List<SObject> records) {
 		return this.insertImmediately(Records(records));
 	}
 
-	public OperationResult insertImmediately(Records records) {
+	global OperationResult insertImmediately(Records records) {
 		return this.executeImmediately(new InsertCommand(records));
 	}
 
 
 	// Update
 	
-	public Commitable toUpdate(SObject record) {
+	global Commitable toUpdate(SObject record) {
 		return this.toUpdate(Record(record));
 	}
 
-	public Commitable toUpdate(Record record) {
+	global Commitable toUpdate(Record record) {
 		return this.registerOperation(new UpdateCommand(record));
 	}
 
-	public Commitable toUpdate(List<SObject> records) {
+	global Commitable toUpdate(List<SObject> records) {
 		return this.toUpdate(Records(records));
 	}
 
-	public Commitable toUpdate(Records records) {
+	global Commitable toUpdate(Records records) {
 		return this.registerOperation(new UpdateCommand(records));
 	}
 
-	public OperationResult updateImmediately(SObject record) {
+	global OperationResult updateImmediately(SObject record) {
 		return this.updateImmediately(Record(record));
 	}
 
-	public OperationResult updateImmediately(Record record) {
+	global OperationResult updateImmediately(Record record) {
 		return this.executeImmediately(new UpdateCommand(record));
 	}
 
-	public OperationResult updateImmediately(List<SObject> records) {
+	global OperationResult updateImmediately(List<SObject> records) {
 		return this.updateImmediately(Records(records));
 	}
 
-	public OperationResult updateImmediately(Records records) {
+	global OperationResult updateImmediately(Records records) {
 		return this.executeImmediately(new UpdateCommand(records));
 	}
 
 	// Upsert
 
-	public Commitable toUpsert(SObject record) {
+	global Commitable toUpsert(SObject record) {
 		return this.toUpsert(Record(record));
 	}
 
-	public Commitable toUpsert(SObject record, SObjectField externalIdField) {
+	global Commitable toUpsert(SObject record, SObjectField externalIdField) {
 		return this.registerOperation(new UpsertCommand(Record(record)).withExternalIdField(externalIdField));
 	}
 
-	public Commitable toUpsert(Record record) {
+	global Commitable toUpsert(Record record) {
 		return this.registerOperation(new UpsertCommand(record));
 	}
 
-	public Commitable toUpsert(List<SObject> records) {
+	global Commitable toUpsert(List<SObject> records) {
 		return this.toUpsert(Records(records));
 	}
 
-	public Commitable toUpsert(List<SObject> records, SObjectField externalIdField) {
+	global Commitable toUpsert(List<SObject> records, SObjectField externalIdField) {
 		return this.registerOperation(new UpsertCommand(Records(records)).withExternalIdField(externalIdField));
 	}
 
-	public Commitable toUpsert(Records records) {
+	global Commitable toUpsert(Records records) {
 		return this.registerOperation(new UpsertCommand(records));
 	}
 
-	public OperationResult upsertImmediately(SObject record) {
+	global OperationResult upsertImmediately(SObject record) {
 		return this.upsertImmediately(Record(record));
 	}
 
-	public OperationResult upsertImmediately(Record record) {
+	global OperationResult upsertImmediately(Record record) {
 		return this.executeImmediately(new UpsertCommand(record));
 	}
 
-	public OperationResult upsertImmediately(List<SObject> records) {
+	global OperationResult upsertImmediately(List<SObject> records) {
 		return this.upsertImmediately(Records(records));
 	}
 
-	public OperationResult upsertImmediately(Records records) {
+	global OperationResult upsertImmediately(Records records) {
 		return this.executeImmediately(new UpsertCommand(records));
 	}
 
 	// Delete
 
-	public Commitable toDelete(Id recordId) {
+	global Commitable toDelete(Id recordId) {
 		return this.registerOperation(new DeleteCommand(Record(recordId)));
 	}
 
-	public Commitable toDelete(SObject record) {
+	global Commitable toDelete(SObject record) {
 		return this.toDelete(record.Id);
 	}
 
-	public Commitable toDelete(Iterable<Id> recordIds) {
+	global Commitable toDelete(Iterable<Id> recordIds) {
 		return this.registerOperation(new DeleteCommand(Records(recordIds)));
 	}
 
-	public Commitable toDelete(List<SObject> records) {
+	global Commitable toDelete(List<SObject> records) {
 		return this.registerOperation(new DeleteCommand(Records(records)));
 	}
 
-	public OperationResult deleteImmediately(Id recordId) {
+	global OperationResult deleteImmediately(Id recordId) {
 		return this.executeImmediately(new DeleteCommand(Record(recordId)));
 	}
 
-	public OperationResult deleteImmediately(SObject record) {
+	global OperationResult deleteImmediately(SObject record) {
 		return this.executeImmediately(new DeleteCommand(Record(record)));
 	}
 
-	public OperationResult deleteImmediately(Iterable<Id> recordIds) {
+	global OperationResult deleteImmediately(Iterable<Id> recordIds) {
 		return this.executeImmediately(new DeleteCommand(Records(recordIds)));
 	}
 
-	public OperationResult deleteImmediately(List<SObject> records) {
+	global OperationResult deleteImmediately(List<SObject> records) {
 		return this.executeImmediately(new DeleteCommand(Records(records)));
 	}
 
 	// Hard Delete
 
-	public Commitable toHardDelete(Id recordId) {
+	global Commitable toHardDelete(Id recordId) {
 		return this.registerOperation(new DeleteCommand(Record(recordId)).withHardDelete());
 	}
 
-	public Commitable toHardDelete(SObject record) {
+	global Commitable toHardDelete(SObject record) {
 		return this.toHardDelete(record.Id);
 	}
 
-	public Commitable toHardDelete(Iterable<Id> recordIds) {
+	global Commitable toHardDelete(Iterable<Id> recordIds) {
 		return this.registerOperation(new DeleteCommand(Records(recordIds)).withHardDelete());
 	}
 
-	public Commitable toHardDelete(List<SObject> records) {
+	global Commitable toHardDelete(List<SObject> records) {
 		return this.registerOperation(new DeleteCommand(Records(records)).withHardDelete());
 	}
 
 	// Undelete
 
-	public Commitable toUndelete(Id recordId) {
+	global Commitable toUndelete(Id recordId) {
 		return this.registerOperation(new UndeleteCommand(Record(recordId)));
 	}
 
-	public Commitable toUndelete(SObject record) {
+	global Commitable toUndelete(SObject record) {
 		return this.toUndelete(record.Id);
 	}
 
-	public Commitable toUndelete(Iterable<Id> recordIds) {
+	global Commitable toUndelete(Iterable<Id> recordIds) {
 		return this.registerOperation(new UndeleteCommand(Records(recordIds)));
 	}
 
-	public Commitable toUndelete(List<SObject> records) {
+	global Commitable toUndelete(List<SObject> records) {
 		return this.registerOperation(new UndeleteCommand(Records(records)));
 	}
 
-	public OperationResult undeleteImmediately(Id recordId) {
+	global OperationResult undeleteImmediately(Id recordId) {
 		return this.executeImmediately(new UndeleteCommand(Record(recordId)));
 	}
 
-	public OperationResult undeleteImmediately(SObject record) {
+	global OperationResult undeleteImmediately(SObject record) {
 		return this.executeImmediately(new UndeleteCommand(Record(record)));
 	}
 
-	public OperationResult undeleteImmediately(Iterable<Id> recordIds) {
+	global OperationResult undeleteImmediately(Iterable<Id> recordIds) {
 		return this.executeImmediately(new UndeleteCommand(Records(recordIds)));
 	}
 
-	public OperationResult undeleteImmediately(List<SObject> records) {
+	global OperationResult undeleteImmediately(List<SObject> records) {
 		return this.executeImmediately(new UndeleteCommand(Records(records)));
 	}
 
 	// Merge
 
-	public Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
+	global Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
 		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Records(duplicateRecords)));
 	}
 
-	public Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
+	global Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
 		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Record(duplicatedRecord)));
 	}
 
-	public Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
+	global Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
 		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Record(duplicatedRecordId)));
 	}
 
-	public Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
+	global Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
 		return this.registerOperation(new MergeCommand(Record(mergeToRecord), Records(duplicatedRecordIds)));
 	}
 
 	// Platform Event
 
-	public Commitable toPublish(SObject record) {
+	global Commitable toPublish(SObject record) {
 		return this.registerOperation(new PlatformEventCommand(Record(record)));
 	}
 
-	public Commitable toPublish(List<SObject> records) {
+	global Commitable toPublish(List<SObject> records) {
 		return this.registerOperation(new PlatformEventCommand(Records(records)));
 	}
 
-	public OperationResult publishImmediately(SObject record) {
+	global OperationResult publishImmediately(SObject record) {
 		return this.executeImmediately(new PlatformEventCommand(Record(record)));
 	}
 
-	public OperationResult publishImmediately(List<SObject> records) {
+	global OperationResult publishImmediately(List<SObject> records) {
 		return this.executeImmediately(new PlatformEventCommand(Records(records)));
 	}
 
@@ -534,25 +534,25 @@ global inherited sharing class DML implements Commitable {
 
 	// Identifier
 
-	public Commitable identifier(String dmlIdentifier) {
+	global Commitable identifier(String dmlIdentifier) {
 		this.configuration.identifier(dmlIdentifier);
 		return this;
 	}
 
 	// Debug
 
-	public void preview() {
+	global void preview() {
 		this.configuration.preview();
 		this.orchestrator.preview();
 	}
 
 	// Field Level Security
 
-	public Commitable userMode() {
+	global Commitable userMode() {
 		return this.setAccessMode(System.AccessLevel.USER_MODE);
 	}
 
-	public Commitable systemMode() {
+	global Commitable systemMode() {
 		return this.setAccessMode(System.AccessLevel.SYSTEM_MODE);
 	}
 
@@ -563,51 +563,51 @@ global inherited sharing class DML implements Commitable {
 
 	// Sharing Mode
 
-	public Commitable withSharing() {
+	global Commitable withSharing() {
 		this.configuration.withSharing();
 		return this;
 	}
 
-	public Commitable withoutSharing() {
+	global Commitable withoutSharing() {
 		this.configuration.withoutSharing();
 		return this;
 	}
 
 	// Other configs
 
-	public Commitable allowPartialSuccess() {
+	global Commitable allowPartialSuccess() {
 		this.configuration.allowPartialSuccess();
 		return this;
 	}
 
-	public Commitable skipDuplicateRules() {
+	global Commitable skipDuplicateRules() {
 		this.configuration.skipDuplicateRules();
 		return this;
 	}
 
-	public Commitable combineOnDuplicate() {
+	global Commitable combineOnDuplicate() {
 		this.configuration.combineOnDuplicate();
 		return this;
 	}
 
-	public Commitable options(Database.DmlOptions options) {
+	global Commitable options(Database.DmlOptions options) {
 		this.configuration.options(options);
 		return this;
 	}
 
-	public Commitable discardWork() {
+	global Commitable discardWork() {
 		this.reset();
 		return this;
 	}
 
 	// Hooks
 
-	public Commitable commitHook(Hook callback) {
+	global Commitable commitHook(Hook callback) {
 		this.hook = callback;
 		return this;
 	}
 
-	public Result dryRun() {
+	global Result dryRun() {
 		Savepoint savePoint = Database.setSavepoint();
 
 		try {
@@ -624,7 +624,7 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	public Result commitWork() {
+	global Result commitWork() {
 		DMLResult result = new DmlResult();
 
 		try {
@@ -650,7 +650,7 @@ global inherited sharing class DML implements Commitable {
 		dmlIdentifierToResult.put(this.configuration.dmlIdentifier, result);
 	}
 
-	public Result commitTransaction() {
+	global Result commitTransaction() {
 		if (!this.configuration.allOrNone) {
 			throw new DmlException('commitTransaction() is not supported when allOrNone=false');
 		}
@@ -1785,6 +1785,7 @@ global inherited sharing class DML implements Commitable {
 			return this.thrownExceptionDmlTypes.contains(dmlType) || (this.thrownExceptionDmlTypesByObjectTypes.get(dmlType) ?? new Set<SObjectType>()).contains(objectType);
 		}
 	}
+
 
 	private class DmlRecords implements Records {
 		private List<SObject> recordsToProcess = new List<SObject>();
