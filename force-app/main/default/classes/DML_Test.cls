@@ -869,6 +869,29 @@ private class DML_Test {
 		Assert.isFalse(operationResult.hasFailures(), 'Inserted operation result should not have failures.');
 	}
 
+	@IsTest
+	static void toInsertWithRelationshipBetweenSameSObjectType() {
+
+		Account parentAccount = getAccount(1);
+		Account childAccount1 = getAccount(2);
+		Account childAccount2 = getAccount(3);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(parentAccount)
+				.toInsert(DML.Record(childAccount1).withRelationship(Account.ParentId, parentAccount))
+				.toInsert(DML.Record(childAccount2).withRelationship(Account.ParentId, parentAccount))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted.');
+		Assert.areEqual(2, [SELECT COUNT() FROM Account WHERE ParentId = :parentAccount.Id], 'Child account should be inserted and related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount1.ParentId, 'Child account should be related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount2.ParentId, 'Child account should be related to parent.');
+	}
+
 	// UPDATE
 
 	@IsTest
@@ -2534,6 +2557,52 @@ private class DML_Test {
 		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Upserted operation result should contain Account object type.');
 		Assert.areEqual(DML.OperationType.UPSERT_DML, operationResult.operationType(), 'Upserted operation result should contain upsert type.');
 		Assert.isFalse(operationResult.hasFailures(), 'Upserted operation result should not have failures.');
+	}
+
+	@IsTest
+	static void toUpsertAndInsertWithRelationshipBetweenSameSObjectType() {
+
+		Account parentAccount = getAccount(1);
+		Account childAccount1 = getAccount(2);
+		Account childAccount2 = getAccount(3);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toUpsert(parentAccount)
+				.toInsert(DML.Record(childAccount1).withRelationship(Account.ParentId, parentAccount))
+				.toInsert(DML.Record(childAccount2).withRelationship(Account.ParentId, parentAccount))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted.');
+		Assert.areEqual(2, [SELECT COUNT() FROM Account WHERE ParentId = :parentAccount.Id], 'Child account should be inserted and related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount1.ParentId, 'Child account should be related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount2.ParentId, 'Child account should be related to parent.');
+	}
+
+	@IsTest
+	static void toUpsertWithRelationshipBetweenSameSObjectType() {
+
+		Account parentAccount = getAccount(1);
+		Account childAccount1 = getAccount(2);
+		Account childAccount2 = getAccount(3);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toUpsert(parentAccount)
+				.toUpsert(DML.Record(childAccount1).withRelationship(Account.ParentId, parentAccount))
+				.toUpsert(DML.Record(childAccount2).withRelationship(Account.ParentId, parentAccount))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted.');
+		Assert.areEqual(2, [SELECT COUNT() FROM Account WHERE ParentId = :parentAccount.Id], 'Child account should be inserted and related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount1.ParentId, 'Child account should be related to parent.');
+		Assert.areEqual(parentAccount.Id, childAccount2.ParentId, 'Child account should be related to parent.');
 	}
 
 	// DELETE
