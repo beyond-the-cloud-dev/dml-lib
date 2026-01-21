@@ -294,9 +294,13 @@ global inherited sharing class DML implements Commitable {
 		return this.toInsert(Record(record));
     }
 
+	// global Commitable toInsert(Record record) {
+	// 	return this.registerOperation(new InsertCommand(record));
+    // }
+
 	global Commitable toInsert(Record record) {
 		return this.registerOperation(new InsertCommand(record));
-        }
+    }
 
 	global Commitable toInsert(List<SObject> records) {
 		return this.toInsert(Records(records));
@@ -528,6 +532,16 @@ global inherited sharing class DML implements Commitable {
         return this;
     }
 
+	private Commitable registerOperation(DmlCommand command, Record record) {
+		this.orchestrator.register(command);
+        return this;
+    }
+
+	private Commitable registerOperation(DmlCommand command, Records records) {
+		this.orchestrator.register(command);
+        return this;
+    }
+
 	private OperationResult executeImmediately(DmlCommand command) {
 		return command.setGlobalConfiguration(this.configuration).commitWork();
 	}
@@ -709,6 +723,20 @@ global inherited sharing class DML implements Commitable {
 			existingCommand.recalculate();
 		}
 
+		private void register(Record record, DmlCommand command) {
+			// EnhancedRecord enhancedRecord = record.get();
+			// this.setObjectType(enhancedRecord);
+
+			// this.enhancedRecords.add(enhancedRecord);
+		}
+
+		private void register(Records records, DmlCommand command) {
+			// EnhancedRecord enhancedRecord = record.get();
+			// this.setObjectType(enhancedRecord);
+
+			// this.enhancedRecords.add(enhancedRecord);
+		}
+
 		private void preview() {
 			for (OperationType operationType : OperationType.values()) {
 				for (DmlCommand command : this.getSortedCommands(operationType)) {
@@ -731,17 +759,17 @@ global inherited sharing class DML implements Commitable {
 
 		private List<DmlCommand> getSortedCommands(OperationType operationType) {
 			List<DmlCommand> operationCommands = this.commandsByOperationType.get(operationType);
-			operationCommands.sort(new DmlCommandComparator(this.getSObjectTypesExecutionOrder(operationType)));
+			// operationCommands.sort(new DmlCommandComparator(this.getSObjectTypesExecutionOrder(operationType)));
 			return operationCommands;
 		}
 
-		private List<SObjectType> getSObjectTypesExecutionOrder(OperationType operationType) {
-			if (!this.configuration.customExecutionOrder.isEmpty()) {
-				return this.configuration.customExecutionOrder;
-			}
+		// private List<SObjectType> getSObjectTypesExecutionOrder(OperationType operationType) {
+		// 	if (!this.configuration.customExecutionOrder.isEmpty()) {
+		// 		return this.configuration.customExecutionOrder;
+		// 	}
 
-			return this.dependencyGraphsByOperationType.get(operationType).getTopologicalOrder();
-		}
+		// 	return this.dependencyGraphsByOperationType.get(operationType).getTopologicalOrder();
+		// }
 	}
 
 	private class DmlResult implements Result {
@@ -909,6 +937,11 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
+	private class ProcessingWave {
+		private DmlCommand command;
+		privateList<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
+	}
+
 	private abstract class DmlCommand {
 		private SObjectType objectType;
 		private Configuration globalConfiguration;
@@ -1008,8 +1041,8 @@ global inherited sharing class DML implements Commitable {
                 recordsToProcess.add(enhancedRecord.getRecord());
             }
 
-                return recordsToProcess;
-            }
+            return recordsToProcess;
+        }
 
 		protected abstract OperationType getOperationType();
 		protected abstract DmlResultAdapter getAdapter();
@@ -1809,7 +1842,7 @@ global inherited sharing class DML implements Commitable {
             }
 
 		public DmlRecords withRelationship(SObjectField relationshipField, SObject relatedToRecord) {
-			this.parentRelationships.add(new ParentRelationship(relationshipField, relatedToRecord));
+			this.parentRelationships.add(new ParentRelationship(relationshipField, new EnhancedRecord(relatedToRecord)));
             return this;
         }
 
@@ -1871,7 +1904,7 @@ global inherited sharing class DML implements Commitable {
         }
 
 		public DmlRecord withRelationship(SObjectField relationshipField, SObject relatedToRecord) {
-			this.enhancedRecord.withRelationship(new ParentRelationship(relationshipField, relatedToRecord));
+			// this.enhancedRecord.withRelationship(new ParentRelationship(relationshipField, relatedToRecord));
 			return this;
 		}
 
@@ -1918,10 +1951,10 @@ global inherited sharing class DML implements Commitable {
 				return;
 			}
 
-			orderDependencyGraph.registerType(this.getSObjectType());
+			orderDependencyGraph.registerType(this);
 
             for (ParentRelationship parentRelationship : this.parentRelationships) {
-				orderDependencyGraph.addDependency(parentRelationship.getRelatedToType(), this.getSObjectType());
+				orderDependencyGraph.addDependency(parentRelationship.getRelatedToEnhancedRecord(), this);
             }
         }
 
@@ -1964,22 +1997,26 @@ global inherited sharing class DML implements Commitable {
     }
 
     private class ParentRelationship {
-        private SObject relatedToRecord;
+        private EnhancedRecord relatedToRecord;
         private SObjectField relationshipField;
 
-		private ParentRelationship(SObjectField relationshipField, SObject relatedToRecord) {
+		private ParentRelationship(SObjectField relationshipField, EnhancedRecord relatedToRecord) {
 			this.validateRelationshipField(relationshipField);
 
             this.relationshipField = relationshipField;
             this.relatedToRecord = relatedToRecord;
         }
 
-		private SObjectType getRelatedToType() {
-			return this.relatedToRecord.getSObjectType();
-            }
+		private EnhancedRecord getRelatedToEnhancedRecord() {
+			return this.relatedToRecord;
+		}
+
+		// private SObjectType getRelatedToType() {
+		// 	return this.relatedToRecord.getSObjectType();
+        // }
 
 		private void resolve(SObject currentRecord) {
-            currentRecord.put(this.relationshipField, this.relatedToRecord.Id);
+            currentRecord.put(this.relationshipField, this.relatedToRecord.getRecordId());
         }
 
 		private void validateRelationshipField(SObjectField relationshipField) {            
@@ -2035,47 +2072,45 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class OrderDependencyGraph {
-		private Map<SObjectType, Set<SObjectType>> childrenByType = new Map<SObjectType, Set<SObjectType>>();
-		private Map<SObjectType, Integer> parentsRemainingByType = new Map<SObjectType, Integer>();
+		private Map<EnhancedRecord, Set<EnhancedRecord>> childrenByType = new Map<EnhancedRecord, Set<EnhancedRecord>>();
+		private Map<EnhancedRecord, Integer> parentsRemainingByType = new Map<EnhancedRecord, Integer>();
 
-		private void registerType(SObjectType type) {
-			this.ensureTypeRegistered(type);
+		private void registerType(EnhancedRecord enhancedRecord) {
+			this.ensureTypeRegistered(enhancedRecord);
 		}
 
-		private void addDependency(SObjectType parentType, SObjectType childType) {
-			this.ensureTypeRegistered(parentType);
-			this.ensureTypeRegistered(childType);
+		private void addDependency(EnhancedRecord parentEnhancedRecord, EnhancedRecord childEnhancedRecord) {
+			this.ensureTypeRegistered(parentEnhancedRecord);
+			this.ensureTypeRegistered(childEnhancedRecord);
 
-			if (this.childrenByType.get(parentType).add(childType)) {
-				this.parentsRemainingByType.put(childType, this.parentsRemainingByType.get(childType) + 1);
+			if (this.childrenByType.get(parentEnhancedRecord).add(childEnhancedRecord)) {
+				this.parentsRemainingByType.put(childEnhancedRecord, this.parentsRemainingByType.get(childEnhancedRecord) + 1);
 			}
 		}
 
-		private void ensureTypeRegistered(SObjectType type) {
-			if (!this.childrenByType.containsKey(type)) {
-				this.childrenByType.put(type, new Set<SObjectType>());
+		private void ensureTypeRegistered(EnhancedRecord enhancedRecord) {
+			if (!this.childrenByType.containsKey(enhancedRecord)) {
+				this.childrenByType.put(enhancedRecord, new Set<EnhancedRecord>());
 			}
-			if (!this.parentsRemainingByType.containsKey(type)) {
-				this.parentsRemainingByType.put(type, 0);
+			if (!this.parentsRemainingByType.containsKey(enhancedRecord)) {
+				this.parentsRemainingByType.put(enhancedRecord, 0);
 			}
 		}
 
 		// Kahn’s sort algorithm
-		private List<SObjectType> getTopologicalOrder() {
-			List<SObjectType> parentsTypesWithoutDependencies = this.getTypesWithNoDependencies();
-			List<SObjectType> typesExecutionOrder = new List<SObjectType>();
+		private List<List<EnhancedRecord>> getTopologicalOrder() {
+			List<List<EnhancedRecord>> typesExecutionOrder = new List<List<EnhancedRecord>>();
 
-			while (!parentsTypesWithoutDependencies.isEmpty()) {
-				SObjectType currentType = parentsTypesWithoutDependencies.remove(0);
-				
-				typesExecutionOrder.add(currentType);
+			while (!this.parentsRemainingByType.isEmpty()) {
+				List<EnhancedRecord> enhancedRecordsWithoutDependencies = this.getEnhancedRecordsWithNoDependencies();
 
-				for (SObjectType childType : this.childrenByType.get(currentType)) {
-					Integer remaining = this.parentsRemainingByType.get(childType) - 1;
-					this.parentsRemainingByType.put(childType, remaining);
+				typesExecutionOrder.add(enhancedRecordsWithoutDependencies);
 
-					if (remaining == 0) {
-						parentsTypesWithoutDependencies.add(childType);
+				for (EnhancedRecord enhancedRecord : enhancedRecordsWithoutDependencies) {
+					this.parentsRemainingByType.remove(enhancedRecord);
+
+					for (EnhancedRecord childEnhancedRecord : this.childrenByType.get(enhancedRecord)) {
+						this.parentsRemainingByType.put(childEnhancedRecord, this.parentsRemainingByType.get(childEnhancedRecord) - 1);
 					}
 				}
 			}
@@ -2087,16 +2122,16 @@ global inherited sharing class DML implements Commitable {
 			return typesExecutionOrder;
 		}
 
-		private List<SObjectType> getTypesWithNoDependencies() {
-			List<SObjectType> typesWithNoDependencies = new List<SObjectType>();
+		private List<EnhancedRecord> getEnhancedRecordsWithNoDependencies() {
+			List<EnhancedRecord> enhancedRecordsWithNoDependencies = new List<EnhancedRecord>();
 
-			for (SObjectType type : this.parentsRemainingByType.keySet()) {
-				if (this.parentsRemainingByType.get(type) == 0) {
-					typesWithNoDependencies.add(type);
+			for (EnhancedRecord enhancedRecord : this.parentsRemainingByType.keySet()) {
+				if (this.parentsRemainingByType.get(enhancedRecord) == 0) {
+					enhancedRecordsWithNoDependencies.add(enhancedRecord);
 				}
 			}
 
-			return typesWithNoDependencies;
+			return enhancedRecordsWithNoDependencies;
 		}
 	}
 

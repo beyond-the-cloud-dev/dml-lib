@@ -269,3 +269,33 @@ Status | Priority | Feature | Effort | Impact |
 | [ ]  | 🟢 Nice | Chunk Size | Medium | Medium |
 | [ ]  | 🟢 Nice | Query Integration | Medium | Low |
 | [x]  | 🟢 Nice | Lifecycle Hooks | Medium | Low |
+
+---------------
+
+1. supported commands:
+	- insert - single
+	- upsert - single
+	- upsert per different external id - many combination
+	- merge - signle/many 
+	- update - single
+	- delete - single
+	- undelete - single
+
+	only insert and upsert matter when it comes to execution order
+2. each command can have different sObjects registered based on hashCode (operation type + sObjectType)
+3. dependent object can be in the same bucket - the same operation id 
+4. dependent object can be in the different buckets - different operation id 
+
+Problem:
+how to sort commands (buckets) based on 
+
+When registered:
+1. register dependency between records and put them into different buckets.
+
+
+
+Group1
+Group2
+Group3
+
+List<Group>
