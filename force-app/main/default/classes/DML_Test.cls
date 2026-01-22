@@ -92,6 +92,111 @@ private class DML_Test {
 	}       
 
 	@IsTest
+	static void toInsertWithRelationshipSingleRecord222() {
+		// Setup
+		Account newAccount = getAccount(1);
+		Account newAccount2 = getAccount(2);
+		Contact newContact = getContact(1);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
+				.toInsert(DML.Record(newAccount2).withRelationship(Account.ParentId, newAccount))
+				.toInsert(newAccount)
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+
+		Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
+		Assert.areEqual(newAccount.Id, newContact.AccountId, 'Contact should be related to Account.');
+	} 
+
+	@IsTest
+	static void toInsertWithRelationshipSingleRecord333() {
+		// Setup
+		Account newAccount = getAccount(1);
+		Account newAccount2 = getAccount(2);
+		Contact newContact = getContact(1);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(newAccount)
+				.toInsert(DML.Record(newAccount2).withRelationship(Account.ParentId, newAccount))
+				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+
+		Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
+	} 
+
+	@IsTest
+	static void toInsertWithRelationshipSingleRecord3444() {
+		// Setup
+		Account newAccount = getAccount(1);
+		Account newAccount2 = getAccount(2);
+		Contact newContact = getContact(1);
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(newAccount)
+				.toInsert(newAccount2)
+				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+
+		Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
+	} 
+
+	@IsTest
+	static void toInsertWithRelationshipSingleRecord344444() {
+		// Setup
+		Account newAccount = getAccount(1);
+		Account newAccount2 = getAccount(2);
+		Account newAccount3 = getAccount(3);
+		Contact newContact = getContact(1);
+
+
+		// Test
+		Test.startTest();
+			new DML()
+				.toInsert(newAccount)
+				.toInsert(newAccount2)
+				.toInsert(DML.Record(newAccount3).withRelationship(Account.ParentId, newAccount2))
+				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
+				.commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+
+		// Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
+
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
+		Assert.areEqual(newAccount2.Id, newAccount3.ParentId, 'Account 3 should be related to Account 2.');
+		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
+	} 
+
+	@IsTest
 	static void toInsertWithInvalidRelationshipSingleRecord() {
 		// Setup
 		Account newAccount = getAccount(1);
