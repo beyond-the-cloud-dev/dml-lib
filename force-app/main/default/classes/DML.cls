@@ -270,6 +270,7 @@ global inherited sharing class DML implements Commitable {
 
 	private Orchestrator orchestrator;
 	private Configuration configuration;
+	private CommandsStorage commandsStorage;
 
 	private Hook hook = null;
 
@@ -280,6 +281,7 @@ global inherited sharing class DML implements Commitable {
 
 	global DML() {
 		this.configuration = new Configuration();
+		this.commandsStorage = new CommandsStorage();
 		this.orchestrator = new Orchestrator(this.configuration);
 	}
 
@@ -528,7 +530,8 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private Commitable registerOperation(DmlCommand command, Record record) {
-		this.orchestrator.register(command, record);
+		DmlCommand existing = this.commandsStorage.intern(command);
+		this.orchestrator.register(existing, record);
 		return this;
 	}
 
@@ -675,6 +678,24 @@ global inherited sharing class DML implements Commitable {
 		this.orchestrator = new Orchestrator(this.configuration);
 	}
 
+	private class CommandsStorage {
+		private Map<String, DmlCommand> commandByHashCode = new Map<String, DmlCommand>();
+
+		private DmlCommand intern(DmlCommand candidate) {
+			String commandHashCode = candidate.hashCode();
+
+			DmlCommand existing = this.commandByHashCode.get(commandHashCode);
+
+			if (existing == null) {
+				// TODO Add config or maybe constructor because config is not opotional
+				this.commandByHashCode.put(commandHashCode, candidate);
+				return candidate;
+			}
+
+			return existing;
+		}
+	}
+
 	private class DependencyOrchestrator { // TODO Insert, Upsert
 		private Map<String, DmlCommand> commandsByHashCode = new Map<String, DmlCommand>();
 		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
@@ -711,15 +732,14 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class LinearOrchestrator { // TODO Update, Delete, Merge, Undelete, Publish
-		// private Map<String, DmlCommand> commandsByHashCode = new Map<String, DmlCommand>();
-		private Map<String, ProcessingGroup> processingGroupsByCommandId = new Map<String, ProcessingGroup>();
-		private Map<OperationType, List<DmlCommand>> commandsByOperationType = new Map<OperationType, List<DmlCommand>>();
+		private Map<String, ProcessingGroup> processingGroupByCommandId = new Map<String, ProcessingGroup>();
+		private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>();
 
 		private Configuration configuration;
 
 		private void register(DmlCommand command, Record record) {
 			// DmlCommand existingCommand = this.commandsByHashCode.get(command.hashCode());
-			ProcessingGroup processingGroup = this.processingGroupsByCommandId.get(command.hashCode()) ;
+			ProcessingGroup processingGroup = this.processingGroupByCommandId.get(command.hashCode()) ;
 
 			EnhancedRecord enhancedRecord = record.get();
 
@@ -728,21 +748,28 @@ global inherited sharing class DML implements Commitable {
 				// command.setObjectType(record.get()); // TODO Move to constructor
 
 				processingGroup = new ProcessingGroup();
-				
+
 				processingGroup.command = command;
 
-				this.processingGroupsByCommandId.put(command.hashCode(), processingGroup);
+				this.processingGroupByCommandId.put(command.hashCode(), processingGroup);
+				this.processingGroupsByOperationType.get(command.getOperationType()).add(processingGroup);
 			}
 
 			processingGroup.add(enhancedRecord);
 			
 		}
 
-		// for (OperationType operationType : OperationType.values()) {
-		// 	for (DmlCommand command : this.commandsByOperationType.get(operationType)) {
-		// 		result.add(operationType, command.commitWork());
-		// 	}
-		// }
+		private DmlResult execute() {
+			DmlResult result = new DmlResult();
+
+			for (OperationType operationType : OperationType.values()) { // Executed in the order of the OperationType enum
+				for (ProcessingGroup processingGroup : this.processingGroupsByOperationType.get(operationType)) {
+					result.add(operationType, processingGroup.command.commitWork()); // TODO command.execute(processingGroup.records)
+				}
+			}
+
+			return result;
+		}
 	}
 
 	private class ProcessingGroup {
