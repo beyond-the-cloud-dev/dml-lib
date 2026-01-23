@@ -1965,12 +1965,18 @@ global inherited sharing class DML implements Commitable {
 	global class EnhancedRecord {
 		private SObject currentRecord;
 		private DmlCommand command;
+		private Boolean hasTemporaryId = false;
 
 		private List<ParentRelationship> parentRelationships = new List<ParentRelationship>();
 		private List<ExternalRelationship> externalRelationships = new List<ExternalRelationship>();
 
 		private EnhancedRecord(SObject currentRecord) {
 			this.currentRecord = currentRecord;
+			this.hasTemporaryId = currentRecord.Id == null;
+
+			if (this.hasTemporaryId) {
+				this.currentRecord.Id = randomIdGenerator.get(currentRecord.getSObjectType());
+			}
 		}
 
 		private EnhancedRecord(Id currentRecordId) {
@@ -2022,6 +2028,9 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private SObject getRecord() {
+			if (this.hasTemporaryId()) {
+				this.currentRecord.Id = null;
+			}
 			return this.currentRecord;
 		}
 
@@ -2034,7 +2043,11 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private String hashCode() {
-			return this.getRecordId() != null ? String.valueOf(this.getRecordId()) : System.hashCode(this.currentRecord).toString();
+			return this.getRecordId();
+		}
+
+		private Boolean hasTemporaryId() {
+			return this.hasTemporaryId;
 		}
 
 		public Boolean equals(Object other) {
