@@ -498,35 +498,55 @@ global inherited sharing class DML implements Commitable {
 	// Undelete
 
 	global Commitable toUndelete(Id recordId) {
-		return this.registerOperation(new UndeleteCommand(Record(recordId)));
+		return this.toUndelete(Record(recordId));
 	}
 
 	global Commitable toUndelete(SObject record) {
-		return this.toUndelete(record.Id);
+		return this.toUndelete(Record(record));
+	}
+
+	private Commitable toUndelete(Record record) {
+		return this.registerInLinearOrchestrator(this.getUndeleteCommand(record.getSObjectType()), record);
 	}
 
 	global Commitable toUndelete(Iterable<Id> recordIds) {
-		return this.registerOperation(new UndeleteCommand(Records(recordIds)));
+		return this.toUndelete(Records(recordIds));
 	}
 
 	global Commitable toUndelete(List<SObject> records) {
-		return this.registerOperation(new UndeleteCommand(Records(records)));
+		return this.toUndelete(Records(records));
+	}
+
+	private Commitable toUndelete(Records records) {
+		return this.registerInLinearOrchestrator(this.getUndeleteCommand(records.getSObjectType()), records);
 	}
 
 	global OperationResult undeleteImmediately(Id recordId) {
-		return this.executeImmediately(new UndeleteCommand(Record(recordId)));
+		return this.undeleteImmediately(Record(recordId));
 	}
 
 	global OperationResult undeleteImmediately(SObject record) {
-		return this.executeImmediately(new UndeleteCommand(Record(record)));
+		return this.undeleteImmediately(Record(record));
+	}
+
+	private OperationResult undeleteImmediately(Record record) {
+		return this.executeImmediately(this.getUndeleteCommand(record.getSObjectType()), record);
 	}
 
 	global OperationResult undeleteImmediately(Iterable<Id> recordIds) {
-		return this.executeImmediately(new UndeleteCommand(Records(recordIds)));
+		return this.undeleteImmediately(Records(recordIds));
 	}
 
 	global OperationResult undeleteImmediately(List<SObject> records) {
-		return this.executeImmediately(new UndeleteCommand(Records(records)));
+		return this.undeleteImmediately(Records(records));
+	}
+
+	private OperationResult undeleteImmediately(Records records) {
+		return this.executeImmediately(this.getUndeleteCommand(records.getSObjectType()), records);
+	}
+
+	private UndeleteCommand getUndeleteCommand(SObjectType objectType) {
+		return new UndeleteCommand(objectType, this.configuration);
 	}
 
 	// Merge
@@ -1570,12 +1590,8 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class UndeleteCommand extends DmlCommand {
-		public UndeleteCommand(Record record) {
-			super(record);
-		}
-
-		public UndeleteCommand(Records records) {
-			super(records);
+		public UndeleteCommand(SObjectType objectType, Configuration configuration) {
+			super(objectType, configuration);
 		}
 
 		protected override OperationType getOperationType() {
