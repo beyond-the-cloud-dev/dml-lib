@@ -806,7 +806,9 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private void reset() {
-		this.orchestrator = new Orchestrator(this.configuration);
+		this.dependencyOrchestrator = new DependencyOrchestrator();
+		this.linearOrchestrator = new LinearOrchestrator();
+		// this.orchestrator = new Orchestrator(this.configuration);
 	}
 
 	private class CommandsStorage {
@@ -855,17 +857,30 @@ global inherited sharing class DML implements Commitable {
 
 			enhancedRecord.associateRecordWithCommand(command);
 			enhancedRecord.addToDependencyGraph(this.orderDependencyGraph); // TODO this.orderDependencyGraph.add(..)
+
+			System.debug('========> register EnhancedRecord Id: ' + enhancedRecord?.getRecordId() + ' - ' + enhancedRecord?.getSObjectType() + ' - ' + command?.hashCode());
+
 		}
 
 		private void execute(DmlResult result) {
 			List<List<Id>> processingOrderById = this.orderDependencyGraph.getProcessingOrderById();
+			System.debug('========> EXECUTE!!!');
 
 			for (List<Id> enhancedRecordIds : processingOrderById) {
 				for (ProcessingGroup processingGroup : this.getWaves(enhancedRecordIds)) {
 					DmlCommand command = processingGroup.command;
+
+					System.debug('========> Group: ' + command?.hashCode() + ' - ' + processingGroup.records.size());
+
+					for (EnhancedRecord enhancedRecord : processingGroup.records) {
+						System.debug('========> EnhancedRecord: ' + enhancedRecord?.getRecordId() + ' - ' + enhancedRecord?.getSObjectType());
+					}
 					result.add(command.getOperationType(), command.commitWork(processingGroup.records)); //TODO
 				}
 			}
+
+			System.debug('========> EXECUTE DONE!!!');
+
 		}
 
 		private List<ProcessingGroup> getWaves(List<Id> enhancedRecordIds) {
@@ -873,6 +888,10 @@ global inherited sharing class DML implements Commitable {
 
 			for (Id enhancedRecordId : enhancedRecordIds) {
 				EnhancedRecord enhancedRecord = this.enhancedRecordsById.get(enhancedRecordId);
+
+				if (enhancedRecord.hasTemporaryId()) {
+					enhancedRecord.currentRecord.Id = null; // TODO 
+				}
 
 				String commandId = enhancedRecord.command.hashCode();
 

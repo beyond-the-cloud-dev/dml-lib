@@ -5464,75 +5464,75 @@ private class DML_Test {
 		Assert.isNotNull(expectedException, 'Expected exception should be thrown.');
 		Assert.areEqual('commitTransaction() is not supported when allOrNone=false', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
-		/*
-	@IsTest
-	static void executionOrder() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Contact newContact = getContact(1);
-		Opportunity newOpportunity = getOpportunity(1);
+	
+	// @IsTest
+	// static void executionOrder() {
+	// 	// Setup
+	// 	Account newAccount = getAccount(1);
+	// 	Contact newContact = getContact(1);
+	// 	Opportunity newOpportunity = getOpportunity(1);
 
-		// Test
-		Test.startTest();
-			new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType, Opportunity.SObjectType })
-				.toInsert(newOpportunity)
-				.toInsert(newAccount)
-				.toInsert(newContact)
-				.commitWork();
-		Test.stopTest();
+	// 	// Test
+	// 	Test.startTest();
+	// 		new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType, Opportunity.SObjectType })
+	// 			.toInsert(newOpportunity)
+	// 			.toInsert(newAccount)
+	// 			.toInsert(newContact)
+	// 			.commitWork();
+	// 	Test.stopTest();
 
-		// Verify
-		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
-	}
+	// 	// Verify
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
+	// }
 
-	@IsTest
-	static void executionOrderWhenOneOfObjectsIsNotRegistered() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Contact newContact = getContact(1);
+	// @IsTest
+	// static void executionOrderWhenOneOfObjectsIsNotRegistered() {
+	// 	// Setup
+	// 	Account newAccount = getAccount(1);
+	// 	Contact newContact = getContact(1);
 
-		// Test
-		Test.startTest();
-			new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType, Opportunity.SObjectType })
-				.toInsert(newAccount)
-				.toInsert(newContact)
-				.commitWork();
-		Test.stopTest();
+	// 	// Test
+	// 	Test.startTest();
+	// 		new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType, Opportunity.SObjectType })
+	// 			.toInsert(newAccount)
+	// 			.toInsert(newContact)
+	// 			.commitWork();
+	// 	Test.stopTest();
 
-		// Verify
-		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-		Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Opportunity should not be inserted.');
-	}
+	// 	// Verify
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+	// 	Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Opportunity should not be inserted.');
+	// }
 
-	@IsTest
-	static void executionOrderWhenOneOfObjectsIsRegisteredButNotInTheOrder() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Contact newContact = getContact(1);
-		Opportunity newOpportunity = getOpportunity(1);
+	// @IsTest
+	// static void executionOrderWhenOneOfObjectsIsRegisteredButNotInTheOrder() {
+	// 	// Setup
+	// 	Account newAccount = getAccount(1);
+	// 	Contact newContact = getContact(1);
+	// 	Opportunity newOpportunity = getOpportunity(1);
 
-		Exception expectedException = null;
+	// 	Exception expectedException = null;
 		
-		// Test
-		Test.startTest();
-			try {
-				new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType })
-					.toInsert(newAccount)
-					.toInsert(newContact)
-					.toInsert(newOpportunity)
-					.commitWork();
-			} catch (Exception e) {
-				expectedException = e;
-			}
-		Test.stopTest();
+	// 	// Test
+	// 	Test.startTest();
+	// 		try {
+	// 			new DML(new List<SObjectType>{ Account.SObjectType, Contact.SObjectType })
+	// 				.toInsert(newAccount)
+	// 				.toInsert(newContact)
+	// 				.toInsert(newOpportunity)
+	// 				.commitWork();
+	// 		} catch (Exception e) {
+	// 			expectedException = e;
+	// 		}
+	// 	Test.stopTest();
 
-		// Verify
-		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.areEqual('Only the following types can be registered: (Account, Contact)', expectedException.getMessage(), 'Expected exception message should be thrown.');
-	}
+	// 	// Verify
+	// 	Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+	// 	Assert.areEqual('Only the following types can be registered: (Account, Contact)', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	// }
 
 	@IsTest
 	static void discardWork() {
@@ -6087,34 +6087,34 @@ private class DML_Test {
 		Assert.isTrue(expectedException.getMessage().contains('Required fields are missing: [Name]'), 'Expected exception message should be thrown.');
 	}
 
-	@IsTest
-	static void addInRandomOrder() {
-		// Setup
-		Account account1 = getAccount(1);
-		Contact contact1 = getContact(1);
-		Opportunity opportunity1 = getOpportunity(1);
+	// @IsTest
+	// static void addInRandomOrder() {
+	// 	// Setup
+	// 	Account account1 = getAccount(1);
+	// 	Contact contact1 = getContact(1);
+	// 	Opportunity opportunity1 = getOpportunity(1);
 
-		// Test
-		Test.startTest();
-			new DML()
-				.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
-				.toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
-				.toInsert(account1)
-				.commitWork();
-		Test.stopTest();
+	// 	// Test
+	// 	Test.startTest();
+	// 		new DML()
+	// 			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+	// 			.toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
+	// 			.toInsert(account1)
+	// 			.commitWork();
+	// 	Test.stopTest();
 
-		// Verify
-		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact WHERE AccountId != null], 'Contact should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity WHERE AccountId != null], 'Opportunity should be inserted.');
+	// 	// Verify
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Contact WHERE AccountId != null], 'Contact should be inserted.');
+	// 	Assert.areEqual(1, [SELECT COUNT() FROM Opportunity WHERE AccountId != null], 'Opportunity should be inserted.');
 
-		Assert.isNotNull(contact1.Id, 'Contact should be inserted and have an Id.');
-		Assert.isNotNull(opportunity1.Id, 'Opportunity should be inserted and have an Id.');
-		Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
+	// 	Assert.isNotNull(contact1.Id, 'Contact should be inserted and have an Id.');
+	// 	Assert.isNotNull(opportunity1.Id, 'Opportunity should be inserted and have an Id.');
+	// 	Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
 
-		Assert.areEqual(account1.Id, contact1.AccountId, 'Contact should be related to Account.');
-		Assert.areEqual(account1.Id, opportunity1.AccountId, 'Opportunity should be related to Account.');
-	}
+	// 	Assert.areEqual(account1.Id, contact1.AccountId, 'Contact should be related to Account.');
+	// 	Assert.areEqual(account1.Id, opportunity1.AccountId, 'Opportunity should be related to Account.');
+	// }
 
 	// SHARED
 
@@ -6222,7 +6222,6 @@ private class DML_Test {
 			Assert.isNotNull(result, 'Result should not be null.');
 		}
 	}
-	*/
 
 	// HELPERS
 

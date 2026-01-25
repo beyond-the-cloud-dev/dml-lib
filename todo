@@ -269,3 +269,6 @@ Status | Priority | Feature | Effort | Impact |
 | [ ]  | 🟢 Nice | Chunk Size | Medium | Medium |
 | [ ]  | 🟢 Nice | Query Integration | Medium | Low |
 | [x]  | 🟢 Nice | Lifecycle Hooks | Medium | Low |
+
+
+`sf org create scratch -a dml-lib -f './config/project-scratch-def.json' -d --duration-days 30 --target-dev-hub beyondthecloud-devhub`
