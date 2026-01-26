@@ -91,31 +91,6 @@ private class DML_Test {
 		Assert.areEqual(newAccount.Id, newContact.AccountId, 'Contact should be related to Account.');
 	}       
 
-	// @IsTest
-	// static void toInsertWithRelationshipSingleRecord222() {
-	// 	// Setup
-	// 	Account newAccount = getAccount(1);
-	// 	Account newAccount2 = getAccount(2);
-	// 	Contact newContact = getContact(1);
-
-	// 	// Test
-	// 	Test.startTest();
-	// 		new DML()
-	// 			.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
-	// 			.toInsert(DML.Record(newAccount2).withRelationship(Account.ParentId, newAccount))
-	// 			.toInsert(newAccount)
-	// 			.commitWork();
-	// 	Test.stopTest();
-
-	// 	// Verify
-	// 	Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-	// 	Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-
-	// 	Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
-	// 	Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
-	// 	Assert.areEqual(newAccount.Id, newContact.AccountId, 'Contact should be related to Account.');
-	// } 
-
 	@IsTest
 	static void toInsertWithRelationshipSingleRecord333() {
 		// Setup
