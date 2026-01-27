@@ -271,7 +271,7 @@ global inherited sharing class DML implements Commitable {
 	global enum OperationType { INSERT_DML, UPSERT_DML, UPDATE_DML, MERGE_DML, DELETE_DML, UNDELETE_DML, PUBLISH_DML }
 
 	private Configuration configuration;
-	private CommandsStorage commandsStorage;
+	private StrategiesStorage strategiesStorage;
 	private DependencyOrchestrator dependencyOrchestrator;
 	private LinearOrchestrator linearOrchestrator;
 
@@ -284,7 +284,7 @@ global inherited sharing class DML implements Commitable {
 
 	global DML() {
 		this.configuration = new Configuration();
-		this.commandsStorage = new CommandsStorage();
+		this.strategiesStorage = new StrategiesStorage();
 		this.dependencyOrchestrator = new DependencyOrchestrator();
 		this.linearOrchestrator = new LinearOrchestrator(this.configuration);
 	}
@@ -604,35 +604,35 @@ global inherited sharing class DML implements Commitable {
 	// Helpers
 
 	private OperationResult executeImmediately(DmlStrategy strategy, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		return existing.execute(new List<EnhancedRecord>{ record.get() });
 	}
 
 	private OperationResult executeImmediately(DmlStrategy strategy, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		return existing.execute(records);
 	}
 
 	private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		this.dependencyOrchestrator.register(existing, record);
 		return this;
 	}
 
 	private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		this.dependencyOrchestrator.register(existing, records);
 		return this;
 	}
 
 	private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		this.linearOrchestrator.register(existing, record);
 		return this;
 	}
 
 	private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(strategy);
+		DmlStrategy existing = this.strategiesStorage.intern(strategy);
 		this.linearOrchestrator.register(existing, records);
 		return this;
 	}
@@ -715,7 +715,7 @@ global inherited sharing class DML implements Commitable {
 		Savepoint savePoint = Database.setSavepoint();
 
 		try {
-			DMLResult result = new DmlResult();
+			DmlResult result = new DmlResult();
 
 			this.hook?.before();
 
@@ -732,7 +732,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	global Result commitWork() {
-		DMLResult result = new DmlResult();
+		DmlResult result = new DmlResult();
 
 		try {
 			this.hook?.before();
@@ -750,7 +750,7 @@ global inherited sharing class DML implements Commitable {
 		return result;
 	}
 
-	private void storeResult(DMLResult result) {
+	private void storeResult(DmlResult result) {
 		if (String.isBlank(this.configuration.dmlIdentifier)) {
 			return;
 		}
@@ -780,16 +780,16 @@ global inherited sharing class DML implements Commitable {
 		this.linearOrchestrator = new LinearOrchestrator(this.configuration);
 	}
 
-	private class CommandsStorage {
-		private Map<String, DmlStrategy> commandByHashCode = new Map<String, DmlStrategy>();
+	private class StrategiesStorage {
+		private Map<String, DmlStrategy> strategyByOperationId = new Map<String, DmlStrategy>();
 
 		private DmlStrategy intern(DmlStrategy candidate) {
-			String commandHashCode = candidate.operationId();
+			String operationId = candidate.operationId();
 
-			DmlStrategy existing = this.commandByHashCode.get(commandHashCode);
+			DmlStrategy existing = this.strategyByOperationId.get(operationId);
 
 			if (existing == null) {
-				this.commandByHashCode.put(commandHashCode, candidate);
+				this.strategyByOperationId.put(operationId, candidate);
 				return candidate;
 			}
 
@@ -824,7 +824,7 @@ global inherited sharing class DML implements Commitable {
 			List<List<Id>> executionWaves = this.orderDependencyGraph.computeExecutionWaves();
 
 			for (List<Id> waveRecordIds : executionWaves) {
-				for (ProcessingGroup processingGroup : this.getWaves(waveRecordIds)) {
+				for (ProcessingGroup processingGroup : this.groupRecordsByStrategy(waveRecordIds)) {
 					DmlStrategy strategy = processingGroup.strategy;
 					result.add(strategy.getOperationType(), strategy.commitWork(processingGroup.records));
 				}
@@ -840,7 +840,7 @@ global inherited sharing class DML implements Commitable {
 			}
 		}
 
-		private List<ProcessingGroup> getWaves(List<Id> enhancedRecordIds) {
+		private List<ProcessingGroup> groupRecordsByStrategy(List<Id> enhancedRecordIds) {
 			Map<String, ProcessingGroup> processingGroupsByCommandId = new Map<String, ProcessingGroup>();
 
 			for (Id enhancedRecordId : enhancedRecordIds) {
@@ -1158,7 +1158,7 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	// Commands
+	// Strategies
 
 	private inherited sharing class InsertStrategy extends DmlStrategy {
 		public InsertStrategy(SObjectType objectType, Configuration configuration) {
@@ -1989,7 +1989,6 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-
 	global class EnhancedRecord {
 		private SObject currentRecord;
 		private DmlStrategy strategy;
@@ -2077,21 +2076,21 @@ global inherited sharing class DML implements Commitable {
 
 	private class ParentRelationship {
 		private SObjectField relationshipField;
-		private EnhancedRecord relatedToRecordEnhancedRecord;
+		private EnhancedRecord relatedToEnhancedRecord;
 
 		private ParentRelationship(SObjectField relationshipField, EnhancedRecord relatedToRecord) {
 			this.validateRelationshipField(relationshipField);
 
 			this.relationshipField = relationshipField;
-			this.relatedToRecordEnhancedRecord = relatedToRecord;
+			this.relatedToEnhancedRecord = relatedToRecord;
 		}
 
 		private EnhancedRecord getRelatedToEnhancedRecord() {
-			return this.relatedToRecordEnhancedRecord;
+			return this.relatedToEnhancedRecord;
 		}
 
 		private void resolve(SObject currentRecord) {
-			currentRecord.put(this.relationshipField, this.relatedToRecordEnhancedRecord.getRecordId());
+			currentRecord.put(this.relationshipField, this.relatedToEnhancedRecord.getRecordId());
 		}
 
 		private void validateRelationshipField(SObjectField relationshipField) {            
