@@ -546,34 +546,34 @@ global inherited sharing class DML implements Commitable {
 
 	global Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
 		Record dmlMergeToRecord = Record(mergeToRecord);
-		return this.toMerge(dmlMergeToRecord.getSObjectType(), this.configuration, dmlMergeToRecord, Record(duplicatedRecord));
+		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecord));
 	}
 
 	global Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
 		Record dmlMergeToRecord = Record(mergeToRecord);
-		return this.toMerge(dmlMergeToRecord.getSObjectType(), this.configuration, dmlMergeToRecord, Record(duplicatedRecordId));
+		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecordId));
 	}
 
-	private Commitable toMerge(SObjectType objectType, Configuration configuration, Record mergeToRecord, Record duplicatedRecord) {
-		return this.registerInLinearOrchestrator(this.getMergeCommand(objectType, configuration, mergeToRecord), duplicatedRecord);
+	private Commitable toMerge(MergeCommand mergeCommand, Record duplicatedRecord) {
+		return this.registerInLinearOrchestrator(mergeCommand, duplicatedRecord);
 	}
 
 	global Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
 		Record dmlMergeToRecord = Record(mergeToRecord);
-		return this.toMerge(dmlMergeToRecord.getSObjectType(), this.configuration, dmlMergeToRecord, Records(duplicateRecords));
+		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicateRecords));
 	}
 
 	global Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
 		Record dmlMergeToRecord = Record(mergeToRecord);
-		return this.toMerge(dmlMergeToRecord.getSObjectType(), this.configuration, dmlMergeToRecord, Records(duplicatedRecordIds));
+		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicatedRecordIds));
 	}
 
-	private Commitable toMerge(SObjectType objectType, Configuration configuration, Record mergeToRecord, Records duplicateRecords) {
-		return this.registerInLinearOrchestrator(this.getMergeCommand(objectType, configuration, mergeToRecord), duplicateRecords);
+	private Commitable toMerge(MergeCommand mergeCommand, Records duplicateRecords) {
+		return this.registerInLinearOrchestrator(mergeCommand, duplicateRecords);
 	}
 
-	private MergeCommand getMergeCommand(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
-		return new MergeCommand(objectType, configuration, mergeToRecord);
+	private MergeCommand getMergeCommand(SObjectType objectType, Record mergeToRecord) {
+		return new MergeCommand(objectType, this.configuration, mergeToRecord);
 	}
 
 	// Platform Event
@@ -604,36 +604,36 @@ global inherited sharing class DML implements Commitable {
 
 	// Helpers
 
-	private OperationResult executeImmediately(DmlStrategy command, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private OperationResult executeImmediately(DmlStrategy strategy, Record record) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		return existing.execute(new List<EnhancedRecord>{ record.get() });
 	}
 
-	private OperationResult executeImmediately(DmlStrategy command, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private OperationResult executeImmediately(DmlStrategy strategy, Records records) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		return existing.execute(records);
 	}
 
-	private Commitable registerInDependencyOrchestrator(DmlStrategy command, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Record record) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		this.dependencyOrchestrator.register(existing, record);
 		return this;
 	}
 
-	private Commitable registerInDependencyOrchestrator(DmlStrategy command, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Records records) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		this.dependencyOrchestrator.register(existing, records);
 		return this;
 	}
 
-	private Commitable registerInLinearOrchestrator(DmlStrategy command, Record record) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Record record) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		this.linearOrchestrator.register(existing, record);
 		return this;
 	}
 
-	private Commitable registerInLinearOrchestrator(DmlStrategy command, Records records) {
-		DmlStrategy existing = this.commandsStorage.intern(command);
+	private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Records records) {
+		DmlStrategy existing = this.commandsStorage.intern(strategy);
 		this.linearOrchestrator.register(existing, records);
 		return this;
 	}
@@ -649,7 +649,6 @@ global inherited sharing class DML implements Commitable {
 
 	global void preview() {
 		this.configuration.preview();
-		// this.orchestrator.preview(); TODO
 	}
 
 	// Field Level Security
@@ -786,7 +785,7 @@ global inherited sharing class DML implements Commitable {
 		private Map<String, DmlStrategy> commandByHashCode = new Map<String, DmlStrategy>();
 
 		private DmlStrategy intern(DmlStrategy candidate) {
-			String commandHashCode = candidate.hashCode();
+			String commandHashCode = candidate.operationId();
 
 			DmlStrategy existing = this.commandByHashCode.get(commandHashCode);
 
@@ -799,48 +798,46 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private class DependencyOrchestrator { // TODO Insert, Upsert
+	private class DependencyOrchestrator {
+		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
 
-		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph();
 
-		private void register(DmlStrategy command, Records records) {
+		private void register(DmlStrategy strategy, Records records) {
 			for (Record record : records.get()) {
-				this.register(command, record);
+				this.register(strategy, record);
 			}
 		}
 
-		private void register(DmlStrategy command, Record record) {
+		private void register(DmlStrategy strategy, Record record) {
 			EnhancedRecord enhancedRecord = record.get();
 
-			command.validate(enhancedRecord);
-			enhancedRecord.associateRecordWithCommand(command);
+			strategy.validate(enhancedRecord);
+			enhancedRecord.setDatabaseStrategy(strategy);
 
 			this.enhancedRecords.add(enhancedRecord);
 		}
 
 		private void execute(DmlResult result) {
-
-			for (EnhancedRecord enhancedRecord : this.enhancedRecords) {
-				if (enhancedRecord.currentRecord.Id == null) {
-					enhancedRecord.setTemporaryId(); // only to build dependency graph
-				}
-
-			    Id enhancedRecordId = enhancedRecord.getRecordId();
-			
-				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
-
-				enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
-			}
+			this.addTemporaryIdsToBuildDependencyGraph();
 
 			List<List<Id>> executionWaves = this.orderDependencyGraph.computeExecutionWaves();
 
 			for (List<Id> waveRecordIds : executionWaves) {
 				for (ProcessingGroup processingGroup : this.getWaves(waveRecordIds)) {
-					DmlStrategy command = processingGroup.command;
-					result.add(command.getOperationType(), command.commitWork(processingGroup.records)); //TODO
+					DmlStrategy strategy = processingGroup.strategy;
+					result.add(strategy.getOperationType(), strategy.commitWork(processingGroup.records));
 				}
+			}
+		}
+
+		private void addTemporaryIdsToBuildDependencyGraph() {
+			for (EnhancedRecord enhancedRecord : this.enhancedRecords) {
+				enhancedRecord.setTemporaryId();
+				enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
+
+				this.enhancedRecordsById.put(enhancedRecord.getRecordId(), enhancedRecord);
 			}
 		}
 
@@ -850,29 +847,22 @@ global inherited sharing class DML implements Commitable {
 			for (Id enhancedRecordId : enhancedRecordIds) {
 				EnhancedRecord enhancedRecord = this.enhancedRecordsById.get(enhancedRecordId);
 
-				if (enhancedRecord.hasTemporaryId) {
-					enhancedRecord.currentRecord.Id = null; // TODO 
-				}
+				enhancedRecord.clearTemporaryId();
 
-				String commandId = enhancedRecord.command.hashCode();
+				String commandId = enhancedRecord.strategy.operationId();
 
 				if (!processingGroupsByCommandId.containsKey(commandId)) {
-					ProcessingGroup processingGroup = new ProcessingGroup();
-
-					processingGroup.command = enhancedRecord.command;
-					processingGroup.records = new List<EnhancedRecord>();
-
-					processingGroupsByCommandId.put(commandId, processingGroup);
+					processingGroupsByCommandId.put(commandId, new ProcessingGroup(enhancedRecord.strategy));
 				}
 
-				processingGroupsByCommandId.get(commandId).records.add(enhancedRecord);
+				processingGroupsByCommandId.get(commandId).add(enhancedRecord);
 			}
 
 			return processingGroupsByCommandId.values();
 		}
 	}
 
-	private class LinearOrchestrator { // TODO Update, Delete, Merge, Undelete, Publish
+	private class LinearOrchestrator {
 		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private Map<String, ProcessingGroup> processingGroupByCommandId = new Map<String, ProcessingGroup>();
 		private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>{
@@ -889,38 +879,45 @@ global inherited sharing class DML implements Commitable {
 			this.configuration = configuration;
 		}
 
-		private void register(DmlStrategy command, Records records) {
+		private void register(DmlStrategy strategy, Records records) {
 			for (Record record : records.get()) {
-				this.register(command, record);
+				this.register(strategy, record);
 			}
 		}
 
-		private void register(DmlStrategy command, Record record) {
-			command.validate(record.get());
+		private void register(DmlStrategy strategy, Record record) {
+			strategy.validate(record.get());
 			
-			ProcessingGroup processingGroup = this.processingGroupByCommandId.get(command.hashCode()) ;
-
 			EnhancedRecord enhancedRecord = record.get();
+
+			this.executeDuplicatesStrategy(enhancedRecord);
+			this.assignRecordToProcessingGroup(strategy, enhancedRecord);
+		}
+
+		private void executeDuplicatesStrategy(EnhancedRecord enhancedRecord) {
+			if (!enhancedRecord.hasId()) {
+				return;
+			}
 
 			Id enhancedRecordId = enhancedRecord.getRecordId();
 
-			if (enhancedRecordId != null) {
-				if (this.enhancedRecordsById.containsKey(enhancedRecordId)) {
-					this.configuration.duplicateCombineStrategy.combine(this.enhancedRecordsById.get(enhancedRecordId), enhancedRecord);
-				}
-
+			if (!this.enhancedRecordsById.containsKey(enhancedRecordId)) {
 				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
+				return;
 			}
+
+			this.configuration.duplicateCombineStrategy.combine(this.enhancedRecordsById.get(enhancedRecordId), enhancedRecord);
+		}
+
+		private void assignRecordToProcessingGroup(DmlStrategy strategy, EnhancedRecord enhancedRecord) {
+			ProcessingGroup processingGroup = this.processingGroupByCommandId.get(strategy.operationId()) ;
 
 			if (processingGroup == null) {
-				processingGroup = new ProcessingGroup();
+				processingGroup = new ProcessingGroup(strategy);
 
-				processingGroup.command = command;
-
-				this.processingGroupByCommandId.put(command.hashCode(), processingGroup);
-				this.processingGroupsByOperationType.get(command.getOperationType()).add(processingGroup);
+				this.processingGroupByCommandId.put(strategy.operationId(), processingGroup);
+				this.processingGroupsByOperationType.get(strategy.getOperationType()).add(processingGroup);
 			}
-
 
 			processingGroup.add(enhancedRecord);
 		}
@@ -928,15 +925,19 @@ global inherited sharing class DML implements Commitable {
 		private void execute(DmlResult result) {
 			for (OperationType operationType : this.processingGroupsByOperationType.keySet()) {
 				for (ProcessingGroup processingGroup : this.processingGroupsByOperationType.get(operationType)) {
-					result.add(operationType, processingGroup.command.commitWork(processingGroup.records)); 
+					result.add(operationType, processingGroup.strategy.commitWork(processingGroup.records)); 
 				}
 			}
 		}
 	}
 
 	private class ProcessingGroup {
-		private DmlStrategy command;
+		private DmlStrategy strategy;
 		private List<EnhancedRecord> records = new List<EnhancedRecord>();
+
+		private ProcessingGroup(DmlStrategy strategy) {
+			this.strategy = strategy;
+		}
 
 		private void add(EnhancedRecord enhancedRecord) { 
 			this.records.add(enhancedRecord);
@@ -1033,7 +1034,6 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class Configuration {
-		private List<SObjectType> customExecutionOrder = new List<SObjectType>();
 		private System.AccessLevel accessMode = System.AccessLevel.USER_MODE;
 		private Database.DmlOptions options = new Database.DMLOptions();
 		private DmlSharing sharingExecutor = new InheritedSharing();
@@ -1057,10 +1057,6 @@ global inherited sharing class DML implements Commitable {
 			this.sharingExecutor = new WithoutSharing();
 		}
 
-		public void executionOrder(List<SObjectType> customExecutionOrder) {
-			this.customExecutionOrder = customExecutionOrder;
-		}
-
 		public void identifier(String dmlIdentifier) {
 			this.dmlIdentifier = dmlIdentifier;
 		}
@@ -1082,7 +1078,6 @@ global inherited sharing class DML implements Commitable {
 		public void preview() {
 			System.debug(LoggingLevel.ERROR, 
 				'\n\n============ DML Configuration ============' +
-				'\nCustom Execution Order: ' + this.customExecutionOrder +
 				'\nOptions: ' + JSON.serializePretty(this.options) +
 				'\nSharing Executor: ' + String.valueOf(this.sharingExecutor).split(':')[0] +
 				'\nAll Or None: ' + this.allOrNone +
@@ -1166,7 +1161,7 @@ global inherited sharing class DML implements Commitable {
 			return;
 		}
 
-		protected virtual String hashCode() {
+		protected virtual String operationId() {
 			return this.getOperationType().name() + '_' + (this.getObjectType()?.toString() ?? 'EMPTY');
 		}
 	}
@@ -1214,9 +1209,9 @@ global inherited sharing class DML implements Commitable {
 			return this;
 		}
 
-		protected override String hashCode() {
+		protected override String operationId() {
 			String externalId = this.externalIdField == null ? 'Id' : this.externalIdField.toString();
-			return super.hashCode() + '_' + externalId;
+			return super.operationId() + '_' + externalId;
 		}
 
 		protected override OperationType getOperationType() {
@@ -1279,8 +1274,8 @@ global inherited sharing class DML implements Commitable {
 			this.mergeToRecord = mergeToRecord.get();
 		}
 
-		protected override String hashCode() {
-			return super.hashCode() + '_' + this.mergeToRecord.getRecordId();
+		protected override String operationId() {
+			return super.operationId() + '_' + this.mergeToRecord.getRecordId();
 		}
 
 		protected override OperationType getOperationType() {
@@ -1318,8 +1313,8 @@ global inherited sharing class DML implements Commitable {
 			return this;
 		}
 		
-		protected override String hashCode() {
-			return super.hashCode() + '_' + this.makeHardDelete;
+		protected override String operationId() {
+			return super.operationId() + '_' + this.makeHardDelete;
 		}
 
 		protected override OperationType getOperationType() {
@@ -1404,24 +1399,24 @@ global inherited sharing class DML implements Commitable {
 	// Issuers
 
 	private interface DmlSharing {
-		OperationResult execute(DmlStrategy command, List<EnhancedRecord> records);
+		OperationResult execute(DmlStrategy strategy, List<EnhancedRecord> records);
 	}
 
 	private inherited sharing class InheritedSharing implements DmlSharing {
-		public OperationResult execute(DmlStrategy command, List<EnhancedRecord> records) {
-			return command.execute(records);
+		public OperationResult execute(DmlStrategy strategy, List<EnhancedRecord> records) {
+			return strategy.execute(records);
 		}
 	}
 
 	private without sharing class WithoutSharing implements DmlSharing {
-		public OperationResult execute(DmlStrategy command, List<EnhancedRecord> records) {
-			return command.execute(records);
+		public OperationResult execute(DmlStrategy strategy, List<EnhancedRecord> records) {
+			return strategy.execute(records);
 		}
 	}
 
 	private with sharing class WithSharing implements DmlSharing {
-		public OperationResult execute(DmlStrategy command, List<EnhancedRecord> records) {
-			return command.execute(records);
+		public OperationResult execute(DmlStrategy strategy, List<EnhancedRecord> records) {
+			return strategy.execute(records);
 		}
 	}
 
@@ -1497,7 +1492,6 @@ global inherited sharing class DML implements Commitable {
 	}
 	
 	private interface DuplicateCombineStrategy {
-		// void combine(DmlStrategy mergeToCommand, DmlStrategy duplicateCommand);
 		void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord);
 	}
 
@@ -1834,22 +1828,22 @@ global inherited sharing class DML implements Commitable {
 			return this.mockedDmlTypes.contains(dmlType) || (this.mockedObjectTypesByDmlType.get(dmlType) ?? new Set<SObjectType>()).contains(objectType) || this.shouldThrowException(dmlType, objectType);
 		}
 
-		private List<RecordResult> getMockedRecordResults(DmlStrategy command, List<SObject> recordsToProcess) {
-			if (this.shouldThrowException(command.getOperationType(), command.getObjectType())) {
-				if (command.globalConfiguration.allOrNone) {
-					throw new DmlException('Exception thrown for ' + command.getOperationType() + ' operation.');
+		private List<RecordResult> getMockedRecordResults(DmlStrategy strategy, List<SObject> recordsToProcess) {
+			if (this.shouldThrowException(strategy.getOperationType(), strategy.getObjectType())) {
+				if (strategy.globalConfiguration.allOrNone) {
+					throw new DmlException('Exception thrown for ' + strategy.getOperationType() + ' operation.');
 				}
 
 				// all or none is false, so we need to return a list of record results with errors
-				return this.getMockedRecordErrors(command, recordsToProcess);
+				return this.getMockedRecordErrors(strategy, recordsToProcess);
 			}
 
-			return this.getMockedRecordSuccesses(command, recordsToProcess);
+			return this.getMockedRecordSuccesses(strategy, recordsToProcess);
 		}
 
-		private List<RecordResult> getMockedRecordErrors(DmlStrategy command, List<SObject> recordsToProcess) {
+		private List<RecordResult> getMockedRecordErrors(DmlStrategy strategy, List<SObject> recordsToProcess) {
 			List<RecordResult> recordResults = new List<RecordResult>();
-			String errorMessage = 'Exception thrown for ' + command.getOperationType() + ' operation.';
+			String errorMessage = 'Exception thrown for ' + strategy.getOperationType() + ' operation.';
 
 			for (SObject record : recordsToProcess) {
 				RecordSummary recordSummary = new RecordSummary()
@@ -1867,11 +1861,11 @@ global inherited sharing class DML implements Commitable {
 			return recordResults;
 		}
 
-		private List<RecordResult> getMockedRecordSuccesses(DmlStrategy command, List<SObject> recordsToProcess) {
+		private List<RecordResult> getMockedRecordSuccesses(DmlStrategy strategy, List<SObject> recordsToProcess) {
 			List<RecordResult> recordResults = new List<RecordResult>();
 
 			for (SObject record : recordsToProcess) {
-				recordResults.add(command.executeMockedDml(record));
+				recordResults.add(strategy.executeMockedDml(record));
 			}
 
 			return recordResults;
@@ -1881,7 +1875,6 @@ global inherited sharing class DML implements Commitable {
 			return this.thrownExceptionDmlTypes.contains(dmlType) || (this.thrownExceptionDmlTypesByObjectTypes.get(dmlType) ?? new Set<SObjectType>()).contains(objectType);
 		}
 	}
-
 
 	private class DmlRecords implements Records {
 		private List<Record> records = new List<Record>();
@@ -1981,7 +1974,6 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		public DmlRecord withRelationship(SObjectField relationshipField, SObject relatedToRecord) {
-			// this.enhancedRecord.withRelationship(new ParentRelationship(relationshipField, relatedToRecord));
 			this.withRelationship(relationshipField, new EnhancedRecord(relatedToRecord));
 			return this;
 		}
@@ -2008,7 +2000,7 @@ global inherited sharing class DML implements Commitable {
 
 	global class EnhancedRecord {
 		private SObject currentRecord;
-		private DmlStrategy command;
+		private DmlStrategy strategy;
 		private Boolean hasTemporaryId = false;
 
 		private List<ParentRelationship> parentRelationships = new List<ParentRelationship>();
@@ -2034,15 +2026,11 @@ global inherited sharing class DML implements Commitable {
 			this.externalRelationships.add(externalRelationship);
 		}
 
-		private void associateRecordWithCommand(DmlStrategy command) {
-			this.command = command;
+		private void setDatabaseStrategy(DmlStrategy strategy) {
+			this.strategy = strategy;
 		}
 
 		private void addToDependencyGraph(OrderDependencyGraph orderDependencyGraph) {
-			if (orderDependencyGraph == null) {
-				return;
-			}
-
 			orderDependencyGraph.ensureRecordIsTracked(this);
 
 			for (ParentRelationship parentRelationship : this.parentRelationships) {
@@ -2061,8 +2049,21 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private void setTemporaryId() {
+			if (this.hasId()) {
+				return;
+			}
+
 			this.hasTemporaryId = true;
 			this.currentRecord.Id = randomIdGenerator.get(this.getSObjectType());
+		}
+
+		private void clearTemporaryId() {
+			if (!this.hasTemporaryId) {
+				return;
+			}
+
+			this.hasTemporaryId = false;
+			this.currentRecord.Id = null;
 		}
 
 		private SObjectType getSObjectType() {
@@ -2179,7 +2180,7 @@ global inherited sharing class DML implements Commitable {
 			}
 
 			if (prerequisite.getRecordId() == null) {
-				throw new DmlException('Relationship was registered for a record that has not been register yet.');
+				throw new DmlException('Relationship was registered for a record that has not been registered yet.');
 			}
 
 			this.ensureRecordIsTracked(prerequisite);

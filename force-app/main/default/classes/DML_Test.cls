@@ -6015,7 +6015,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-		Assert.isTrue(expectedException.getMessage().contains('Relationship was registered for a record that has not been register yet.'), 'Expected exception message should be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('Relationship was registered for a record that has not been registered yet.'), 'Expected exception message should be thrown.');
 	}
 
 	// SHARED
