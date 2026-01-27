@@ -832,6 +832,8 @@ global inherited sharing class DML implements Commitable {
 					enhancedRecord.setTemporaryId(); // only to build dependency graph
 				}
 
+				System.debug('========> enhancedRecord: ' + enhancedRecord.getRecordId());
+
 			    Id enhancedRecordId = enhancedRecord.getRecordId();
 			
 				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
@@ -840,6 +842,8 @@ global inherited sharing class DML implements Commitable {
 			}
 
 			List<List<Id>> executionWaves = this.orderDependencyGraph.computeExecutionWaves();
+
+			System.debug('========> eexecutionWaves' + executionWaves);
 
 			for (List<Id> waveRecordIds : executionWaves) {
 				for (ProcessingGroup processingGroup : this.getWaves(waveRecordIds)) {
@@ -852,8 +856,12 @@ global inherited sharing class DML implements Commitable {
 		private List<ProcessingGroup> getWaves(List<Id> enhancedRecordIds) {
 			Map<String, ProcessingGroup> processingGroupsByCommandId = new Map<String, ProcessingGroup>();
 
+			System.debug('========> enhancedRecord in getWaves 11: ' + enhancedRecordIds);
+
 			for (Id enhancedRecordId : enhancedRecordIds) {
 				EnhancedRecord enhancedRecord = this.enhancedRecordsById.get(enhancedRecordId);
+
+				System.debug('========> enhancedRecord in getWaves: ' + enhancedRecordId);
 
 				if (enhancedRecord.hasTemporaryId) {
 					enhancedRecord.currentRecord.Id = null; // TODO 
@@ -1348,9 +1356,6 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override RecordSummary executeMockedDml(SObject record) {
-			// if (this.duplicateRecords.isEmpty()) {
-			// 	throw new DmlException('A single merge request must contain at least one record to merge, got none.');
-			// }
 			return new RecordSummary().isSuccess(true).recordId(record.Id);
 		}
 	}
@@ -2240,6 +2245,10 @@ global inherited sharing class DML implements Commitable {
 		private void addDependency(EnhancedRecord prerequisite, EnhancedRecord dependent) {
 			if (prerequisite == dependent) {
 				throw new DmlException('Self-dependency detected for record: ' + prerequisite.getRecordId());
+			}
+
+			if (prerequisite.getRecordId() == null) {
+				throw new DmlException('Relationship was registered for a record that has not been register yet.');
 			}
 
 			this.ensureRecordIsTracked(prerequisite);
