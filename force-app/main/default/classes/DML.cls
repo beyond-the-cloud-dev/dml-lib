@@ -140,7 +140,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	global interface Record {
-		Record with(SObjectField field, Object value); 
+		Record with(SObjectField field, Object value);
 		Record withRelationship(SObjectField targetField, SObject relatedRecord);
 		Record withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
 
@@ -150,7 +150,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	global interface Records {
-		Records with(SObjectField field, Object value); 
+		Records with(SObjectField field, Object value);
 		Records withRelationship(SObjectField targetField, SObject relatedRecord);
 		Records withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
 		
@@ -275,7 +275,7 @@ global inherited sharing class DML implements Commitable {
 	private DependencyOrchestrator dependencyOrchestrator;
 	private LinearOrchestrator linearOrchestrator;
 
-	private Hook hook = null;
+	private Hook hook;
 
 	@TestVisible
 	private static final RandomIdGenerator randomIdGenerator = new RandomIdGenerator();
@@ -323,8 +323,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getInsertCommand(records.getSObjectType()), records);
 	}
 
-	private InsertCommand getInsertCommand(SObjectType objectType) {
-		return new InsertCommand(objectType, this.configuration);
+	private InsertStrategy getInsertCommand(SObjectType objectType) {
+		return new InsertStrategy(objectType, this.configuration);
 	}
 
 	// Update
@@ -361,8 +361,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getUpdateCommand(records.getSObjectType()), records);
 	}
 
-	private UpdateCommand getUpdateCommand(SObjectType objectType) {
-		return new UpdateCommand(objectType, this.configuration);
+	private UpdateStrategy getUpdateCommand(SObjectType objectType) {
+		return new UpdateStrategy(objectType, this.configuration);
 	}
 
 	// Upsert
@@ -407,8 +407,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getUpsertCommand(records.getSObjectType()), records);
 	}
 
-	private UpsertCommand getUpsertCommand(SObjectType objectType) {
-		return new UpsertCommand(objectType, this.configuration);
+	private UpsertStrategy getUpsertCommand(SObjectType objectType) {
+		return new UpsertStrategy(objectType, this.configuration);
 	}
 
 	// Delete
@@ -461,8 +461,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getDeleteCommand(records.getSObjectType()), records);
 	}
 
-	private DeleteCommand getDeleteCommand(SObjectType objectType) {
-		return new DeleteCommand(objectType, this.configuration);
+	private DeleteStrategy getDeleteCommand(SObjectType objectType) {
+		return new DeleteStrategy(objectType, this.configuration);
 	}
 
 	// Hard Delete
@@ -470,7 +470,6 @@ global inherited sharing class DML implements Commitable {
 	global Commitable toHardDelete(Id recordId) {
 		Record dmlRecord = Record(recordId);
 		return this.registerInLinearOrchestrator(this.getDeleteCommand(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
-
 	}
 
 	global Commitable toHardDelete(SObject record) {
@@ -538,8 +537,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getUndeleteCommand(records.getSObjectType()), records);
 	}
 
-	private UndeleteCommand getUndeleteCommand(SObjectType objectType) {
-		return new UndeleteCommand(objectType, this.configuration);
+	private UndeleteStrategy getUndeleteCommand(SObjectType objectType) {
+		return new UndeleteStrategy(objectType, this.configuration);
 	}
 
 	// Merge
@@ -554,7 +553,7 @@ global inherited sharing class DML implements Commitable {
 		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecordId));
 	}
 
-	private Commitable toMerge(MergeCommand mergeCommand, Record duplicatedRecord) {
+	private Commitable toMerge(MergeStrategy mergeCommand, Record duplicatedRecord) {
 		return this.registerInLinearOrchestrator(mergeCommand, duplicatedRecord);
 	}
 
@@ -568,12 +567,12 @@ global inherited sharing class DML implements Commitable {
 		return this.toMerge(this.getMergeCommand(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicatedRecordIds));
 	}
 
-	private Commitable toMerge(MergeCommand mergeCommand, Records duplicateRecords) {
+	private Commitable toMerge(MergeStrategy mergeCommand, Records duplicateRecords) {
 		return this.registerInLinearOrchestrator(mergeCommand, duplicateRecords);
 	}
 
-	private MergeCommand getMergeCommand(SObjectType objectType, Record mergeToRecord) {
-		return new MergeCommand(objectType, this.configuration, mergeToRecord);
+	private MergeStrategy getMergeCommand(SObjectType objectType, Record mergeToRecord) {
+		return new MergeStrategy(objectType, this.configuration, mergeToRecord);
 	}
 
 	// Platform Event
@@ -598,8 +597,8 @@ global inherited sharing class DML implements Commitable {
 		return this.executeImmediately(this.getPlatformEventCommand(dmlRecords.getSObjectType()), dmlRecords);
 	}
 
-	private PlatformEventCommand getPlatformEventCommand(SObjectType objectType) {
-		return new PlatformEventCommand(objectType, this.configuration);
+	private PlatformEventStrategy getPlatformEventCommand(SObjectType objectType) {
+		return new PlatformEventStrategy(objectType, this.configuration);
 	}
 
 	// Helpers
@@ -886,31 +885,32 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private void register(DmlStrategy strategy, Record record) {
-			strategy.validate(record.get());
-			
 			EnhancedRecord enhancedRecord = record.get();
 
-			this.executeDuplicatesStrategy(enhancedRecord);
+			strategy.validate(enhancedRecord);
+
+			if (enhancedRecord.hasId() && this.enhancedRecordsById.containsKey(enhancedRecord.getRecordId())) {
+				this.executeDuplicatesStrategy(enhancedRecord);
+				return;
+			}
+
+			if (enhancedRecord.hasId()) {
+				this.enhancedRecordsById.put(enhancedRecord.getRecordId(), enhancedRecord);
+			}
+			
 			this.assignRecordToProcessingGroup(strategy, enhancedRecord);
 		}
 
-		private void executeDuplicatesStrategy(EnhancedRecord enhancedRecord) {
-			if (!enhancedRecord.hasId()) {
-				return;
-			}
+		private void executeDuplicatesStrategy(EnhancedRecord duplicateRecord) {
+			Id duplicateRecordId = duplicateRecord.getRecordId();
 
-			Id enhancedRecordId = enhancedRecord.getRecordId();
+			EnhancedRecord existingRecord = this.enhancedRecordsById.get(duplicateRecordId);
 
-			if (!this.enhancedRecordsById.containsKey(enhancedRecordId)) {
-				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
-				return;
-			}
-
-			this.configuration.duplicateCombineStrategy.combine(this.enhancedRecordsById.get(enhancedRecordId), enhancedRecord);
+			this.configuration.duplicateCombineStrategy.combine(existingRecord, duplicateRecord);
 		}
 
 		private void assignRecordToProcessingGroup(DmlStrategy strategy, EnhancedRecord enhancedRecord) {
-			ProcessingGroup processingGroup = this.processingGroupByCommandId.get(strategy.operationId()) ;
+			ProcessingGroup processingGroup = this.processingGroupByCommandId.get(strategy.operationId());
 
 			if (processingGroup == null) {
 				processingGroup = new ProcessingGroup(strategy);
@@ -1100,14 +1100,6 @@ global inherited sharing class DML implements Commitable {
 			this.globalConfiguration = configuration;
 		}
 
-		private void preview() {
-			System.debug(LoggingLevel.ERROR,
-				'\n\n============ ' + this.getOperationType() + ' Preview ============'
-				+ '\nObject Type: ' + this.objectType
-				+ '\n=======================================\n'
-			);
-		}
-
 		private SObjectType getObjectType() {
 			return this.objectType;
 		}
@@ -1138,7 +1130,7 @@ global inherited sharing class DML implements Commitable {
 				return operationSummary.setRecordResults(dmlMock.getMockedRecordResults(this, recordsToProcess));
 			}
 
-			return operationSummary.setRecordResults(this.getAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
+			return operationSummary.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
 		}
 		
 		private List<SObject> getRecordsToProcess(List<EnhancedRecord> records) {
@@ -1153,7 +1145,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected abstract OperationType getOperationType();
-		protected abstract DmlResultAdapter getAdapter();
+		protected abstract DmlResultAdapter getResultAdapter();
 		protected abstract List<Object> executeDml(List<SObject> recordsToProcess);
 		protected abstract RecordSummary executeMockedDml(SObject record);
 
@@ -1168,8 +1160,8 @@ global inherited sharing class DML implements Commitable {
 
 	// Commands
 
-	private inherited sharing class InsertCommand extends DmlStrategy {
-		public InsertCommand(SObjectType objectType, Configuration configuration) {
+	private inherited sharing class InsertStrategy extends DmlStrategy {
+		public InsertStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1177,7 +1169,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.INSERT_DML;
 		}
 
-		public override DmlResultAdapter getAdapter() {
+		public override DmlResultAdapter getResultAdapter() {
 			return new SaveResultAdapter();
 		}
 
@@ -1197,14 +1189,14 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class UpsertCommand extends DmlStrategy {
+	private inherited sharing class UpsertStrategy extends DmlStrategy {
 		private SObjectField externalIdField;
 
-		public UpsertCommand(SObjectType objectType, Configuration configuration) {
+		public UpsertStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
-		private UpsertCommand withExternalIdField(SObjectField externalIdField) {
+		private UpsertStrategy withExternalIdField(SObjectField externalIdField) {
 			this.externalIdField = externalIdField;
 			return this;
 		}
@@ -1218,7 +1210,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.UPSERT_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new UpsertResultAdapter();
 		}
 
@@ -1238,8 +1230,8 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class UpdateCommand extends DmlStrategy {
-		public UpdateCommand(SObjectType objectType, Configuration configuration) {
+	private inherited sharing class UpdateStrategy extends DmlStrategy {
+		public UpdateStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1247,7 +1239,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.UPDATE_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new SaveResultAdapter();
 		}
 
@@ -1266,10 +1258,10 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class MergeCommand extends DmlStrategy {
+	private inherited sharing class MergeStrategy extends DmlStrategy {
 		private EnhancedRecord mergeToRecord;
 
-		public MergeCommand(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
+		public MergeStrategy(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
 			super(objectType, configuration);
 			this.mergeToRecord = mergeToRecord.get();
 		}
@@ -1282,7 +1274,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.MERGE_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new MergeResultAdapter();
 		}
 
@@ -1301,14 +1293,14 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class DeleteCommand extends DmlStrategy {
+	private inherited sharing class DeleteStrategy extends DmlStrategy {
 		private Boolean makeHardDelete = false;
 
-		public DeleteCommand(SObjectType objectType, Configuration configuration) {
+		public DeleteStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
-		private DeleteCommand withHardDelete() {
+		private DeleteStrategy withHardDelete() {
 			this.makeHardDelete = true;
 			return this;
 		}
@@ -1321,7 +1313,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.DELETE_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new DeleteResultAdapter();
 		}
 
@@ -1346,8 +1338,8 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class UndeleteCommand extends DmlStrategy {
-		public UndeleteCommand(SObjectType objectType, Configuration configuration) {
+	private inherited sharing class UndeleteStrategy extends DmlStrategy {
+		public UndeleteStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1355,7 +1347,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.UNDELETE_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new UndeleteResultAdapter();
 		}
 
@@ -1374,8 +1366,8 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private inherited sharing class PlatformEventCommand extends DmlStrategy { 
-		public PlatformEventCommand(SObjectType objectType, Configuration configuration) {
+	private inherited sharing class PlatformEventStrategy extends DmlStrategy { 
+		public PlatformEventStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1383,7 +1375,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.PUBLISH_DML;
 		}
 
-		protected override DmlResultAdapter getAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new SaveResultAdapter();
 		}
 
@@ -2071,9 +2063,6 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private SObject getRecord() {
-			if (this.hasTemporaryId) {
-				this.currentRecord.Id = null;
-			}
 			return this.currentRecord;
 		}
 
