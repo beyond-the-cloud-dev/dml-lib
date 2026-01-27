@@ -1003,37 +1003,37 @@ private class DML_Test {
 		Assert.isFalse(operationResult.hasFailures(), 'Updated operation result should not have failures.');
 	}
 
-	// @IsTest
-	// static void toUpdateSingleRecordTwice() {
-	// 	// Setup
-	// 	Account account1 = getAccount(1);
-	// 	insert account1;
+	@IsTest
+	static void toUpdateSingleRecordTwice() {
+		// Setup
+		Account account1 = getAccount(1);
+		insert account1;
 
-	// 	// Test
-	// 	Test.startTest();
-	// 		Exception expectedException = null;
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
 
-	// 		try {	
-	// 			account1.Name = 'Updated Test Account';
+			try {	
+				account1.Name = 'Updated Test Account';
 
-	// 			DML db = new DML();
+				DML db = new DML();
 	
-	// 			db.toUpdate(account1);
+				db.toUpdate(account1);
 	
-	// 			Account duplicatedAccount = new Account(Id = account1.Id, Name = 'Updated Test Account 2');
+				Account duplicatedAccount = new Account(Id = account1.Id, Name = 'Updated Test Account 2');
 				
-	// 			db.toUpdate(duplicatedAccount);
+				db.toUpdate(duplicatedAccount);
 	
-	// 			db.commitWork();
-	// 		} catch (Exception e) {
-	// 			expectedException = e;
-	// 		}
-	// 	Test.stopTest();
+				db.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
 		
-	// 	// Verify
-	// 	Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-	// 	Assert.areEqual('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
-	// }
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.areEqual('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+	}
 
 	// @IsTest
 	// static void toUpdateSingleRecordTwiceWithMergeOnDuplicate() {

@@ -286,7 +286,7 @@ global inherited sharing class DML implements Commitable {
 		this.configuration = new Configuration();
 		this.commandsStorage = new CommandsStorage();
 		this.dependencyOrchestrator = new DependencyOrchestrator();
-		this.linearOrchestrator = new LinearOrchestrator();
+		this.linearOrchestrator = new LinearOrchestrator(this.configuration);
 	}
 
 	global DML(List<SObjectType> customExecutionOrder) {
@@ -784,7 +784,7 @@ global inherited sharing class DML implements Commitable {
 
 	private void reset() {
 		this.dependencyOrchestrator = new DependencyOrchestrator();
-		this.linearOrchestrator = new LinearOrchestrator();
+		this.linearOrchestrator = new LinearOrchestrator(this.configuration);
 	}
 
 	private class CommandsStorage {
@@ -805,6 +805,8 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class DependencyOrchestrator { // TODO Insert, Upsert
+		private List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
+
 		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph();
 
@@ -815,27 +817,28 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private void register(DmlStrategy command, Record record) {
-			command.validate(record.get());
-
 			EnhancedRecord enhancedRecord = record.get();
 
-			if (enhancedRecord.currentRecord.Id == null) {
-				enhancedRecord.setTemporaryId();
-			}
-
-			Id enhancedRecordId = enhancedRecord.getRecordId();
-
-			if (this.enhancedRecordsById.containsKey(enhancedRecordId)) { // TODO Or maybe just merge ??
-				throw new DmlException('Record already registered: ' + enhancedRecordId);
-			}
-
-			this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
-
+			command.validate(enhancedRecord);
 			enhancedRecord.associateRecordWithCommand(command);
-			enhancedRecord.addToDependencyGraph(this.orderDependencyGraph); // TODO this.orderDependencyGraph.add(..)
+
+			this.enhancedRecords.add(enhancedRecord);
 		}
 
 		private void execute(DmlResult result) {
+
+			for (EnhancedRecord enhancedRecord : this.enhancedRecords) {
+				if (enhancedRecord.currentRecord.Id == null) {
+					enhancedRecord.setTemporaryId(); // only to build dependency graph
+				}
+
+			    Id enhancedRecordId = enhancedRecord.getRecordId();
+			
+				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
+
+				enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
+			}
+
 			List<List<Id>> executionWaves = this.orderDependencyGraph.computeExecutionWaves();
 
 			for (List<Id> waveRecordIds : executionWaves) {
@@ -875,6 +878,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class LinearOrchestrator { // TODO Update, Delete, Merge, Undelete, Publish
+		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private Map<String, ProcessingGroup> processingGroupByCommandId = new Map<String, ProcessingGroup>();
 		private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>{
 			OperationType.UPDATE_DML => new List<ProcessingGroup>(),
@@ -885,6 +889,10 @@ global inherited sharing class DML implements Commitable {
 		};
 
 		private Configuration configuration;
+
+		public LinearOrchestrator(Configuration configuration) {
+			this.configuration = configuration;
+		}
 
 		private void register(DmlStrategy command, Records records) {
 			for (Record record : records.get()) {
@@ -899,6 +907,16 @@ global inherited sharing class DML implements Commitable {
 
 			EnhancedRecord enhancedRecord = record.get();
 
+			Id enhancedRecordId = enhancedRecord.getRecordId();
+
+			if (enhancedRecordId != null) {
+				if (this.enhancedRecordsById.containsKey(enhancedRecordId)) {
+					this.configuration.duplicateCombineStrategy.combine(this.enhancedRecordsById.get(enhancedRecordId), enhancedRecord);
+				}
+
+				this.enhancedRecordsById.put(enhancedRecordId, enhancedRecord);
+			}
+
 			// this.configuration.duplicateCombineStrategy.combine(existingCommand, command); // TODO
 
 			if (processingGroup == null) {
@@ -909,6 +927,7 @@ global inherited sharing class DML implements Commitable {
 				this.processingGroupByCommandId.put(command.hashCode(), processingGroup);
 				this.processingGroupsByOperationType.get(command.getOperationType()).add(processingGroup);
 			}
+
 
 			processingGroup.add(enhancedRecord);
 		}
@@ -928,6 +947,8 @@ global inherited sharing class DML implements Commitable {
 
 		private void add(EnhancedRecord enhancedRecord) { // TODO Here combine strategy should be applied
 			this.records.add(enhancedRecord);
+
+
 		}
 	}
 
@@ -1105,11 +1126,6 @@ global inherited sharing class DML implements Commitable {
 			this.globalConfiguration = configuration;
 		}
 
-		private DmlStrategy setGlobalConfiguration(Configuration globalConfiguration) {
-			this.globalConfiguration = globalConfiguration;
-			return this;
-		}
-
 		private void preview() {
 			System.debug(LoggingLevel.ERROR,
 				'\n\n============ ' + this.getOperationType() + ' Preview ============'
@@ -1154,9 +1170,11 @@ global inherited sharing class DML implements Commitable {
 
 		private OperationResult execute(Records records) {
 			List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
+
 			for (Record record : records.get()) {
 				enhancedRecords.add(record.get());
 			}
+			System.debug('========> execute: ' + enhancedRecords);
 			return this.execute(enhancedRecords);
 		}
 
@@ -1528,38 +1546,24 @@ global inherited sharing class DML implements Commitable {
 	}
 	
 	private interface DuplicateCombineStrategy {
-		void combine(DmlStrategy mergeToCommand, DmlStrategy duplicateCommand);
-		// void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord);
+		// void combine(DmlStrategy mergeToCommand, DmlStrategy duplicateCommand);
+		void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord);
 	}
 
 	private class ThrownExceptionDuplicateStrategy implements DuplicateCombineStrategy {
-		public void combine(DmlStrategy mergeToCommand, DmlStrategy duplicateCommand) {
-			// for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
-			// 	if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
-			// 		throw new DmlException('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.');
-			// 	}
-			// }
-
-			// mergeToCommand.enhancedRecords.addAll(duplicateCommand.enhancedRecords);
+		public void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord) {
+			throw new DmlException('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.');
 		}
 	}
 
 	private class MergeDuplicateStrategy implements DuplicateCombineStrategy {
-		public void combine(DmlStrategy mergeToCommand, DmlStrategy duplicateCommand) {
-			// for (EnhancedRecord newEnhancedRecord : duplicateCommand.enhancedRecords) {
-			// 	if (mergeToCommand.enhancedRecords.contains(newEnhancedRecord)) {
-			// 		Integer index = mergeToCommand.enhancedRecords.indexOf(newEnhancedRecord);
+		public void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord) {
+			SObject existingRecord = mergeToRecord.getRecord();
+			SObject newRecord = duplicateRecord.getRecord();
 
-			// 		SObject existingRecord = mergeToCommand.enhancedRecords[index].getRecord();
-			// 		SObject newRecord = newEnhancedRecord.getRecord();
-
-			// 		for (String field : newRecord.getPopulatedFieldsAsMap().keySet()) {
-			// 			existingRecord.put(field, newRecord.get(field));
-			// 		}
-			// 	} else {
-			// 		mergeToCommand.enhancedRecords.add(newEnhancedRecord);
-			// 	}
-			// }
+			for (String field : newRecord.getPopulatedFieldsAsMap().keySet()) {
+				existingRecord.put(field, newRecord.get(field));
+			}
 		}
 	}
 
@@ -2051,7 +2055,7 @@ global inherited sharing class DML implements Commitable {
 	global class EnhancedRecord {
 		private SObject currentRecord;
 		private DmlStrategy command;
-		private Id operationId;
+		// private Id operationId;
 		private Boolean hasTemporaryId = false;
 
 		private List<ParentRelationship> parentRelationships = new List<ParentRelationship>();
@@ -2059,7 +2063,7 @@ global inherited sharing class DML implements Commitable {
 
 		private EnhancedRecord(SObject currentRecord) {
 			this.currentRecord = currentRecord;
-			this.operationId = currentRecord.Id;
+			// this.operationId = currentRecord.Id;
 		}
 
 		private EnhancedRecord(Id currentRecordId) {
