@@ -1742,7 +1742,7 @@ global inherited sharing class DML implements Commitable {
 			return this.thenMockDml(OperationType.PUBLISH_DML);
 		}
 
-		public Mockable thenMockDml(OperationType dmlType) {
+		private Mockable thenMockDml(OperationType dmlType) {
 			this.mockedDmlTypes.add(dmlType);
 			return this;
 		}
