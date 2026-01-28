@@ -1043,7 +1043,7 @@ global inherited sharing class DML implements Commitable {
 
 	private class Configuration {
 		private System.AccessLevel accessMode = System.AccessLevel.USER_MODE;
-		private Database.DmlOptions options = new Database.DMLOptions();
+		private Database.DmlOptions options = new Database.DmlOptions();
 		private DmlSharing sharingExecutor = new InheritedSharing();
 		private DuplicateCombineStrategy duplicateCombineStrategy = new ThrownExceptionDuplicateStrategy();
 		private Boolean allOrNone = true;
@@ -1993,6 +1993,10 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private DmlRecord(Id recordId) {
+			if (recordId == null) {
+				throw new DmlException('Invalid argument: recordId. Record ID cannot be null.');
+			}
+
 			this.enhancedRecord = new EnhancedRecord(recordId);
 		}
 
@@ -2284,7 +2288,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private String getPrefix(SObjectType objectType) {
-			String prefix = this.prefixBySObject?.get(objectType);
+			String prefix = this.prefixBySObject.get(objectType);
 			
 			if (prefix == null) {
 				prefix = objectType.getDescribe().getKeyPrefix();

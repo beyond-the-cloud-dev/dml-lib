@@ -5370,6 +5370,7 @@ private class DML_Test {
 			try {
 				new DML()
 					.toInsert(account)
+					.toInsert(account)
 					.commitTransaction();
 			} catch (Exception e) {
 				expectedException = e;
@@ -5378,7 +5379,7 @@ private class DML_Test {
 
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception should be thrown.');
-	}
+	} 
 
 	@IsTest
 	static void commitTransactionWhenAllOrNoneIsFalse() {
