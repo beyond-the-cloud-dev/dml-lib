@@ -89,118 +89,83 @@ private class DML_Test {
 		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
 
 		Assert.areEqual(newAccount.Id, newContact.AccountId, 'Contact should be related to Account.');
-	}       
-
-	@IsTest
-	static void toInsertWithRelationshipSingleRecord333() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Account newAccount2 = getAccount(2);
-		Contact newContact = getContact(1);
-
-		// Test
-		Test.startTest();
-			new DML()
-				.toInsert(newAccount)
-				.toInsert(DML.Record(newAccount2).withRelationship(Account.ParentId, newAccount))
-				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
-				.commitWork();
-		Test.stopTest();
-
-		// Verify
-		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-
-		Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
-	} 
-
-	@IsTest
-	static void toInsertWithRelationshipSingleRecord3444() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Account newAccount2 = getAccount(2);
-		Contact newContact = getContact(1);
-
-		// Test
-		Test.startTest();
-			new DML()
-				.toInsert(newAccount)
-				.toInsert(newAccount2)
-				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
-				.commitWork();
-		Test.stopTest();
-
-		// Verify
-		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
-	} 
-
-	@IsTest
-	static void toInsertWithRelationshipSingleRecord344444() {
-		// Setup
-		Account newAccount = getAccount(1);
-		Account newAccount2 = getAccount(2);
-		Account newAccount3 = getAccount(3);
-		Contact newContact = getContact(1);
-
-		// Test
-		Test.startTest();
-			new DML()
-				.toInsert(newAccount)
-				.toInsert(newAccount2)
-				.toInsert(DML.Record(newAccount3).withRelationship(Account.ParentId, newAccount2))
-				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
-				.commitWork();
-		Test.stopTest();
-
-		// Verify
-		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Account should be inserted.');
-		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
-
-		// Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
-
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
-		Assert.areEqual(newAccount2.Id, newAccount3.ParentId, 'Account 3 should be related to Account 2.');
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
-	} 
+	}
 	
 	@IsTest
-	static void toInsertWithRelationshipSingleRecord344444555() {
+	static void toInsertWithDifferentRecordTypesAndRelationships() {
 		// Setup
-		Account newAccount = getAccount(1);
-		Account newAccount2 = getAccount(2);
-		Account newAccount3 = getAccount(3);
-		Contact newContact = getContact(1);
-		Opportunity newOpportunity = getOpportunity(1);
-		Lead newLead = getLead(1);
+		Account account1 = getAccount(1);
+		Account account2 = getAccount(2);
+		Account account3 = getAccount(3);
+		Contact contact1 = getContact(1);
+		Opportunity opportunity1 = getOpportunity(1);
+		Lead lead1 = getLead(1);
 
 		// Test
 		Test.startTest();
-			new DML()
-				.toInsert(newAccount)
-				.toInsert(newAccount2)
-				.toInsert(DML.Record(newAccount3).withRelationship(Account.ParentId, newAccount2))
-				.toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount2))
-				.toInsert(newOpportunity)
-				.toInsert(newLead)
+			Integer dmlsBefore = Limits.getDmlStatements();
+
+			DML.Result result = new DML()
+				.toInsert(account1)
+				.toInsert(account2)
+				.toInsert(DML.Record(account3).withRelationship(Account.ParentId, account2))
+				.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account2))
+				.toInsert(opportunity1)
+				.toInsert(lead1)
 				.commitWork();
+				
+			Integer dmlsAfter = Limits.getDmlStatements();
 		Test.stopTest();
 
 		// Verify
+		Assert.areEqual(dmlsAfter - dmlsBefore, 5, '5 DML statements should be executed');
+
 		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Account should be inserted.');
 		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
 		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
 		Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Lead should be inserted.');
 
-		// Assert.areEqual(newAccount.Id, newAccount2.ParentId, 'Account 2 should be related to Account.');
+		Assert.areEqual(account2.Id, contact1.AccountId, 'Contact should be related to Account 2.');
+		Assert.areEqual(account2.Id, account3.ParentId, 'Account 3 should be related to Account 2.');
 
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account 2.');
-		Assert.areEqual(newAccount2.Id, newAccount3.ParentId, 'Account 3 should be related to Account 2.');
-		Assert.areEqual(newAccount2.Id, newContact.AccountId, 'Contact should be related to Account.');
+		Assert.areEqual(4, result.inserts().size(), 'Inserted operation result should contain 4 results.');
+		Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+		Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+		Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+		Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
+
+		DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+
+		Assert.areEqual(3, operationResult.records().size(), 'Inserted operation result should contain the inserted records.');
+		Assert.areEqual(3, operationResult.recordResults().size(), 'Inserted operation result should contain the inserted record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Inserted operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, operationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Inserted operation result should not have failures.');
+
+		DML.OperationResult contactOperationResult = result.insertsOf(Contact.SObjectType);
+
+		Assert.areEqual(1, contactOperationResult.records().size(), 'Inserted operation result should contain the inserted record.');
+		Assert.areEqual(1, contactOperationResult.recordResults().size(), 'Inserted operation result should contain the inserted record results.');
+		Assert.areEqual(Contact.SObjectType, contactOperationResult.objectType(), 'Inserted operation result should contain Contact object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, contactOperationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(contactOperationResult.hasFailures(), 'Inserted operation result should not have failures.');
+
+		DML.OperationResult opportunityOperationResult = result.insertsOf(Opportunity.SObjectType);
+
+		Assert.areEqual(1, opportunityOperationResult.records().size(), 'Inserted operation result should contain the inserted record.');
+		Assert.areEqual(1, opportunityOperationResult.recordResults().size(), 'Inserted operation result should contain the inserted record results.');
+		Assert.areEqual(Opportunity.SObjectType, opportunityOperationResult.objectType(), 'Inserted operation result should contain Opportunity object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, opportunityOperationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(opportunityOperationResult.hasFailures(), 'Inserted operation result should not have failures.');
+
+		DML.OperationResult leadOperationResult = result.insertsOf(Lead.SObjectType);
+
+		Assert.areEqual(1, leadOperationResult.records().size(), 'Inserted operation result should contain the inserted record.');
+		Assert.areEqual(1, leadOperationResult.recordResults().size(), 'Inserted operation result should contain the inserted record results.');
+		Assert.areEqual(Lead.SObjectType, leadOperationResult.objectType(), 'Inserted operation result should contain Lead object type.');
+		Assert.areEqual(DML.OperationType.INSERT_DML, leadOperationResult.operationType(), 'Inserted operation result should contain insert type.');
+		Assert.isFalse(leadOperationResult.hasFailures(), 'Inserted operation result should not have failures.');
 	} 
 
 	@IsTest

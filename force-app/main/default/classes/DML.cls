@@ -553,8 +553,8 @@ global inherited sharing class DML implements Commitable {
 		return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecordId));
 	}
 
-	private Commitable toMerge(MergeStrategy mergeCommand, Record duplicatedRecord) {
-		return this.registerInLinearOrchestrator(mergeCommand, duplicatedRecord);
+	private Commitable toMerge(MergeStrategy mergeStrategy, Record duplicatedRecord) {
+		return this.registerInLinearOrchestrator(mergeStrategy, duplicatedRecord);
 	}
 
 	global Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
@@ -567,8 +567,8 @@ global inherited sharing class DML implements Commitable {
 		return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicatedRecordIds));
 	}
 
-	private Commitable toMerge(MergeStrategy mergeCommand, Records duplicateRecords) {
-		return this.registerInLinearOrchestrator(mergeCommand, duplicateRecords);
+	private Commitable toMerge(MergeStrategy mergeStrategy, Records duplicateRecords) {
+		return this.registerInLinearOrchestrator(mergeStrategy, duplicateRecords);
 	}
 
 	private MergeStrategy getMergeStrategy(SObjectType objectType, Record mergeToRecord) {
@@ -945,16 +945,24 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class DmlResult implements Result {
-		private Map<OperationType, Map<SObjectType, OperationResult>> operationResultsByObjectType = new Map<OperationType, Map<SObjectType, OperationResult>>();
+		private Map<OperationType, Map<SObjectType, SObjectAggregatedResult>> operationResultsByObjectType = new Map<OperationType, Map<SObjectType, SObjectAggregatedResult>>();
 
 		public DmlResult() {
 			for (OperationType operationType : OperationType.values()) {
-				this.operationResultsByObjectType.put(operationType, new Map<SObjectType, OperationResult>());
+				this.operationResultsByObjectType.put(operationType, new Map<SObjectType, SObjectAggregatedResult>());
 			}
 		}
 
 		public DmlResult add(OperationType operationType, OperationResult result) {
-			this.operationResultsByObjectType.get(operationType).put(result.objectType(), result);
+			SObjectAggregatedResult aggregatedResult = this.operationResultsByObjectType.get(operationType).get(result.objectType());
+
+			if (aggregatedResult == null) {
+				aggregatedResult = new SObjectAggregatedResult(result.objectType(), operationType);
+				this.operationResultsByObjectType.get(operationType).put(result.objectType(), aggregatedResult);
+			}
+
+			aggregatedResult.add(result);
+
 			return this;
 		}
 
@@ -1019,7 +1027,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private OperationResult getOperationResult(OperationType operationType, SObjectType objectType) {
-			return this.operationResultsByObjectType.get(operationType).get(objectType) ?? new OperationSummary(objectType, operationType);
+			return this.operationResultsByObjectType.get(operationType).get(objectType) ?? new SObjectAggregatedResult(objectType, operationType);
 		}
 
 		public List<OperationResult> all() {
@@ -1108,7 +1116,6 @@ global inherited sharing class DML implements Commitable {
 			return this.globalConfiguration.sharingExecutor.execute(this, records);
 		}
 
-		// TODO TO remove
 		private OperationResult execute(Records records) {
 			List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
 
@@ -1122,15 +1129,15 @@ global inherited sharing class DML implements Commitable {
 		private OperationResult execute(List<EnhancedRecord> records) {
 			List<SObject> recordsToProcess = this.getRecordsToProcess(records);
 
-			OperationSummary operationSummary = new OperationSummary(this.objectType, this.getOperationType()).setRecords(recordsToProcess);
+			ExecutionResult result = new ExecutionResult(this.objectType, this.getOperationType()).setRecords(recordsToProcess);
 
 			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
 
 			if (dmlMock != null && dmlMock.shouldBeMocked(this.getOperationType(), this.objectType)) {
-				return operationSummary.setRecordResults(dmlMock.getMockedRecordResults(this, recordsToProcess));
+				return result.setRecordResults(dmlMock.getMockedRecordResults(this, recordsToProcess));
 			}
 
-			return operationSummary.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
+			return result.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
 		}
 		
 		private List<SObject> getRecordsToProcess(List<EnhancedRecord> records) {
@@ -1169,7 +1176,7 @@ global inherited sharing class DML implements Commitable {
 			return OperationType.INSERT_DML;
 		}
 
-		public override DmlResultAdapter getResultAdapter() {
+		protected override DmlResultAdapter getResultAdapter() {
 			return new SaveResultAdapter();
 		}
 
@@ -1263,6 +1270,7 @@ global inherited sharing class DML implements Commitable {
 
 		public MergeStrategy(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
 			super(objectType, configuration);
+			this.validate(mergeToRecord.get());
 			this.mergeToRecord = mergeToRecord.get();
 		}
 
@@ -1279,7 +1287,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		protected override void validate(EnhancedRecord enhancedRecord) {
-			if (!mergeToRecord.hasId()) {
+			if (!enhancedRecord.hasId()) {
 				throw new DmlException('Only existing records can be merged.');
 			}
 		}
@@ -1504,41 +1512,20 @@ global inherited sharing class DML implements Commitable {
 		}
 	}
 
-	private class OperationSummary implements OperationResult {
+	private abstract class DmlOperationResult implements OperationResult {
 		private OperationType type;
 		private SObjectType objectType;
 		private List<RecordResult> recordResults = new List<RecordResult>();
 		private List<SObject> records = new List<SObject>();
 
+		private Boolean isResultsCached = false;
 		private List<SObject> cachedSuccesses = new List<SObject>();
 		private List<SObject> cachedFailures = new List<SObject>();
 		private List<Error> cachedErrors = new List<Error>();
 
-		private OperationSummary(SObjectType objectType, OperationType type) {
-			this.objectType = objectType;
+		private DmlOperationResult(OperationType type, SObjectType objectType) {
 			this.type = type;
-		}
-
-		private OperationSummary setRecords(List<SObject> records) {
-			this.records = records;
-			return this;
-		}
-
-		private OperationSummary setRecordResults(List<RecordResult> recordResults) {
-			this.recordResults = recordResults;
-			this.flatResults();
-			return this;
-		}
-
-		private void flatResults() {
-			for (RecordResult recordResult : this.recordResults) {
-				if (recordResult.isSuccess()) {
-					this.cachedSuccesses.add(recordResult.record());
-				} else {
-					this.cachedErrors.addAll(recordResult.errors());
-					this.cachedFailures.add(recordResult.record());
-				}
-			}
+			this.objectType = objectType;
 		}
 
 		public SObjectType objectType() {
@@ -1554,6 +1541,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		public List<Error> errors() {
+			this.cacheResults();
 			return this.cachedErrors;
 		}
 
@@ -1562,15 +1550,63 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		public List<SObject> successes() {
+			this.cacheResults();
 			return this.cachedSuccesses;
 		}
 
 		public List<SObject> failures() {
+			this.cacheResults();
 			return this.cachedFailures;
 		}
 
 		public List<RecordResult> recordResults() {
 			return this.recordResults;
+		}
+
+		private void cacheResults() {
+			if (this.isResultsCached) {
+				return;
+			}
+
+			for (RecordResult recordResult : this.recordResults) {
+				if (recordResult.isSuccess()) {
+					this.cachedSuccesses.add(recordResult.record());
+					continue;
+				} 
+
+				this.cachedErrors.addAll(recordResult.errors());
+				this.cachedFailures.add(recordResult.record());
+			}
+
+			this.isResultsCached = true;
+		}
+	}
+
+	private class ExecutionResult extends DmlOperationResult {
+		private ExecutionResult(SObjectType objectType, OperationType type) {
+			super(type, objectType);
+		}
+
+		private ExecutionResult setRecords(List<SObject> records) {
+			this.records = records;
+			return this;
+		}
+
+		private ExecutionResult setRecordResults(List<RecordResult> recordResults) {
+			this.recordResults = recordResults;
+			return this;
+		}
+	}
+
+	private class SObjectAggregatedResult extends DmlOperationResult {
+		private SObjectAggregatedResult(SObjectType objectType, OperationType type) {
+			super(type, objectType);
+		}
+
+		private SObjectAggregatedResult add(OperationResult recordResult) {
+			this.recordResults.addAll(recordResult.recordResults());
+			this.records.addAll(recordResult.records());
+			return this;
 		}
 	}
 
