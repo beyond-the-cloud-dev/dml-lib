@@ -170,19 +170,19 @@ global inherited sharing class DML implements Commitable {
 		List<OperationResult> merges();
 		List<OperationResult> events();
 		// Per Object OperationType
-		OperationResult insertsOf(Schema.SObjectType objectType);
-		OperationResult updatesOf(Schema.SObjectType objectType);
-		OperationResult upsertsOf(Schema.SObjectType objectType);
-		OperationResult deletesOf(Schema.SObjectType objectType);
-		OperationResult undeletesOf(Schema.SObjectType objectType);
-		OperationResult mergesOf(Schema.SObjectType objectType);
-		OperationResult eventsOf(Schema.SObjectType objectType);
+		OperationResult insertsOf(SObjectType objectType);
+		OperationResult updatesOf(SObjectType objectType);
+		OperationResult upsertsOf(SObjectType objectType);
+		OperationResult deletesOf(SObjectType objectType);
+		OperationResult undeletesOf(SObjectType objectType);
+		OperationResult mergesOf(SObjectType objectType);
+		OperationResult eventsOf(SObjectType objectType);
 	}
 
 	global interface OperationResult {
 		// Metadata
 		DML.OperationType operationType();
-		Schema.SObjectType objectType();
+		SObjectType objectType();
 		Boolean hasFailures();
 		// Errors
 		List<Error> errors();
@@ -825,8 +825,7 @@ global inherited sharing class DML implements Commitable {
 
 			for (List<Id> waveRecordIds : executionWaves) {
 				for (ProcessingGroup processingGroup : this.groupRecordsByStrategy(waveRecordIds)) {
-					DmlStrategy strategy = processingGroup.strategy;
-					result.add(strategy.getOperationType(), strategy.commitWork(processingGroup.records));
+					result.add(processingGroup.strategy.commitWork(processingGroup.records));
 				}
 			}
 		}
@@ -874,7 +873,7 @@ global inherited sharing class DML implements Commitable {
 
 		private Configuration configuration;
 
-		public LinearOrchestrator(Configuration configuration) {
+		private LinearOrchestrator(Configuration configuration) {
 			this.configuration = configuration;
 		}
 
@@ -925,7 +924,7 @@ global inherited sharing class DML implements Commitable {
 		private void execute(DmlResult result) {
 			for (OperationType operationType : this.processingGroupsByOperationType.keySet()) {
 				for (ProcessingGroup processingGroup : this.processingGroupsByOperationType.get(operationType)) {
-					result.add(operationType, processingGroup.strategy.commitWork(processingGroup.records)); 
+					result.add(processingGroup.strategy.commitWork(processingGroup.records)); 
 				}
 			}
 		}
@@ -947,18 +946,21 @@ global inherited sharing class DML implements Commitable {
 	private class DmlResult implements Result {
 		private Map<OperationType, Map<SObjectType, SObjectAggregatedResult>> operationResultsByObjectType = new Map<OperationType, Map<SObjectType, SObjectAggregatedResult>>();
 
-		public DmlResult() {
+		private DmlResult() {
 			for (OperationType operationType : OperationType.values()) {
 				this.operationResultsByObjectType.put(operationType, new Map<SObjectType, SObjectAggregatedResult>());
 			}
 		}
 
-		public DmlResult add(OperationType operationType, OperationResult result) {
-			SObjectAggregatedResult aggregatedResult = this.operationResultsByObjectType.get(operationType).get(result.objectType());
+		private DmlResult add(OperationResult result) {
+			OperationType operationType = result.operationType();
+			SObjectType objectType = result.objectType();
+
+			SObjectAggregatedResult aggregatedResult = this.operationResultsByObjectType.get(operationType).get(objectType);
 
 			if (aggregatedResult == null) {
-				aggregatedResult = new SObjectAggregatedResult(result.objectType(), operationType);
-				this.operationResultsByObjectType.get(operationType).put(result.objectType(), aggregatedResult);
+				aggregatedResult = new SObjectAggregatedResult(operationType, objectType);
+				this.operationResultsByObjectType.get(operationType).put(objectType, aggregatedResult);
 			}
 
 			aggregatedResult.add(result);
@@ -1027,7 +1029,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private OperationResult getOperationResult(OperationType operationType, SObjectType objectType) {
-			return this.operationResultsByObjectType.get(operationType).get(objectType) ?? new SObjectAggregatedResult(objectType, operationType);
+			return this.operationResultsByObjectType.get(operationType).get(objectType) ?? new SObjectAggregatedResult(operationType, objectType);
 		}
 
 		public List<OperationResult> all() {
@@ -1049,41 +1051,41 @@ global inherited sharing class DML implements Commitable {
 		private Boolean allOrNone = true;
 		private String dmlIdentifier = null;
 
-		public Configuration() {
+		private Configuration() {
 			this.options.optAllOrNone = true;
 		}
 
-		public void accessMode(System.AccessLevel accessMode) {
+		private void accessMode(System.AccessLevel accessMode) {
 			this.accessMode = accessMode;
 		}
 
-		public void withSharing() {
+		private void withSharing() {
 			this.sharingExecutor = new WithSharing();
 		}
 
-		public void withoutSharing() {
+		private void withoutSharing() {
 			this.sharingExecutor = new WithoutSharing();
 		}
 
-		public void identifier(String dmlIdentifier) {
+		private void identifier(String dmlIdentifier) {
 			this.dmlIdentifier = dmlIdentifier;
 		}
 
-		public void allowPartialSuccess() {
+		private void allowPartialSuccess() {
 			this.allOrNone = false;
 			this.options.optAllOrNone = false;
 		}
 
-		public void combineOnDuplicate() {
+		private void combineOnDuplicate() {
 			this.duplicateCombineStrategy = new MergeDuplicateStrategy();
 		}
 
-		public void options(Database.DmlOptions options) {
+		private void options(Database.DmlOptions options) {
 			this.options = options;
 			this.options.optAllOrNone = this.options.optAllOrNone ?? this.allOrNone ?? true;
 		}
 
-		public void preview() {
+		private void preview() {
 			System.debug(LoggingLevel.ERROR, 
 				'\n\n============ DML Configuration ============' +
 				'\nOptions: ' + JSON.serializePretty(this.options) +
@@ -1094,7 +1096,7 @@ global inherited sharing class DML implements Commitable {
 			);	
 		}
 
-		public void skipDuplicateRules() {
+		private void skipDuplicateRules() {
 			this.options.duplicateRuleHeader.allowSave = true;
 		}
 	}
@@ -1103,7 +1105,7 @@ global inherited sharing class DML implements Commitable {
 		private SObjectType objectType;
 		private Configuration globalConfiguration;
 
-		public DmlStrategy(SObjectType objectType, Configuration configuration) {
+		protected DmlStrategy(SObjectType objectType, Configuration configuration) {
 			this.objectType = objectType;
 			this.globalConfiguration = configuration;
 		}
@@ -1129,7 +1131,7 @@ global inherited sharing class DML implements Commitable {
 		private OperationResult execute(List<EnhancedRecord> records) {
 			List<SObject> recordsToProcess = this.getRecordsToProcess(records);
 
-			ExecutionResult result = new ExecutionResult(this.objectType, this.getOperationType()).setRecords(recordsToProcess);
+			ExecutionResult result = new ExecutionResult(this.getOperationType(), this.objectType).setRecords(recordsToProcess);
 
 			DmlMock dmlMock = dmlIdentifierToMock.get(this.globalConfiguration.dmlIdentifier);
 
@@ -1168,7 +1170,7 @@ global inherited sharing class DML implements Commitable {
 	// Strategies
 
 	private inherited sharing class InsertStrategy extends DmlStrategy {
-		public InsertStrategy(SObjectType objectType, Configuration configuration) {
+		private InsertStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1199,7 +1201,7 @@ global inherited sharing class DML implements Commitable {
 	private inherited sharing class UpsertStrategy extends DmlStrategy {
 		private SObjectField externalIdField;
 
-		public UpsertStrategy(SObjectType objectType, Configuration configuration) {
+		private UpsertStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1238,7 +1240,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class UpdateStrategy extends DmlStrategy {
-		public UpdateStrategy(SObjectType objectType, Configuration configuration) {
+		private UpdateStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1268,7 +1270,7 @@ global inherited sharing class DML implements Commitable {
 	private inherited sharing class MergeStrategy extends DmlStrategy {
 		private EnhancedRecord mergeToRecord;
 
-		public MergeStrategy(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
+		private MergeStrategy(SObjectType objectType, Configuration configuration, Record mergeToRecord) {
 			super(objectType, configuration);
 			this.validate(mergeToRecord.get());
 			this.mergeToRecord = mergeToRecord.get();
@@ -1304,7 +1306,7 @@ global inherited sharing class DML implements Commitable {
 	private inherited sharing class DeleteStrategy extends DmlStrategy {
 		private Boolean makeHardDelete = false;
 
-		public DeleteStrategy(SObjectType objectType, Configuration configuration) {
+		private DeleteStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1335,7 +1337,7 @@ global inherited sharing class DML implements Commitable {
 			List<Object> dmlResults = Database.delete(recordsToProcess, this.globalConfiguration.allOrNone, this.globalConfiguration.accessMode);
 
 			if (this.makeHardDelete) {
-				System.Database.emptyRecycleBin(recordsToProcess);
+				Database.emptyRecycleBin(recordsToProcess);
 			}
 
 			return dmlResults;
@@ -1347,7 +1349,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class UndeleteStrategy extends DmlStrategy {
-		public UndeleteStrategy(SObjectType objectType, Configuration configuration) {
+		private UndeleteStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1375,7 +1377,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private inherited sharing class PlatformEventStrategy extends DmlStrategy { 
-		public PlatformEventStrategy(SObjectType objectType, Configuration configuration) {
+		private PlatformEventStrategy(SObjectType objectType, Configuration configuration) {
 			super(objectType, configuration);
 		}
 
@@ -1583,7 +1585,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class ExecutionResult extends DmlOperationResult {
-		private ExecutionResult(SObjectType objectType, OperationType type) {
+		private ExecutionResult(OperationType type, SObjectType objectType) {
 			super(type, objectType);
 		}
 
@@ -1599,7 +1601,7 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class SObjectAggregatedResult extends DmlOperationResult {
-		private SObjectAggregatedResult(SObjectType objectType, OperationType type) {
+		private SObjectAggregatedResult(OperationType type, SObjectType objectType) {
 			super(type, objectType);
 		}
 
