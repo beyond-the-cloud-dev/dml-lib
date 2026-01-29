@@ -1000,46 +1000,46 @@ private class DML_Test {
 		Assert.areEqual('Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.', expectedException.getMessage(), 'Expected exception message should be thrown.');
 	}
 
-	// @IsTest
-	// static void toUpdateSingleRecordTwiceWithMergeOnDuplicate() {
-	// 	// Setup
-	// 	Account account1 = getAccount(1);
-	// 	insert account1;
+	@IsTest
+	static void toUpdateSingleRecordTwiceWithMergeOnDuplicate() {
+		// Setup
+		Account account1 = getAccount(1);
+		insert account1;
 
-	// 	// Test
-	// 	Test.startTest();
-	// 		account1.Name = 'Updated Test Account';
-	// 		account1.Website = 'https://www.updatedtestaccount.com';
+		// Test
+		Test.startTest();
+			account1.Name = 'Updated Test Account';
+			account1.Website = 'https://www.updatedtestaccount.com';
 
-	// 		DML db = new DML();
+			DML db = new DML();
 			
-	// 		db.combineOnDuplicate();
+			db.combineOnDuplicate();
 	
-	// 		db.toUpdate(account1);
+			db.toUpdate(account1);
 	
-	// 		Account duplicatedAccount = new Account(Id = account1.Id, Name = 'Updated Test Account 2', Description = 'Updated Test Description');
+			Account duplicatedAccount = new Account(Id = account1.Id, Name = 'Updated Test Account 2', Description = 'Updated Test Description');
 				
-	// 		db.toUpdate(duplicatedAccount);
+			db.toUpdate(duplicatedAccount);
 	
-	// 		DML.Result result = db.commitWork();
-	// 	Test.stopTest();
+			DML.Result result = db.commitWork();
+		Test.stopTest();
 		
-	// 	// Verify
-	// 	Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be updated.');
+		// Verify
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be updated.');
 
-	// 	Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
 
-	// 	DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
+		DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
 		
-	// 	Assert.areEqual(1, operationResult.records().size(), 'Updated operation result should contain the updated record.');
-	// 	Assert.areEqual(1, operationResult.recordResults().size(), 'Updated operation result should contain the updated record results.');
-	// 	Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Updated operation result should contain Account object type.');
-	// 	Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Updated operation result should contain update type.');
-	// 	Assert.isFalse(operationResult.hasFailures(), 'Updated operation result should not have failures.');
-	// 	Assert.areEqual('Updated Test Account 2', account1.Name, 'Account should be updated.');
-	// 	Assert.areEqual('https://www.updatedtestaccount.com', account1.Website, 'Account should be updated.');
-	// 	Assert.areEqual('Updated Test Description', account1.Description, 'Account should be updated.');
-	// }
+		Assert.areEqual(1, operationResult.records().size(), 'Updated operation result should contain the updated record.');
+		Assert.areEqual(1, operationResult.recordResults().size(), 'Updated operation result should contain the updated record results.');
+		Assert.areEqual(Account.SObjectType, operationResult.objectType(), 'Updated operation result should contain Account object type.');
+		Assert.areEqual(DML.OperationType.UPDATE_DML, operationResult.operationType(), 'Updated operation result should contain update type.');
+		Assert.isFalse(operationResult.hasFailures(), 'Updated operation result should not have failures.');
+		Assert.areEqual('Updated Test Account 2', account1.Name, 'Account should be updated.');
+		Assert.areEqual('https://www.updatedtestaccount.com', account1.Website, 'Account should be updated.');
+		Assert.areEqual('Updated Test Description', account1.Description, 'Account should be updated.');
+	}
 
 	@IsTest
 	static void toUpdateWithEmptyRecordIds() {
