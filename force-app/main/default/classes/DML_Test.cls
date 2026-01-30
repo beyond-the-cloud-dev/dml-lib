@@ -5862,6 +5862,28 @@ private class DML_Test {
 	// OPTIONS
 
 	@IsTest
+	static void recordWithEmptyId() {
+		// Setup
+		Account account = getAccount(1);
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+			try {
+				new DML()
+					.toInsert(DML.Record(account.Id))
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('Invalid argument: recordId. Record ID cannot be null.'), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
 	static void allowFieldTruncationOption() {
 		// Setup
 		String longAccountName = 'Test Account ' + 'Test'.repeat(' ', 100);
@@ -5982,6 +6004,54 @@ private class DML_Test {
 		// Verify
 		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
 		Assert.isTrue(expectedException.getMessage().contains('Relationship was registered for a record that has not been registered yet.'), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void selfDependency() {
+		// Setup
+		Account account1 = getAccount(1);
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+			try {
+				new DML()
+					.toInsert(account1)
+					.toInsert(DML.Record(account1).withRelationship(Account.ParentId, account1))
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('Self-dependency detected for record: ' + account1.Id), 'Expected exception message should be thrown.');
+	}
+
+	@IsTest
+	static void cyclicDependency() {
+		// Setup
+		Account account1 = getAccount(1);
+		Account account2 = getAccount(2);
+
+		// Test
+		Test.startTest();
+			Exception expectedException = null;
+			try {
+				new DML()
+					.toInsert(account1)
+					.toInsert(DML.Record(account2).withRelationship(Account.ParentId, account1))
+					.toInsert(DML.Record(account1).withRelationship(Account.ParentId, account2))
+					.commitWork();
+			} catch (Exception e) {
+				expectedException = e;
+			}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+		Assert.isTrue(expectedException.getMessage().contains('Cyclic dependencies detected among records.'), 'Expected exception message should be thrown.');
 	}
 
 	// SHARED

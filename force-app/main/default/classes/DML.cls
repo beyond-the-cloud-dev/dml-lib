@@ -2205,7 +2205,7 @@ global inherited sharing class DML implements Commitable {
 		}
 
 		private void addDependency(EnhancedRecord prerequisite, EnhancedRecord dependent) {
-			if (prerequisite == dependent) {
+			if (prerequisite.getRecordId() == dependent.getRecordId()) {
 				throw new DmlException('Self-dependency detected for record: ' + prerequisite.getRecordId());
 			}
 
