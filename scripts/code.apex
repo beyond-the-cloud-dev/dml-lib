@@ -1,21 +1,21 @@
 // DML Work
 
-DML dml = new DML();
+DML db = new DML();
 
 Opportunity newOpportunity = new Opportunity(
-    Name = 'UoW Test Name ' + i,
+    Name = 'UoW Test Name ',
     StageName = 'Open',
     CloseDate = System.today()
 );
 
-dml.toInsert(newOpportunity);
+db.toInsert(newOpportunity);
 
-for(Integer j = 0 ; j < i + 1 ; j++) {
+for(Integer j = 0 ; j < 10 ; j++) {
     Product2 newProduct = new Product2(
-        Name = newOpportunity.Name + ' : Product : ' + i
+        Name = newOpportunity.Name + ' : Product : ' + j
     );
 
-    dml.toInsert(newProduct);
+    db.toInsert(newProduct);
 
     PricebookEntry newPricebookEntry = new PricebookEntry(
         UnitPrice = 10,
@@ -23,16 +23,7 @@ for(Integer j = 0 ; j < i + 1 ; j++) {
         UseStandardPrice = false
     );  
 
-    dml.toInsert(newPricebookEntry, PricebookEntry.Product2Id, newProduct);
-
-    // or
-
-    dml.toInsert(newPricebookEntry)
-        .withRelationship(PricebookEntry.Product2Id, newProduct);
-
-    // or
-
-    dml.toInsert(
+    db.toInsert(
         DML.Record(newPricebookEntry).withRelationship(PricebookEntry.Product2Id, newProduct)
     );
 
@@ -41,20 +32,14 @@ for(Integer j = 0 ; j < i + 1 ; j++) {
         TotalPrice = 10
     );
 
-    dml.toInsert(newOpportunityLineItem)
-        .withRelationship(OpportunityLineItem.OpportunityId, newOpportunity)
-        .withRelationship(OpportunityLineItem.PricebookEntryId, newPricebookEntry);
-
-    // or
-
-    dml.toInsert(
+    db.toInsert(
         DML.Record(newOpportunityLineItem)
             .withRelationship(OpportunityLineItem.OpportunityId, newOpportunity)
             .withRelationship(OpportunityLineItem.PricebookEntryId, newPricebookEntry)
     );
 }
 
-dml.commitWork();
+db.commitWork();
 
 
 DML uow = new DML();
@@ -72,3 +57,5 @@ uow.toInsert(DML.Record(newOpportunity));
 // System.debug(record.get());
 
 uow.preview();
+
+
