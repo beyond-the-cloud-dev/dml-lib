@@ -81,25 +81,97 @@ Contact contact = new Contact(LastName = 'Smith');
 Opportunity opportunity = new Opportunity(Name = 'Deal', StageName = 'New', CloseDate = Date.today());
 
 new DML()
+    .toInsert(account)
     .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
     .toInsert(DML.Record(opportunity).withRelationship(Opportunity.AccountId, account))
-    .toInsert(account) // Registered last, but inserted first
     .commitWork();
 ```
 
 ## Minimal DMLs
 
-DML Lib groups records by SObject type and operation, reducing the number of DML statements to the minimum required.
+DML Lib minimizes the number of DML statements by building a dependency graph and grouping records into execution buckets.
 
-**Example**
+### How It Works
+
+1. **Graph Construction** — When you register records using `toInsert()`, `toUpdate()`, etc., each record becomes a node in a dependency graph. Relationships defined via `withRelationship()` create edges between nodes.
+
+2. **Dependency Resolution** — Kahn's algorithm (topological sort) processes the graph, ensuring parent records are committed before their dependents.
+
+3. **Bucket Assignment** — During graph resolution, records are grouped into buckets based on their operation characteristics:
+   - **Operation type** — INSERT, UPDATE, UPSERT, DELETE, UNDELETE, MERGE, PUBLISH
+   - **SObject type** — Account, Contact, Opportunity, etc.
+   - **Additional identifiers** — Upsert external ID field, merge master record ID
+
+Records sharing the same characteristics are placed in the same bucket and executed in a single DML statement.
+
+### Example
 
 ```apex
 new DML()
-    .toInsert(new Account(Name = 'Account 1'))
-    .toInsert(new Account(Name = 'Account 2'))
-    .toUpsert(new Contact(LastName = 'Smith'), Contact.MyExternalId__c)
-    .toUpsert(new Contact(LastName = 'Doe'), Contact.MyExternalId__c)
-    .commitWork();
+	.toInsert(account1)
+	.toInsert(account2)
+	.toUpsert(account3)
+	.toUpsert(account4)
+	.toInsert(DML.Record(account5).withRelationship(Account.ParentId, account2))
+	.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account2))
+	.toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, account3))
+	.toInsert(opportunity1)
+	.toInsert(DML.Record(opportunity2).withRelationship(Opportunity.AccountId, account4))
+	.toInsert(lead1)
+	.commitWork();
+
+// Result: 7 DML statements executed
 ```
 
-Only 2 DML statements will be executed: one `INSERT` for Accounts, one `UPSERT` for Contacts. Records are automatically bulkified regardless of whether they are registered together or in separate method calls.
+**Dependency Graph**
+
+```mermaid
+graph LR
+    subgraph "No Dependencies"
+        account1((account1))
+        account2((account2))
+        account3((account3))
+        account4((account4))
+        opportunity1((opportunity1))
+        lead1((lead1))
+    end
+
+    subgraph "With Dependencies"
+        account5((account5))
+        contact1((contact1))
+        contact2((contact2))
+        opportunity2((opportunity2))
+    end
+
+    account5 -->|ParentId| account2
+    contact1 -->|AccountId| account2
+    contact2 -->|AccountId| account3
+    opportunity2 -->|AccountId| account4
+
+    style account1 fill:#4CAF50,color:#fff
+    style account2 fill:#4CAF50,color:#fff
+    style account3 fill:#FF9800,color:#fff
+    style account4 fill:#FF9800,color:#fff
+    style account5 fill:#00BCD4,color:#fff
+    style contact1 fill:#2196F3,color:#fff
+    style contact2 fill:#2196F3,color:#fff
+    style opportunity1 fill:#9C27B0,color:#fff
+    style opportunity2 fill:#E91E63,color:#fff
+    style lead1 fill:#F44336,color:#fff
+```
+
+Despite registering 10 records, only **7 DML statements** are executed:
+
+| DML # | Operation | SObject | Records | Reason |
+|-------|-----------|---------|---------|--------|
+| <span style="display:inline-block;width:12px;height:12px;background:#4CAF50;border-radius:2px"></span> 1 | INSERT | Account | account1, account2 | No dependencies, same bucket |
+| <span style="display:inline-block;width:12px;height:12px;background:#FF9800;border-radius:2px"></span> 2 | UPSERT | Account | account3, account4 | No dependencies, different operation type |
+| <span style="display:inline-block;width:12px;height:12px;background:#9C27B0;border-radius:2px"></span> 3 | INSERT | Opportunity | opportunity1 | No dependencies |
+| <span style="display:inline-block;width:12px;height:12px;background:#F44336;border-radius:2px"></span> 4 | INSERT | Lead | lead1 | No dependencies |
+| <span style="display:inline-block;width:12px;height:12px;background:#00BCD4;border-radius:2px"></span> 5 | INSERT | Account | account5 | Depends on account2 (ParentId) |
+| <span style="display:inline-block;width:12px;height:12px;background:#2196F3;border-radius:2px"></span> 6 | INSERT | Contact | contact1, contact2 | Depend on account2 and account3 |
+| <span style="display:inline-block;width:12px;height:12px;background:#E91E63;border-radius:2px"></span> 7 | INSERT | Opportunity | opportunity2 | Depends on account4 (AccountId) |
+
+::: tip
+No matter how you register records - in any order, across multiple method calls, or with complex relationships - DML Lib guarantees the minimal number of DML statements while respecting all dependencies.
+:::
