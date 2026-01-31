@@ -876,6 +876,12 @@ global inherited sharing class DML implements Commitable {
 			for (Id enhancedRecordId : enhancedRecordIds) {
 				EnhancedRecord enhancedRecord = this.enhancedRecordsById.get(enhancedRecordId);
 
+				if (enhancedRecord == null) {
+					// record was commited without unit of work, or executeImmediately was used
+					// so it was not registered in the dependency graph
+					continue;
+				}
+
 				enhancedRecord.clearTemporaryId();
 
 				String operationId = enhancedRecord.strategy.operationId();
@@ -892,7 +898,6 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	private class LinearOrchestrator {
-		private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
 		private Map<String, ProcessingGroup> processingGroupByOperationId = new Map<String, ProcessingGroup>();
 		private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>{
 			OperationType.UPDATE_DML => new List<ProcessingGroup>(),
@@ -919,34 +924,23 @@ global inherited sharing class DML implements Commitable {
 
 			strategy.validate(enhancedRecord);
 
-			if (enhancedRecord.hasId() && this.enhancedRecordsById.containsKey(enhancedRecord.getRecordId())) {
-				this.executeDuplicatesStrategy(enhancedRecord);
-				return;
-			}
-
-			if (enhancedRecord.hasId()) {
-				this.enhancedRecordsById.put(enhancedRecord.getRecordId(), enhancedRecord);
-			}
 
 			this.assignRecordToProcessingGroup(strategy, enhancedRecord);
-		}
-
-		private void executeDuplicatesStrategy(EnhancedRecord duplicateRecord) {
-			Id duplicateRecordId = duplicateRecord.getRecordId();
-
-			EnhancedRecord existingRecord = this.enhancedRecordsById.get(duplicateRecordId);
-
-			this.configuration.duplicateCombineStrategy.combine(existingRecord, duplicateRecord);
 		}
 
 		private void assignRecordToProcessingGroup(DmlStrategy strategy, EnhancedRecord enhancedRecord) {
 			ProcessingGroup processingGroup = this.processingGroupByOperationId.get(strategy.operationId());
 
 			if (processingGroup == null) {
-				processingGroup = new ProcessingGroup(strategy);
+				processingGroup = new ProcessingGroup(strategy, this.configuration.duplicateCombineStrategy);
 
 				this.processingGroupByOperationId.put(strategy.operationId(), processingGroup);
 				this.processingGroupsByOperationType.get(strategy.getOperationType()).add(processingGroup);
+			}
+
+			if (processingGroup.hasDuplicate(enhancedRecord)) {
+				processingGroup.executeDuplicateStrategy(enhancedRecord);
+				return;
 			}
 
 			processingGroup.add(enhancedRecord);
@@ -963,14 +957,36 @@ global inherited sharing class DML implements Commitable {
 
 	private class ProcessingGroup {
 		private DmlStrategy strategy;
+		private DuplicateCombineStrategy duplicateCombineStrategy;
+
+		private Map<Id, EnhancedRecord> recordsById = new Map<Id, EnhancedRecord>();
 		private List<EnhancedRecord> records = new List<EnhancedRecord>();
 
 		private ProcessingGroup(DmlStrategy strategy) {
 			this.strategy = strategy;
 		}
 
-		private void add(EnhancedRecord enhancedRecord) {
-			this.records.add(enhancedRecord);
+		private ProcessingGroup(DmlStrategy strategy, DuplicateCombineStrategy duplicateCombineStrategy) {
+			this(strategy);
+			this.duplicateCombineStrategy = duplicateCombineStrategy;
+		}
+
+		private Boolean hasDuplicate(EnhancedRecord newRecord) {
+			return newRecord.hasId() && this.recordsById.containsKey(newRecord.getRecordId());
+		}
+
+		private void executeDuplicateStrategy(EnhancedRecord newRecord) {
+			EnhancedRecord existingRecord = this.recordsById.get(newRecord.getRecordId());
+
+			this.duplicateCombineStrategy.combine(existingRecord, newRecord);
+		}
+
+		private void add(EnhancedRecord newRecord) {
+			this.records.add(newRecord);
+
+			if (newRecord.hasId()) {
+				this.recordsById.put(newRecord.getRecordId(), newRecord);
+			}
 		}
 	}
 

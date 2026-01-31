@@ -3097,7 +3097,7 @@ private class DML_Full_Test {
 		Assert.areEqual(0, result.events().size(), 'Result should contain 0 publish operation results.');
 	}
 
-	//  ================================================ DEPENDENCIES =================================================
+	// ================================================ DEPENDENCIES =================================================
 
 	@IsTest
 	static void addInRandomOrder() {
@@ -3213,11 +3213,212 @@ private class DML_Full_Test {
 		Assert.areEqual(55, [SELECT COUNT() FROM PricebookEntry], 'Pricebook entries should be inserted.');
 	}
 
+	@IsTest
+	static void insertUpdateAndDeleteWithRelationships() {
+		// Setup
+		Account existingAccount = getAccount(1);
+		insert existingAccount;
+
+		Account newAccount = getAccount(2);
+		Contact contact1 = getContact(1);
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		DML.Result result = new DML()
+			.toInsert(newAccount)
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, newAccount))
+			.toUpdate(DML.Record(existingAccount).with(Account.Description, 'Marked for review'))
+			.toDelete(existingAccount)
+			.commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(4, dmlsAfter - dmlsBefore, '4 DML statements should be executed (Account insert, Contact insert, Account update, Account delete).');
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only the new account should exist.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+		Assert.areEqual(newAccount.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact should be linked to the new Account.');
+		Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
+		Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+		Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+	}
+
+	@IsTest
+	static void multiLevelRelationshipHierarchy() {
+		// Setup
+		Account grandParentAccount = new Account(Name = 'Grand Parent Account');
+		Account parentAccount = new Account(Name = 'Parent Account');
+		Account childAccount = new Account(Name = 'Child Account');
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		new DML()
+			.toInsert(grandParentAccount)
+			.toInsert(DML.Record(parentAccount).withRelationship(Account.ParentId, grandParentAccount))
+			.toInsert(DML.Record(childAccount).withRelationship(Account.ParentId, parentAccount))
+			.commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed (one per hierarchy level due to dependencies).');
+		Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted.');
+
+		Account queriedChild = [SELECT ParentId, Parent.ParentId FROM Account WHERE Id = :childAccount.Id];
+		Assert.areEqual(parentAccount.Id, queriedChild.ParentId, 'Child should be linked to parent.');
+		Assert.areEqual(grandParentAccount.Id, queriedChild.Parent.ParentId, 'Parent should be linked to grandparent.');
+	}
+
+	@IsTest
+	static void multipleDependentObjectTypesWithRelationships() {
+		// Setup
+		Account account1 = getAccount(1);
+		Contact contact1 = getContact(1);
+		Opportunity opportunity1 = getOpportunity(1);
+		Case case1 = new Case(Subject = 'Test Case 1', Status = 'New');
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		DML.Result result = new DML()
+			.toInsert(account1)
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+			.toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
+			.toInsert(DML.Record(case1).withRelationship(Case.AccountId, account1).withRelationship(Case.ContactId, contact1))
+			.commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(4, dmlsAfter - dmlsBefore, '4 DML statements should be executed (Account, Contact, Opportunity, Case).');
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
+		Assert.areEqual(1, [SELECT COUNT() FROM Case], 'Case should be inserted.');
+
+		Case queriedCase = [SELECT AccountId, ContactId FROM Case WHERE Id = :case1.Id];
+		Assert.areEqual(account1.Id, queriedCase.AccountId, 'Case should be linked to Account.');
+		Assert.areEqual(contact1.Id, queriedCase.ContactId, 'Case should be linked to Contact.');
+		Assert.areEqual(4, result.inserts().size(), 'Inserted operation result should contain 4 object types.');
+	}
+
+	@IsTest
+	static void insertWithRelationshipsAndImmediateOperations() {
+		// Setup
+		Account account1 = getAccount(1);
+		Contact contact1 = getContact(1);
+		Contact contact2 = getContact(2);
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		DML db = new DML();
+
+		// Insert account immediately
+		db.insertImmediately(account1);
+
+		// Register contact with relationship to the already-inserted account
+		db.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1)).toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, account1)).commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account immediate, Contacts commit).');
+		Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+		Assert.areEqual(2, [SELECT COUNT() FROM Contact], 'Contacts should be inserted.');
+		Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact 1 should be linked to Account.');
+		Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact2.Id].AccountId, 'Contact 2 should be linked to Account.');
+	}
+
+	@IsTest
+	static void upsertAndInsertWithRelationships() {
+		// Setup
+		Account existingAccount = getAccount(1);
+		insert existingAccount;
+
+		Account newAccount = getAccount(2);
+		Contact contact1 = getContact(1);
+		Contact contact2 = getContact(2);
+
+		existingAccount.Description = 'Updated Description';
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		new DML()
+			.toUpsert(existingAccount) // Update existing
+			.toInsert(newAccount) // Insert new
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, existingAccount))
+			.toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, newAccount))
+			.commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed (Account upsert, Account insert, Contact insert).');
+		Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Both accounts should exist.');
+		Assert.areEqual(2, [SELECT COUNT() FROM Contact], 'Contacts should be inserted.');
+		Assert.areEqual('Updated Description', [SELECT Description FROM Account WHERE Id = :existingAccount.Id].Description, 'Existing account should be updated.');
+		Assert.areEqual(existingAccount.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact 1 should be linked to existing Account.');
+		Assert.areEqual(newAccount.Id, [SELECT AccountId FROM Contact WHERE Id = :contact2.Id].AccountId, 'Contact 2 should be linked to new Account.');
+	}
+
 	// ================================================================================================
 	// =========================================== MOCKING ============================================
 	// ================================================================================================
 
-	//  ================================================ MOCKING - INSERT =================================================
+	@IsTest
+	static void complexHierarchyWithMocking() {
+		// Setup - 3 level hierarchy with multiple branches
+		Account parentAccount = new Account(Name = 'Parent');
+		Account childAccount1 = new Account(Name = 'Child 1');
+		Account childAccount2 = new Account(Name = 'Child 2');
+		Contact contact1 = getContact(1);
+		Contact contact2 = getContact(2);
+		Opportunity opportunity1 = getOpportunity(1);
+
+		DML.mock('dmlMockId').allInserts();
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		new DML()
+			.identifier('dmlMockId')
+			.toInsert(parentAccount)
+			.toInsert(DML.Record(childAccount1).withRelationship(Account.ParentId, parentAccount))
+			.toInsert(DML.Record(childAccount2).withRelationship(Account.ParentId, parentAccount))
+			.toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, childAccount1))
+			.toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, childAccount2))
+			.toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, parentAccount))
+			.commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		// Verify
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+		Assert.areEqual(3, result.inserts().size(), 'Inserted operation result should contain 3 object types (Account, Contact, Opportunity).');
+		Assert.areEqual(3, result.insertsOf(Account.SObjectType).records().size(), 'Account result should contain 3 records.');
+		Assert.areEqual(2, result.insertsOf(Contact.SObjectType).records().size(), 'Contact result should contain 2 records.');
+		Assert.areEqual(1, result.insertsOf(Opportunity.SObjectType).records().size(), 'Opportunity result should contain 1 record.');
+	}
+
+	// ================================================ MOCKING - INSERT =================================================
 
 	@IsTest
 	static void toInsertSingleRecordWithMocking() {
