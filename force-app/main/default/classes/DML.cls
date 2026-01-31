@@ -5,7 +5,8 @@
  * v3.0.0
  *
  * PMD False Positives:
- * - MethodNamingConventions - Some methods are uppercase to indicate that they are "constructors" of other internal classes
+ * - MethodNamingConventions: Some methods are uppercase to indicate that they are "constructors" of other internal classes
+ * - ApexDoc - ApexDoc is not needed, code is self-explainatory
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
  * - CognitiveComplexity: It is a library and we tried to put everything into ONE class
  * - ExcessivePublicCount: It is a library and we tried to put everything into ONE class
@@ -20,7 +21,7 @@
  * - AvoidGlobalModifier - DML has package version
  **/
 @SuppressWarnings(
-	'PMD.MethodNamingConventions,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions,PMD.AvoidGlobalModifier'
+	'PMD.MethodNamingConventions,PMD.ApexDoc,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions,PMD.AvoidGlobalModifier'
 )
 global inherited sharing class DML implements Commitable {
 	global static Commitable Shared {
@@ -1689,6 +1690,7 @@ global inherited sharing class DML implements Commitable {
 		private List<String> fields;
 
 		private RecordProcessingError() {
+			// Default constructor for builder pattern
 		}
 
 		private RecordProcessingError(Database.Error error) {
