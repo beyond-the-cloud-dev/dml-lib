@@ -91,6 +91,12 @@ new DML()
 
 DML Lib minimizes the number of DML statements by building a dependency graph and grouping records into execution buckets.
 
+### Interactive Visualization
+
+<UnitOfWorkAnimation />
+
+The animation above demonstrates how DML Lib intelligently processes 17 records using only 12 DML statements. Watch as the dependency resolution algorithm executes each step, showing how records are grouped into buckets based on their operation type, SObject type, and dependencies. Use the controls to step through the animation, or press **Space** to play/pause.
+
 ### How It Works
 
 1. **Graph Construction** - When you register records using `toInsert()`, `toUpdate()`, etc., each record becomes a node in a dependency graph. Relationships defined via `withRelationship()` create edges between nodes.
