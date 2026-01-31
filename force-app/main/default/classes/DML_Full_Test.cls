@@ -25,10 +25,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toInsert(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Single record should be inserted.');
 
         Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
@@ -56,10 +59,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().insertImmediately(account1);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Single record should be inserted.');
         Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
         Assert.areEqual(1, result.records().size(), 'Inserted operation result should contain the inserted record.');
@@ -77,10 +83,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(newAccount).toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount)).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
         Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'Contact should be inserted.');
 
@@ -246,10 +255,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toInsert(account1).toInsert(account2).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
 
         Assert.isNotNull(account1.Id, 'Account 1 should be inserted and have an Id.');
@@ -279,10 +291,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().insertImmediately(new List<Account>{ account1, account2 });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
 
         Assert.isNotNull(account1.Id, 'Account 1 should be inserted and have an Id.');
@@ -306,10 +321,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(newAccount).toInsert(DML.Records(contacts).withRelationship(Contact.AccountId, newAccount)).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
         Assert.areEqual(2, [SELECT COUNT() FROM Contact], 'Contacts should be inserted.');
 
@@ -409,10 +427,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toInsert(account1).toInsert(opportunityToInsert).toInsert(leadToInsert).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
         Assert.areEqual(1, [SELECT COUNT() FROM Opportunity], 'Opportunity should be inserted.');
         Assert.areEqual(1, [SELECT COUNT() FROM Lead], 'Lead should be inserted.');
@@ -460,10 +481,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(accounts).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
 
         Assert.isNotNull(accounts[0].Id, 'Account 1 should be inserted and have an Id.');
@@ -503,10 +527,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(accounts).allowPartialSuccess().commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only one account should be inserted, because one has missing required field.');
     }
 
@@ -582,12 +609,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.insertsOf(Account.SObjectType).objectType(), 'Inserted operation result should contain Account object type.');
@@ -609,12 +639,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(account1).toInsert(account2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.insertsOf(Account.SObjectType).objectType(), 'Inserted operation result should contain Account object type.');
@@ -674,12 +707,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(account1).toInsert(contact1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should be inserted to the database.');
         Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 results.');
@@ -869,12 +905,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account';
 
         DML.Result result = new DML().toUpdate(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be updated.');
 
         Assert.areEqual('Updated Test Account', account1.Name, 'Account should be updated.');
@@ -1007,10 +1046,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().updateImmediately(account1);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account WHERE Name = 'Updated Test Account'], 'Single record should be updated.');
         Assert.areEqual('Updated Test Account', account1.Name, 'Account should be updated.');
         Assert.areEqual(1, result.records().size(), 'Updated operation result should contain the updated record.');
@@ -1051,13 +1093,16 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account 1';
         account2.Name = 'Updated Test Account 2';
 
         DML.Result result = new DML().toUpdate(account1).toUpdate(account2).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be updated.');
 
         Assert.areEqual('Updated Test Account 1', account1.Name, 'Account 1 should be updated.');
@@ -1091,10 +1136,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().updateImmediately(new List<Account>{ account1, account2 });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account WHERE Name IN ('Updated Test Account 1', 'Updated Test Account 2')], 'Accounts should be updated.');
 
         Assert.areEqual('Updated Test Account 1', account1.Name, 'Account 1 should be updated.');
@@ -1362,14 +1410,17 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account';
 
         new DML().toUpdate(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.updatesOf(Account.SObjectType).objectType(), 'Updated operation result should contain Account object type.');
@@ -1394,15 +1445,18 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account 1';
         account2.Name = 'Updated Test Account 2';
 
         new DML().toUpdate(account1).toUpdate(account2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.updatesOf(Account.SObjectType).objectType(), 'Updated operation result should contain Account object type.');
@@ -1430,15 +1484,18 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account 1';
         contact1.FirstName = 'Updated Test Contact 1';
 
         new DML().toUpdate(account1).toUpdate(contact1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should be inserted to the database.');
         Assert.areEqual(2, result.updates().size(), 'Updated operation result should contain 2 results.');
@@ -1676,12 +1733,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account';
 
         DML.Result result = new DML().toUpsert(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be updated.');
 
         Assert.areEqual('Updated Test Account', account1.Name, 'Account should be updated.');
@@ -1711,10 +1771,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().upsertImmediately(account1);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account WHERE Name = 'Upserted Test Account'], 'Single record should be upserted.');
         Assert.areEqual('Upserted Test Account', account1.Name, 'Account should be upserted.');
         Assert.areEqual(1, result.records().size(), 'Upserted operation result should contain the upserted record.');
@@ -1731,10 +1794,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toUpsert(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
 
         Assert.isNotNull(account1.Id, 'Account should be inserted and have an Id.');
@@ -1765,13 +1831,16 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Updated Test Account 1';
         account2.Name = 'Updated Test Account 2';
 
         new DML().toUpsert(account1).toUpsert(account2).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be updated.');
 
         Assert.areEqual('Updated Test Account 1', account1.Name, 'Account 1 should be updated.');
@@ -1786,10 +1855,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toUpsert(account1).toUpsert(account2).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
 
         Assert.isNotNull(account1.Id, 'Account 1 should be inserted and have an Id.');
@@ -1808,10 +1880,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().upsertImmediately(new List<Account>{ account1, account2 });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be upserted.');
 
         Assert.areEqual('Upserted Test Account 1', account1.Name, 'Account 1 should be updated.');
@@ -2021,14 +2096,17 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Upserted Test Account';
 
         new DML().toUpsert(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.upsertsOf(Account.SObjectType).objectType(), 'Upserted operation result should contain Account object type.');
@@ -2052,14 +2130,17 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Upserted Test Account';
 
         new DML().toUpsert(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.upsertsOf(Account.SObjectType).objectType(), 'Upserted operation result should contain Account object type.');
@@ -2082,15 +2163,18 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Upserted Test Account 1';
         account2.Name = 'Upserted Test Account 2';
 
         new DML().toUpsert(account1).toUpsert(account2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.upsertsOf(Account.SObjectType).objectType(), 'Upserted operation result should contain Account object type.');
@@ -2115,15 +2199,18 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         account1.Name = 'Upserted Test Account 1';
         contact1.FirstName = 'Upserted Test Contact 1';
 
         new DML().toUpsert(account1).toUpsert(contact1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should be inserted to the database.');
         Assert.areEqual(2, result.upserts().size(), 'Upserted operation result should contain 2 results.');
@@ -2355,10 +2442,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toDelete(account.Id).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
     }
 
@@ -2369,10 +2459,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toDelete(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
@@ -2399,10 +2492,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().deleteImmediately(account1);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Single record should be deleted.');
         Assert.areEqual(1, result.records().size(), 'Deleted operation result should contain the deleted record.');
         Assert.areEqual(1, result.recordResults().size(), 'Deleted operation result should contain the deleted record results.');
@@ -2419,10 +2515,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().deleteImmediately(account1.Id);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Single record should be deleted.');
         Assert.areEqual(1, result.records().size(), 'Deleted operation result should contain the deleted record.');
         Assert.areEqual(1, result.recordResults().size(), 'Deleted operation result should contain the deleted record results.');
@@ -2441,10 +2540,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toDelete(account1).toDelete(account2).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
@@ -2472,10 +2574,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().deleteImmediately(new List<Account>{ account1, account2 });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
         Assert.areEqual(2, result.records().size(), 'Deleted operation result should contain the deleted records.');
@@ -2495,10 +2600,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().deleteImmediately(new List<Id>{ account1.Id, account2.Id });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
         Assert.areEqual(2, result.records().size(), 'Deleted operation result should contain the deleted records.');
@@ -2515,10 +2623,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toDelete(accounts).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
     }
 
@@ -2529,12 +2640,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
 
         new DML().toDelete(accountIds).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
     }
 
@@ -2549,10 +2663,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toDelete(account1).toDelete(opportunity1).toDelete(lead1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
         Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'Opportunity should be deleted.');
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'Lead should be deleted.');
@@ -2725,12 +2842,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toDelete(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.deletesOf(Account.SObjectType).objectType(), 'Deleted operation result should contain Account object type.');
@@ -2754,12 +2874,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toDelete(account1).toDelete(account2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.deletesOf(Account.SObjectType).objectType(), 'Deleted operation result should contain Account object type.');
@@ -2785,12 +2908,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toDelete(account1).toDelete(contact1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No Account records should exist, because delete was mocked.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No Contact records should exist, because delete was mocked.');
         Assert.areEqual(2, result.deletes().size(), 'Deleted operation result should contain 2 results.');
@@ -3268,10 +3394,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toUndelete(account.Id).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be undeleted.');
     }
 
@@ -3285,10 +3414,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toUndelete(account1).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be undeleted.');
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
@@ -3318,10 +3450,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().undeleteImmediately(account1);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Single record should be undeleted.');
         Assert.areEqual(1, result.records().size(), 'Undeleted operation result should contain the undeleted record.');
         Assert.areEqual(1, result.recordResults().size(), 'Undeleted operation result should contain the undeleted record results.');
@@ -3341,10 +3476,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().undeleteImmediately(account1.Id);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Single record should be undeleted.');
         Assert.areEqual(1, result.records().size(), 'Undeleted operation result should contain the undeleted record.');
         Assert.areEqual(1, result.recordResults().size(), 'Undeleted operation result should contain the undeleted record results.');
@@ -3363,12 +3501,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         Set<Id> accountIds = new Map<Id, Account>(accounts).keySet();
 
         new DML().toUndelete(accountIds).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(accounts.size(), [SELECT COUNT() FROM Account], 'Accounts should be undeleted.');
     }
 
@@ -3382,10 +3523,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toUndelete(accounts).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(accounts.size(), [SELECT COUNT() FROM Account], 'Accounts should be undeleted.');
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
@@ -3416,10 +3560,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().undeleteImmediately(new List<Account>{ account1, account2 });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be undeleted.');
 
         Assert.areEqual(2, result.records().size(), 'Undeleted operation result should contain the undeleted records.');
@@ -3441,10 +3588,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().undeleteImmediately(new List<Id>{ account1.Id, account2.Id });
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be undeleted.');
 
         Assert.areEqual(2, result.records().size(), 'Undeleted operation result should contain the undeleted records.');
@@ -3643,12 +3793,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toUndelete(account1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.undeletes().size(), 'Undeleted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.deletesOf(Account.SObjectType).objectType(), 'Deleted operation result should contain Account object type.');
@@ -3672,12 +3825,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toUndelete(account1).toUndelete(account2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(1, result.undeletes().size(), 'Undeleted operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.undeletesOf(Account.SObjectType).objectType(), 'Undeleted operation result should contain Account object type.');
@@ -3703,12 +3859,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toUndelete(account1).toUndelete(contact1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No Account records should exist, because undelete was mocked.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No Contact records should exist, because undelete was mocked.');
         Assert.areEqual(2, result.undeletes().size(), 'Undeleted operation result should contain 2 results.');
@@ -3945,10 +4104,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toMerge(masterAccount, duplicateAccount).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
         Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
 
@@ -3978,10 +4140,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toMerge(masterAccount, duplicateAccount.Id).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
         Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
 
@@ -4008,10 +4173,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toMerge(masterAccount, duplicateAccounts).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
         Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
 
@@ -4038,10 +4206,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toMerge(masterAccount, duplicateAccountIds).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
         Assert.areEqual(masterAccount.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Master account should survive the merge.');
 
@@ -4234,12 +4405,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toMerge(masterAccount, duplicateAccount).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be in the database.');
         Assert.areEqual(1, result.merges().size(), 'Merged operation result should contain 1 result.');
         Assert.areEqual(Account.SObjectType, result.mergesOf(Account.SObjectType).objectType(), 'Merged operation result should contain Account object type.');
@@ -4267,12 +4441,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toMerge(masterAccount, duplicateAccount).toMerge(masterLead, duplicateLead).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No Account records should be in the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'No Lead records should be in the database.');
         Assert.areEqual(2, result.merges().size(), 'Merged operation result should contain 2 results.');
@@ -4474,10 +4651,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.Result result = new DML().toPublish(event).commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
         Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
@@ -4501,10 +4681,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult result = new DML().publishImmediately(event);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(1, result.records().size(), 'Published operation result should contain the published record.');
         Assert.areEqual(1, result.recordResults().size(), 'Published operation result should contain the published record results.');
         Assert.areEqual(FlowOrchestrationEvent.SObjectType, result.objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
@@ -4554,10 +4737,13 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         DML.OperationResult operationResult = new DML().publishImmediately(events);
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.areEqual(2, operationResult.records().size(), 'Published operation result should contain the published records.');
         Assert.areEqual(2, operationResult.recordResults().size(), 'Published operation result should contain the published record results.');
         Assert.areEqual(FlowOrchestrationEvent.SObjectType, operationResult.objectType(), 'Published operation result should contain FlowOrchestrationEvent object type.');
@@ -4573,12 +4759,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toPublish(event).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
         Assert.areEqual(
             FlowOrchestrationEvent.SObjectType,
@@ -4605,12 +4794,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toPublish(event).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
         Assert.areEqual(
             FlowOrchestrationEvent.SObjectType,
@@ -4638,12 +4830,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toPublish(event1).toPublish(event2).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(1, result.events().size(), 'Published operation result should contain 1 result.');
         Assert.areEqual(
             FlowOrchestrationEvent.SObjectType,
@@ -5078,12 +5273,15 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
         new DML().toInsert(account1).toUpdate(contact1).toDelete(opportunity1).identifier('dmlMockId').commitWork();
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         DML.Result result = DML.retrieveResultFor('dmlMockId');
 
         // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should be inserted to the database.');
         Assert.areEqual(0, [SELECT COUNT() FROM Opportunity], 'No records should be deleted from the database.');
