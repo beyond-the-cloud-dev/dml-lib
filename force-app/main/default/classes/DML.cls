@@ -50,166 +50,6 @@ global inherited sharing class DML implements Commitable {
 		return new DmlRecords(recordIds);
 	}
 
-	global interface Commitable {
-		// Insert
-		Commitable toInsert(SObject record);
-		Commitable toInsert(DML.Record record);
-		Commitable toInsert(List<SObject> records);
-		Commitable toInsert(DML.Records records);
-		// Update
-		Commitable toUpdate(SObject record);
-		Commitable toUpdate(DML.Record record);
-		Commitable toUpdate(List<SObject> records);
-		Commitable toUpdate(DML.Records records);
-		// Upsert
-		Commitable toUpsert(SObject record);
-		Commitable toUpsert(SObject record, SObjectField externalIdField);
-		Commitable toUpsert(DML.Record record);
-		Commitable toUpsert(List<SObject> records);
-		Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
-		Commitable toUpsert(DML.Records records);
-		// Delete
-		Commitable toDelete(Id recordId);
-		Commitable toDelete(SObject record);
-		Commitable toDelete(Iterable<Id> recordIds);
-		Commitable toDelete(List<SObject> records);
-		// Hard Delete
-		Commitable toHardDelete(Id recordId);
-		Commitable toHardDelete(SObject record);
-		Commitable toHardDelete(Iterable<Id> recordIds);
-		Commitable toHardDelete(List<SObject> records);
-		// Undelete
-		Commitable toUndelete(Id recordId);
-		Commitable toUndelete(SObject record);
-		Commitable toUndelete(Iterable<Id> recordIds);
-		Commitable toUndelete(List<SObject> records);
-		// Merge
-		Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
-		Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
-		Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
-		Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
-		// Platform Event
-		Commitable toPublish(SObject record);
-		Commitable toPublish(List<SObject> records);
-		// Immediate Insert
-		OperationResult insertImmediately(SObject record);
-		OperationResult insertImmediately(DML.Record record);
-		OperationResult insertImmediately(List<SObject> records);
-		OperationResult insertImmediately(DML.Records records);
-		// Immediate Update
-		OperationResult updateImmediately(SObject record);
-		OperationResult updateImmediately(DML.Record record);
-		OperationResult updateImmediately(List<SObject> records);
-		OperationResult updateImmediately(DML.Records records);
-		// Immediate Upsert
-		OperationResult upsertImmediately(SObject record);
-		OperationResult upsertImmediately(DML.Record record);
-		OperationResult upsertImmediately(List<SObject> records);
-		OperationResult upsertImmediately(DML.Records records);
-		// Immediate Delete
-		OperationResult deleteImmediately(Id recordId);
-		OperationResult deleteImmediately(SObject record);
-		OperationResult deleteImmediately(Iterable<Id> recordIds);
-		OperationResult deleteImmediately(List<SObject> records);
-		// Immediate Undelete
-		OperationResult undeleteImmediately(Id recordId);
-		OperationResult undeleteImmediately(SObject record);
-		OperationResult undeleteImmediately(Iterable<Id> recordIds);
-		OperationResult undeleteImmediately(List<SObject> records);
-		// Immediate Publish
-		OperationResult publishImmediately(SObject record);
-		OperationResult publishImmediately(List<SObject> records);
-		// Mocking
-		Commitable identifier(String dmlIdentifier); // used for mocking and tracking results
-		// Debug
-		void preview();
-		// Field Level Security
-		Commitable userMode();
-		Commitable systemMode();
-		// Sharing Mode
-		Commitable withSharing();
-		Commitable withoutSharing();
-		// Other configs
-		Commitable allowPartialSuccess();
-		Commitable skipDuplicateRules();
-		Commitable options(Database.DmlOptions options);
-		Commitable discardWork();
-		Commitable commitHook(DML.Hook callback);
-		Commitable combineOnDuplicate();
-		// Save
-		Result dryRun();
-		Result commitWork();
-		Result commitTransaction(); // make a savepoint and rollback on exception
-	}
-
-	global interface Record {
-		Record with(SObjectField field, Object value);
-		Record withRelationship(SObjectField targetField, SObject relatedRecord);
-		Record withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
-
-		// for internal use only
-		EnhancedRecord get();
-		SObjectType getSObjectType();
-	}
-
-	global interface Records {
-		Records with(SObjectField field, Object value);
-		Records withRelationship(SObjectField targetField, SObject relatedRecord);
-		Records withRelationship(SObjectField targetField, SObjectField relatedObjectExternalIdField, Object relatedRecordExternalId);
-
-		// for internal use only
-		List<Record> get();
-		SObjectType getSObjectType();
-	}
-
-	global interface Result {
-		List<OperationResult> all();
-		// Per Operation
-		List<OperationResult> inserts();
-		List<OperationResult> updates();
-		List<OperationResult> upserts();
-		List<OperationResult> deletes();
-		List<OperationResult> undeletes();
-		List<OperationResult> merges();
-		List<OperationResult> events();
-		// Per Object OperationType
-		OperationResult insertsOf(SObjectType objectType);
-		OperationResult updatesOf(SObjectType objectType);
-		OperationResult upsertsOf(SObjectType objectType);
-		OperationResult deletesOf(SObjectType objectType);
-		OperationResult undeletesOf(SObjectType objectType);
-		OperationResult mergesOf(SObjectType objectType);
-		OperationResult eventsOf(SObjectType objectType);
-	}
-
-	global interface OperationResult {
-		// Metadata
-		DML.OperationType operationType();
-		SObjectType objectType();
-		Boolean hasFailures();
-		// Errors
-		List<Error> errors();
-		// Records
-		List<SObject> records();
-		List<SObject> successes();
-		List<SObject> failures();
-		// Details
-		List<RecordResult> recordResults();
-	}
-
-	global interface RecordResult {
-		Id id();
-		SObject record();
-		Boolean isSuccess();
-		List<Error> errors();
-	}
-
-	global interface Error {
-		String message();
-		System.StatusCode statusCode();
-		List<String> fields();
-	}
-
 	// Mocking
 
 	global static DML.Mockable mock(String dmlIdentifier) {
@@ -219,7 +59,7 @@ global inherited sharing class DML implements Commitable {
 		return dmlIdentifierToMock.get(dmlIdentifier);
 	}
 
-	global static DML.Result retrieveResultFor(String dmlIdentifier) {
+	global static Result retrieveResultFor(String dmlIdentifier) {
 		if (!dmlIdentifierToResult.containsKey(dmlIdentifier)) {
 			throw new DmlException('No result found for dml identifier: ' + dmlIdentifier);
 		}
@@ -260,13 +100,6 @@ global inherited sharing class DML implements Commitable {
 		Mockable exceptionOnUndeletesFor(SObjectType objectType);
 		Mockable exceptionOnMergesFor(SObjectType objectType);
 		Mockable exceptionOnPublishesFor(SObjectType objectType);
-	}
-
-	// Hooks
-
-	global interface Hook {
-		void before();
-		void after(Result result);
 	}
 
 	// Implementation
