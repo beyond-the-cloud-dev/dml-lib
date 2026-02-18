@@ -1147,6 +1147,102 @@ private class DML_Test {
 	}
 
 	@IsTest
+	static void toUpsertGenericSObjectListWithExternalIdFieldWithMocking() {
+		// Setup
+		Account account1 = getAccount(1);
+		List<SObject> genericRecords = new List<SObject>{ account1 };
+
+		DML.mock('dmlMockId').allUpserts();
+
+		// Test
+		Test.startTest();
+		Integer dmlsBefore = Limits.getDMLStatements();
+
+		new DML().toUpsert(genericRecords, Account.Id).identifier('dmlMockId').commitWork();
+
+		Integer dmlsAfter = Limits.getDMLStatements();
+		Test.stopTest();
+
+		DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+		// Verify
+		Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+		Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+		Assert.areEqual(1, result.upserts().size(), 'Upserted operation result should contain 1 result.');
+		Assert.areEqual(1, result.upsertsOf(Account.SObjectType).records().size(), 'Upserted operation result should contain the upserted records.');
+		Assert.areEqual(1, result.upsertsOf(Account.SObjectType).recordResults().size(), 'Upserted operation result should contain the upserted record results.');
+		Assert.isTrue(result.upsertsOf(Account.SObjectType).recordResults()[0].isSuccess(), 'Upserted operation result should contain a successful record result.');
+	}
+
+	@IsTest
+	static void listSObjectOverloadsResolveRuntimeTypeAcrossOperationsWithMocking() {
+		// Setup
+		Account insertAccount = getAccount(101);
+		List<SObject> insertRecords = new List<SObject>{ insertAccount };
+		DML.mock('genericInsertMockId').allInserts();
+
+		Account updateAccount = getAccount(102);
+		updateAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		List<SObject> updateRecords = new List<SObject>{ updateAccount };
+		DML.mock('genericUpdateMockId').allUpdates();
+
+		Account deleteAccount = getAccount(103);
+		deleteAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		List<SObject> deleteRecords = new List<SObject>{ deleteAccount };
+		DML.mock('genericDeleteMockId').allDeletes();
+
+		Account hardDeleteAccount = getAccount(104);
+		hardDeleteAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		List<SObject> hardDeleteRecords = new List<SObject>{ hardDeleteAccount };
+		DML.mock('genericHardDeleteMockId').allDeletes();
+
+		Account undeleteAccount = getAccount(105);
+		undeleteAccount.Id = DML.randomIdGenerator.get(Account.SObjectType);
+		List<SObject> undeleteRecords = new List<SObject>{ undeleteAccount };
+		DML.mock('genericUndeleteMockId').allUndeletes();
+
+		// Test
+		Test.startTest();
+		new DML().toInsert(insertRecords).identifier('genericInsertMockId').commitWork();
+		new DML().toUpdate(updateRecords).identifier('genericUpdateMockId').commitWork();
+		new DML().toDelete(deleteRecords).identifier('genericDeleteMockId').commitWork();
+		new DML().toHardDelete(hardDeleteRecords).identifier('genericHardDeleteMockId').commitWork();
+		new DML().toUndelete(undeleteRecords).identifier('genericUndeleteMockId').commitWork();
+		Test.stopTest();
+
+		// Verify
+		Assert.areEqual(1, DML.retrieveResultFor('genericInsertMockId').insertsOf(Account.SObjectType).recordResults().size(), 'Insert result should be keyed by Account SObjectType.');
+		Assert.areEqual(1, DML.retrieveResultFor('genericUpdateMockId').updatesOf(Account.SObjectType).recordResults().size(), 'Update result should be keyed by Account SObjectType.');
+		Assert.areEqual(1, DML.retrieveResultFor('genericDeleteMockId').deletesOf(Account.SObjectType).recordResults().size(), 'Delete result should be keyed by Account SObjectType.');
+		Assert.areEqual(1, DML.retrieveResultFor('genericHardDeleteMockId').deletesOf(Account.SObjectType).recordResults().size(), 'Hard delete result should be keyed by Account SObjectType.');
+		Assert.areEqual(1, DML.retrieveResultFor('genericUndeleteMockId').undeletesOf(Account.SObjectType).recordResults().size(), 'Undelete result should be keyed by Account SObjectType.');
+	}
+
+	@IsTest
+	static void listSObjectOverloadsThrowWhenMixedTypesProvided() {
+		// Setup
+		List<SObject> mixedRecords = new List<SObject>{
+			getAccount(1),
+			getContact(1)
+		};
+
+		Exception expectedException = null;
+
+		// Test
+		Test.startTest();
+		try {
+			new DML().toUpsert(mixedRecords).identifier('mixedSObjectTypeMockId').commitWork();
+		} catch (Exception e) {
+			expectedException = e;
+		}
+		Test.stopTest();
+
+		// Verify
+		Assert.isNotNull(expectedException, 'Expected exception to be thrown for mixed SObject types in one list operation.');
+		Assert.isTrue(expectedException.getMessage().contains('Mixed SObject types'), 'Expected mixed SObject type validation message.');
+	}
+
+	@IsTest
 	static void toUpsertMultipleRecordsWithMocking() {
 		// Setup
 		Account account1 = getAccount(1);
