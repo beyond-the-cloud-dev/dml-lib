@@ -395,7 +395,8 @@ global inherited sharing class DML implements Commitable {
 	}
 
 	global Commitable toUpsert(List<SObject> records, SObjectField externalIdField) {
-		return this.registerInDependencyOrchestrator(this.getUpsertStrategy(records.getSObjectType()).withExternalIdField(externalIdField), Records(records));
+		Records dmlRecords = Records(records);
+		return this.registerInDependencyOrchestrator(this.getUpsertStrategy(dmlRecords.getSObjectType()).withExternalIdField(externalIdField), dmlRecords);
 	}
 
 	global Commitable toUpsert(Records records) {
@@ -1952,11 +1953,37 @@ global inherited sharing class DML implements Commitable {
 		private List<ExternalRelationship> externalRelationships = new List<ExternalRelationship>();
 
 		private DmlRecords(List<SObject> records) {
-			this.objectType = records.getSObjectType();
+			this.objectType = this.resolveObjectType(records);
 
 			for (SObject record : records) {
 				this.records.add(new DmlRecord(record));
 			}
+		}
+
+		private SObjectType resolveObjectType(List<SObject> records) {
+			if(records == null) {
+				return null;
+			}
+
+			SObjectType resolvedType = null;
+
+			for (SObject record : records) {
+				if (record == null) {
+					continue;
+				}
+
+				SObjectType currentType = record.getSObjectType();
+				if (resolvedType == null) {
+					resolvedType = currentType;
+					continue;
+				}
+
+				if (resolvedType != currentType) {
+					throw new DmlException('Mixed SObject types in a single List<SObject> operation are not supported.');
+				}
+			}
+
+			return resolvedType;
 		}
 
 		private DmlRecords(Iterable<Id> recordIds) {
