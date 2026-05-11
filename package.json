@@ -34,7 +34,7 @@
     "prettier-plugin-apex": "^2.2.6",
     "vitepress": "^1.6.4",
     "vue": "^3.5.26",
-    "mermaid": "^11.12.3",
+    "mermaid": "^11.15.0",
     "vitepress-plugin-mermaid": "^2.0.17"
   },
   "lint-staged": {
