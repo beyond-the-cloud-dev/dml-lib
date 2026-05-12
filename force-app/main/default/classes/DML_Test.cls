@@ -377,21 +377,21 @@ private class DML_Test {
 
     @IsTest
     static void retrieveResultForWhenIncorrectIdentifierIsUsed() {
-        // Setup
-        Exception expectedException = null;
-
         // Test
         Test.startTest();
-        try {
-            DML.retrieveResultFor('dmlMockId');
-        } catch (Exception e) {
-            expectedException = e;
-        }
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
         Test.stopTest();
 
         // Verify
-        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.areEqual('No result found for dml identifier: dmlMockId', expectedException.getMessage(), 'Expected exception message should be thrown.');
+        Assert.isNotNull(result, 'Empty result should be returned for an unknown identifier.');
+        Assert.areEqual(0, result.all().size(), 'Result should contain 0 operation results.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+        Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+        Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+        Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+        Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+        Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
     }
 
     @IsTest
@@ -3390,17 +3390,19 @@ private class DML_Test {
 
         // Test
         Test.startTest();
-        Exception expectedException = null;
-        try {
-            DML.retrieveResultFor('dmlMockId');
-        } catch (Exception e) {
-            expectedException = e;
-        }
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
         Test.stopTest();
 
         // Verify
-        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.isTrue(expectedException.getMessage().contains('No result found for dml identifier: dmlMockId'), 'Expected exception message should be thrown.');
+        Assert.isNotNull(result, 'Empty result should be returned when no commitWork has run for the identifier.');
+        Assert.areEqual(0, result.all().size(), 'Result should contain 0 operation results.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+        Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
+        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
+        Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
+        Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
+        Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
+        Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
     }
 
 

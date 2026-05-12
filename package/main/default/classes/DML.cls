@@ -221,7 +221,7 @@ global inherited sharing class DML implements Commitable {
 
     global static DML.Result retrieveResultFor(String dmlIdentifier) {
         if (!dmlIdentifierToResult.containsKey(dmlIdentifier)) {
-            throw new DmlException('No result found for dml identifier: ' + dmlIdentifier);
+            return new DmlResult();
         }
         return dmlIdentifierToResult.get(dmlIdentifier);
     }
