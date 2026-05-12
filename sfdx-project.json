@@ -3,14 +3,14 @@
     {
       "versionName": "ver 3.0.1",
       "versionNumber": "3.0.1.NEXT",
-      "path": "force-app",
-      "default": true,
+      "path": "package",
+      "default": false,
       "package": "DML Lib",
       "versionDescription": ""
     },
     {
-      "path": "internal",
-      "default": false
+      "path": "force-app",
+      "default": true
     }
   ],
   "name": "dml-lib",
