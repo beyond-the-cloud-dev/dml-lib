@@ -3532,7 +3532,28 @@ private class DML_Test {
         Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
     }
 
+    @IsTest
+    static void toInsertWithUserModeExplicitlySetWithMode() {
+        // Setup
+        Case newCase = getCase(1);
 
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toInsert(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
 
     @IsTest
     static void toInsertWithInvalidRelationshipSingleRecord() {
