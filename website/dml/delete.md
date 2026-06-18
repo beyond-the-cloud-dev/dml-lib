@@ -154,7 +154,7 @@ OperationResult deleteImmediately(List<SObject> records);
 ```
 
 ::: tip
-All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `deleteImmediately`.
+All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `withMode(System.AccessLevel)`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `deleteImmediately`.
 :::
 
 ### Single Record

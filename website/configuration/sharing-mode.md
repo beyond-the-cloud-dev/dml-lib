@@ -42,7 +42,7 @@ We suggest using `.systemMode().withoutSharing()` in triggers, as trigger logic 
 
 By default, the DML library uses `with sharing`, meaning it respects the sharing context of the calling class. 
 Sharing mode is enforced by `userMode()`, which is the default mode.
-Only when `.systemMode()` is used, `.withSharing()` can control the sharing mode.
+Only when `.systemMode()` or `.withMode(System.AccessLevel.SYSTEM_MODE)` is used, `.withSharing()` can control the sharing mode.
 
 Execute DML operations enforcing sharing rules. Records the user doesn't have access to will cause errors.
 
@@ -76,7 +76,7 @@ new DML()
 ## withoutSharing
 
 Execute DML operations bypassing sharing rules. All records are accessible regardless of sharing settings.
-To use `.withoutSharing()`, the `.systemMode()` must be enabled.
+To use `.withoutSharing()`, `.systemMode()` or `.withMode(System.AccessLevel.SYSTEM_MODE)` must be enabled.
 
 **Signature**
 

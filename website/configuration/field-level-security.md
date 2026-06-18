@@ -17,6 +17,39 @@ System.runAs(minimalAccessUser) {
 }
 ```
 
+## withMode
+
+Set access mode explicitly using the Salesforce `System.AccessLevel` enum.
+
+**Signature**
+
+```apex
+Commitable withMode(System.AccessLevel accessMode);
+```
+
+Use `withMode(System.AccessLevel.USER_MODE)` as an alternative to `userMode()`, and `withMode(System.AccessLevel.SYSTEM_MODE)` as an alternative to `systemMode()`.
+
+**Standard DML**
+
+```apex
+insert as user new Account(Name = 'My Account');
+insert as system new Case(Subject = 'System Mode Case');
+```
+
+**DML Lib**
+
+```apex
+new DML()
+    .toInsert(new Account(Name = 'My Account'))
+    .withMode(System.AccessLevel.USER_MODE)
+    .commitWork();
+
+new DML()
+    .toInsert(new Case(Subject = 'System Mode Case'))
+    .withMode(System.AccessLevel.SYSTEM_MODE)
+    .commitWork();
+```
+
 ## userMode
 
 Execute DML operations respecting user permissions. This is the **default behavior**.
@@ -78,10 +111,13 @@ Field-level security and sharing mode are independent settings that work togethe
 | Configuration | FLS | Sharing Rules |
 |---------------|-----|---------------|
 | `userMode()` | Enforced | Enforced |
+| `withMode(System.AccessLevel.USER_MODE)` | Enforced | Enforced |
 | `userMode().withSharing()` | Enforced | Enforced |
 | `userMode().withoutSharing()` | Enforced | Enforced |
 | `systemMode().withSharing()` | Bypassed | Enforced |
+| `withMode(System.AccessLevel.SYSTEM_MODE).withSharing()` | Bypassed | Enforced |
 | `systemMode().withoutSharing()` | Bypassed | Bypassed |
+| `withMode(System.AccessLevel.SYSTEM_MODE).withoutSharing()` | Bypassed | Bypassed |
 
 **Example**
 
