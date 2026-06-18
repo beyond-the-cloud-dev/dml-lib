@@ -126,6 +126,7 @@ public inherited sharing class DML implements Commitable {
         // Field Level Security
         Commitable userMode();
         Commitable systemMode();
+        Commitable withMode(System.AccessLevel accessMode);
         // Sharing Mode
         Commitable withSharing();
         Commitable withoutSharing();
@@ -674,6 +675,10 @@ public inherited sharing class DML implements Commitable {
 
     public Commitable systemMode() {
         return this.setAccessMode(System.AccessLevel.SYSTEM_MODE);
+    }
+
+    public Commitable withMode(System.AccessLevel accessMode) {
+        return this.setAccessMode(accessMode);
     }
 
     private Commitable setAccessMode(System.AccessLevel accessMode) {
