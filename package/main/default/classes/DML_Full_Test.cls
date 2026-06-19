@@ -6854,6 +6854,29 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toInsertWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toInsert(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
     static void toUpdateWithUserMode() {
         // Setup
         Case newCase = getCase(1);
@@ -6892,6 +6915,31 @@ private class DML_Full_Test {
             try {
                 newCase.Subject = 'Updated Test Case';
                 new DML().toUpdate(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toUpdateWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                newCase.Subject = 'Updated Test Case';
+                new DML().toUpdate(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -6966,6 +7014,37 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toUpsertWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase1 = getCase(1);
+        Case newCase2 = getCase(2);
+
+        insert newCase1;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                newCase1.Subject = 'Updated Test Case';
+
+                new DML().toUpsert(newCase1).toUpsert(newCase2).accessMode(System.AccessLevel.USER_MODE).commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(
+            expectedException.getMessage().contains('Operation failed due to fields being inaccessible on Sobject Case, check errors on Exception or Result'),
+            'Expected exception message should be thrown.'
+        );
+    }
+
+    @IsTest
     static void toDeleteWithUserMode() {
         // Setup
         Case newCase = getCase(1);
@@ -7002,6 +7081,30 @@ private class DML_Full_Test {
         System.runAs(minimumAccessUser()) {
             try {
                 new DML().toDelete(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toDeleteWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toDelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7100,6 +7203,34 @@ private class DML_Full_Test {
         System.runAs(minimumAccessUser()) {
             try {
                 new DML().toUndelete(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(expectedException.getMessage().contains('invalid record id'), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toUndeleteWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        delete newCase;
+
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toUndelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }

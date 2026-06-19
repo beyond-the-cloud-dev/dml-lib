@@ -17,6 +17,39 @@ System.runAs(minimalAccessUser) {
 }
 ```
 
+## accessMode
+
+Set access mode explicitly using the Salesforce `System.AccessLevel` enum.
+
+**Signature**
+
+```apex
+Commitable accessMode(System.AccessLevel accessMode);
+```
+
+Use `accessMode(System.AccessLevel.USER_MODE)` as an alternative to `userMode()`, and `accessMode(System.AccessLevel.SYSTEM_MODE)` as an alternative to `systemMode()`.
+
+**Standard DML**
+
+```apex
+insert as user new Account(Name = 'My Account');
+insert as system new Case(Subject = 'System Mode Case');
+```
+
+**DML Lib**
+
+```apex
+new DML()
+    .toInsert(new Account(Name = 'My Account'))
+    .accessMode(System.AccessLevel.USER_MODE)
+    .commitWork();
+
+new DML()
+    .toInsert(new Case(Subject = 'System Mode Case'))
+    .accessMode(System.AccessLevel.SYSTEM_MODE)
+    .commitWork();
+```
+
 ## userMode
 
 Execute DML operations respecting user permissions. This is the **default behavior**.
@@ -75,13 +108,16 @@ Use `systemMode()` with caution. It bypasses field-level security, which could e
 
 Field-level security and sharing mode are independent settings that work together.
 
-| Configuration | FLS | Sharing Rules |
-|---------------|-----|---------------|
-| `userMode()` | Enforced | Enforced |
-| `userMode().withSharing()` | Enforced | Enforced |
-| `userMode().withoutSharing()` | Enforced | Enforced |
-| `systemMode().withSharing()` | Bypassed | Enforced |
-| `systemMode().withoutSharing()` | Bypassed | Bypassed |
+| Configuration                                                 | FLS      | Sharing Rules |
+| ------------------------------------------------------------- | -------- | ------------- |
+| `userMode()`                                                  | Enforced | Enforced      |
+| `accessMode(System.AccessLevel.USER_MODE)`                    | Enforced | Enforced      |
+| `userMode().withSharing()`                                    | Enforced | Enforced      |
+| `userMode().withoutSharing()`                                 | Enforced | Enforced      |
+| `systemMode().withSharing()`                                  | Bypassed | Enforced      |
+| `accessMode(System.AccessLevel.SYSTEM_MODE).withSharing()`    | Bypassed | Enforced      |
+| `systemMode().withoutSharing()`                               | Bypassed | Bypassed      |
+| `accessMode(System.AccessLevel.SYSTEM_MODE).withoutSharing()` | Bypassed | Bypassed      |
 
 **Example**
 
