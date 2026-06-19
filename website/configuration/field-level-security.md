@@ -17,17 +17,17 @@ System.runAs(minimalAccessUser) {
 }
 ```
 
-## withMode
+## accessMode
 
 Set access mode explicitly using the Salesforce `System.AccessLevel` enum.
 
 **Signature**
 
 ```apex
-Commitable withMode(System.AccessLevel accessMode);
+Commitable accessMode(System.AccessLevel accessMode);
 ```
 
-Use `withMode(System.AccessLevel.USER_MODE)` as an alternative to `userMode()`, and `withMode(System.AccessLevel.SYSTEM_MODE)` as an alternative to `systemMode()`.
+Use `accessMode(System.AccessLevel.USER_MODE)` as an alternative to `userMode()`, and `accessMode(System.AccessLevel.SYSTEM_MODE)` as an alternative to `systemMode()`.
 
 **Standard DML**
 
@@ -41,12 +41,12 @@ insert as system new Case(Subject = 'System Mode Case');
 ```apex
 new DML()
     .toInsert(new Account(Name = 'My Account'))
-    .withMode(System.AccessLevel.USER_MODE)
+    .accessMode(System.AccessLevel.USER_MODE)
     .commitWork();
 
 new DML()
     .toInsert(new Case(Subject = 'System Mode Case'))
-    .withMode(System.AccessLevel.SYSTEM_MODE)
+    .accessMode(System.AccessLevel.SYSTEM_MODE)
     .commitWork();
 ```
 
@@ -108,16 +108,16 @@ Use `systemMode()` with caution. It bypasses field-level security, which could e
 
 Field-level security and sharing mode are independent settings that work together.
 
-| Configuration | FLS | Sharing Rules |
-|---------------|-----|---------------|
-| `userMode()` | Enforced | Enforced |
-| `withMode(System.AccessLevel.USER_MODE)` | Enforced | Enforced |
-| `userMode().withSharing()` | Enforced | Enforced |
-| `userMode().withoutSharing()` | Enforced | Enforced |
-| `systemMode().withSharing()` | Bypassed | Enforced |
-| `withMode(System.AccessLevel.SYSTEM_MODE).withSharing()` | Bypassed | Enforced |
-| `systemMode().withoutSharing()` | Bypassed | Bypassed |
-| `withMode(System.AccessLevel.SYSTEM_MODE).withoutSharing()` | Bypassed | Bypassed |
+| Configuration                                                 | FLS      | Sharing Rules |
+| ------------------------------------------------------------- | -------- | ------------- |
+| `userMode()`                                                  | Enforced | Enforced      |
+| `accessMode(System.AccessLevel.USER_MODE)`                    | Enforced | Enforced      |
+| `userMode().withSharing()`                                    | Enforced | Enforced      |
+| `userMode().withoutSharing()`                                 | Enforced | Enforced      |
+| `systemMode().withSharing()`                                  | Bypassed | Enforced      |
+| `accessMode(System.AccessLevel.SYSTEM_MODE).withSharing()`    | Bypassed | Enforced      |
+| `systemMode().withoutSharing()`                               | Bypassed | Bypassed      |
+| `accessMode(System.AccessLevel.SYSTEM_MODE).withoutSharing()` | Bypassed | Bypassed      |
 
 **Example**
 

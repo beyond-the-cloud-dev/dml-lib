@@ -6854,7 +6854,7 @@ private class DML_Full_Test {
     }
 
     @IsTest
-    static void toInsertWithUserModeExplicitlySetWithMode() {
+    static void toInsertWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
 
@@ -6864,7 +6864,7 @@ private class DML_Full_Test {
         Test.startTest();
         System.runAs(minimumAccessUser()) {
             try {
-                new DML().toInsert(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toInsert(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -6927,7 +6927,7 @@ private class DML_Full_Test {
     }
 
     @IsTest
-    static void toUpdateWithUserModeExplicitlySetWithMode() {
+    static void toUpdateWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
         insert newCase;
@@ -6939,7 +6939,7 @@ private class DML_Full_Test {
         System.runAs(minimumAccessUser()) {
             try {
                 newCase.Subject = 'Updated Test Case';
-                new DML().toUpdate(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toUpdate(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7014,7 +7014,7 @@ private class DML_Full_Test {
     }
 
     @IsTest
-    static void toUpsertWithUserModeExplicitlySetWithMode() {
+    static void toUpsertWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase1 = getCase(1);
         Case newCase2 = getCase(2);
@@ -7029,7 +7029,7 @@ private class DML_Full_Test {
             try {
                 newCase1.Subject = 'Updated Test Case';
 
-                new DML().toUpsert(newCase1).toUpsert(newCase2).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toUpsert(newCase1).toUpsert(newCase2).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7093,7 +7093,7 @@ private class DML_Full_Test {
     }
 
     @IsTest
-    static void toDeleteWithUserModeExplicitlySetWithMode() {
+    static void toDeleteWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
         insert newCase;
@@ -7104,7 +7104,7 @@ private class DML_Full_Test {
         Test.startTest();
         System.runAs(minimumAccessUser()) {
             try {
-                new DML().toDelete(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toDelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7215,7 +7215,7 @@ private class DML_Full_Test {
     }
 
     @IsTest
-    static void toUndeleteWithUserModeExplicitlySetWithMode() {
+    static void toUndeleteWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
         insert newCase;
@@ -7230,7 +7230,7 @@ private class DML_Full_Test {
         Test.startTest();
         System.runAs(minimumAccessUser()) {
             try {
-                new DML().toUndelete(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toUndelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }

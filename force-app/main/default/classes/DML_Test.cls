@@ -3533,7 +3533,7 @@ private class DML_Test {
     }
 
     @IsTest
-    static void toInsertWithUserModeExplicitlySetWithMode() {
+    static void toInsertWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
 
@@ -3543,7 +3543,7 @@ private class DML_Test {
         Test.startTest();
         System.runAs(minimumAccessUser()) {
             try {
-                new DML().toInsert(newCase).withMode(System.AccessLevel.USER_MODE).commitWork();
+                new DML().toInsert(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
