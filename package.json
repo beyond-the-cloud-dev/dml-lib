@@ -37,6 +37,12 @@
     "mermaid": "^11.15.0",
     "vitepress-plugin-mermaid": "^2.0.17"
   },
+  "overrides": {
+    "vite": "6.4.3",
+    "esbuild": "0.25.12",
+    "launch-editor": "2.14.1",
+    "@babel/core": "7.29.6"
+  },
   "lint-staged": {
     "**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}": [
       "prettier --write"
