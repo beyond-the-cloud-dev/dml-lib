@@ -847,7 +847,6 @@ global inherited sharing class DML implements Commitable {
         private void register(DmlStrategy strategy, Record record) {
             EnhancedRecord enhancedRecord = record.get();
 
-            strategy.validate(enhancedRecord);
             enhancedRecord.setDatabaseStrategy(strategy);
 
             this.enhancedRecords.add(enhancedRecord);
@@ -925,8 +924,6 @@ global inherited sharing class DML implements Commitable {
 
         private void register(DmlStrategy strategy, Record record) {
             EnhancedRecord enhancedRecord = record.get();
-
-            strategy.validate(enhancedRecord);
 
             this.assignRecordToProcessingGroup(strategy, enhancedRecord);
         }
@@ -1184,6 +1181,8 @@ global inherited sharing class DML implements Commitable {
         }
 
         private OperationResult execute(List<EnhancedRecord> records) {
+            this.validate(records);
+
             List<SObject> recordsToProcess = this.getRecordsToProcess(records);
 
             ExecutionResult result = new ExecutionResult(this.getOperationType(), this.objectType).setRecords(recordsToProcess);
@@ -1212,6 +1211,12 @@ global inherited sharing class DML implements Commitable {
         protected abstract DmlResultAdapter getResultAdapter();
         protected abstract List<Object> executeDml(List<SObject> recordsToProcess);
         protected abstract RecordSummary executeMockedDml(SObject record);
+
+        private void validate(List<EnhancedRecord> records) {
+            for (EnhancedRecord enhancedRecord : records) {
+                this.validate(enhancedRecord);
+            }
+        }
 
         protected virtual void validate(EnhancedRecord enhancedRecord) {
             return;

@@ -87,6 +87,44 @@ new DML()
     .commitWork();
 ```
 
+## Deferred Validation
+
+Record validation (such as "a record must have an Id to be updated or deleted") runs when `commitWork()` executes each operation — not when the record is registered. Because all inserts and upserts execute before updates, merges, deletes, undeletes, and publishes, a record inserted in a unit of work already has its Id by the time a later operation on it executes.
+
+This makes it possible to insert a record and update or delete it within the same `commitWork()`:
+
+**Example**
+
+```apex
+Account account = new Account(Name = 'Acme');
+Contact contact = new Contact(LastName = 'Smith');
+
+new DML()
+    .toInsert(account)
+    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toUpdate(DML.Record(account).with(Account.Description, 'Updated via UoW'))
+    .commitWork(); // Account insert, Contact insert, Account update — 3 DML statements
+```
+
+When a validation rule is still violated at execution time (for example, updating a record that never receives an Id), the same `DmlException` messages are thrown from `commitWork()`:
+
+| Operation | Exception Message |
+|-----------|-------------------|
+| `toInsert` | `Only new records can be registered as new.` |
+| `toUpdate` | `Only existing records can be updated.` |
+| `toDelete` / `toHardDelete` | `Only existing records can be registered as deleted.` |
+| `toUndelete` | `Only deleted records can be undeleted.` |
+| `toMerge` | `Only existing records can be merged.` |
+
+Two checks still run at registration time:
+
+- The `toMerge` merge-to record must have an Id when `toMerge()` is called — the master record identifies the merge operation itself, so it cannot receive its Id from an insert in the same unit of work.
+- [Duplicate detection](#deduplication-strategy) applies to records that have an Id at registration. Records that receive their Id from an insert in the same unit of work are not deduplicated — registering the same record twice for update surfaces as the standard platform `Duplicate id in list` error at execution time, and `combineOnDuplicate()` does not apply to them.
+
+::: warning
+`commitWork()` does not use a savepoint. If a validation exception is thrown mid-commit, operations that already executed stay committed. Use `commitTransaction()` when the whole unit of work must be atomic — see [Rollback](/architecture/rollback).
+:::
+
 ## Minimal DMLs
 
 DML Lib minimizes the number of DML statements by building a dependency graph and grouping records into execution buckets.

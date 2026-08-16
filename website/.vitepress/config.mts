@@ -50,9 +50,11 @@ export default withMermaid({
           { text: 'Update', link: '/dml/update' },
           { text: 'Upsert', link: '/dml/upsert' },
           { text: 'Delete', link: '/dml/delete' },
+          { text: 'Hard Delete', link: '/dml/hard-delete' },
           { text: 'Undelete', link: '/dml/undelete' },
           { text: 'Merge', link: '/dml/merge' },
           { text: 'Publish', link: '/dml/publish' },
+          { text: 'Record & Records', link: '/dml/record-builders' },
           { text: 'Result', link: '/result' }
         ]
       },
@@ -77,6 +79,15 @@ export default withMermaid({
           { text: 'Field-Level Security', link: '/configuration/field-level-security' },
           { text: 'Sharing Mode', link: '/configuration/sharing-mode' },
           { text: 'DmlOptions', link: '/configuration/dml-options' }
+        ]
+      },
+      {
+        text: 'Advanced',
+        collapsed: true,
+        items: [
+          { text: 'Shared Instance', link: '/advanced/shared-instance' },
+          { text: 'Commit Hooks', link: '/advanced/commit-hooks' },
+          { text: 'Execution Control', link: '/advanced/execution-control' }
         ]
       },
       {

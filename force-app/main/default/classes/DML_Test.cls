@@ -3777,6 +3777,78 @@ private class DML_Test {
     }
 
 
+    @IsTest
+    static void insertAndUpdateWithRelationships() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+        Contact contact1 = getContact(1);
+        Contact contact2 = getContact(2);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML()
+            .toInsert(account1)
+            .toInsert(account2)
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, account2))
+            .toUpdate(DML.Record(account1).with(Account.Description, 'Updated via UoW'))
+            .toUpdate(DML.Record(account2).with(Account.Description, 'Updated via UoW'))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed (Account insert, Contact insert, Account update).');
+        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Contact], 'Contacts should be inserted.');
+        Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact 1 should be linked to Account 1.');
+        Assert.areEqual(account2.Id, [SELECT AccountId FROM Contact WHERE Id = :contact2.Id].AccountId, 'Contact 2 should be linked to Account 2.');
+        Assert.areEqual('Updated via UoW', [SELECT Description FROM Account WHERE Id = :account1.Id].Description, 'Account 1 should be updated.');
+        Assert.areEqual('Updated via UoW', [SELECT Description FROM Account WHERE Id = :account2.Id].Description, 'Account 2 should be updated.');
+        Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
+        Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+        Assert.areEqual(2, result.updatesOf(Account.SObjectType).records().size(), 'Updated operation result should contain 2 records.');
+    }
+
+    @IsTest
+    static void insertUpdateDeleteWithMocking() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts().allUpdates().allDeletes();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .identifier('dmlMockId')
+            .toInsert(account1)
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toUpdate(DML.Record(account1).with(Account.Description, 'Updated'))
+            .toDelete(contact1)
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should exist in the database.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should exist in the database.');
+        Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
+        Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+        Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+    }
+
+
     public class MyHook implements DML.Hook {
         private Boolean beforeCalled = false;
         private Boolean afterCalled = false;
