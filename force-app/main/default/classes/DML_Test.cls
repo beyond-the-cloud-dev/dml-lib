@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.1.0
+ * v3.2.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -3846,6 +3846,116 @@ private class DML_Test {
         Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
         Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
         Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+    }
+
+
+    @IsTest
+    static void customOperationOrder() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').exceptionOnInserts().exceptionOnDeletes();
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        try {
+            new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML, DML.OperationType.INSERT_DML })
+                .toInsert(account1)
+                .toDelete(contact1)
+                .identifier('dmlMockId')
+                .commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Exception thrown for DELETE_DML operation.', expectedException.getMessage(), 'Delete should be executed before insert, so the delete exception should be thrown first.');
+    }
+
+    @IsTest
+    static void customOperationOrderWithMocking() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').allDmls();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML, DML.OperationType.INSERT_DML })
+            .toInsert(account1)
+            .toDelete(contact1)
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should exist in the database.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+        Assert.isNotNull(account1.Id, 'Account should have mocked Id.');
+    }
+
+    @IsTest
+    static void customOperationOrderWithNotListedOperation() {
+        // Setup
+        Account account1 = getAccount(1);
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML }).toInsert(account1);
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('INSERT_DML operation is not listed in the custom operation order.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void customOperationOrderDiscardWork() {
+        // Setup
+        Account account1 = getAccount(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.INSERT_DML })
+            .toInsert(account1)
+            .discardWork()
+            .commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted in the database.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+        Assert.isNull(account1.Id, 'Account should not have an Id.');
     }
 
 
