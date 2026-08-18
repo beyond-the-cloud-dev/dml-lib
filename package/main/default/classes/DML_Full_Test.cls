@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.1.0
+ * v3.2.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -3404,6 +3404,8 @@ private class DML_Full_Test {
         Assert.areEqual(1, result.insertsOf(Account.SObjectType).recordResults().size(), 'Inserted operation result should contain the inserted record results.');
         Assert.isTrue(result.insertsOf(Account.SObjectType).recordResults()[0].isSuccess(), 'Inserted operation result should contain a successful record result.');
         Assert.isNotNull(result.insertsOf(Account.SObjectType).recordResults()[0].id(), 'Inserted operation result should contain a mocked record Id.');
+        Assert.isNotNull(result.insertsOf(Account.SObjectType).recordResults()[0].record(), 'Inserted operation record result should contain the record.');
+        Assert.areEqual(account1.Id, result.insertsOf(Account.SObjectType).recordResults()[0].record().Id, 'Record result should return the mocked record.');
         Assert.isNotNull(account1.Id, 'Account should have mocked Id.');
     }
 
@@ -6854,6 +6856,29 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toInsertWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toInsert(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
     static void toUpdateWithUserMode() {
         // Setup
         Case newCase = getCase(1);
@@ -6892,6 +6917,31 @@ private class DML_Full_Test {
             try {
                 newCase.Subject = 'Updated Test Case';
                 new DML().toUpdate(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toUpdateWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                newCase.Subject = 'Updated Test Case';
+                new DML().toUpdate(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -6966,6 +7016,37 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toUpsertWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase1 = getCase(1);
+        Case newCase2 = getCase(2);
+
+        insert newCase1;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                newCase1.Subject = 'Updated Test Case';
+
+                new DML().toUpsert(newCase1).toUpsert(newCase2).accessMode(System.AccessLevel.USER_MODE).commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(
+            expectedException.getMessage().contains('Operation failed due to fields being inaccessible on Sobject Case, check errors on Exception or Result'),
+            'Expected exception message should be thrown.'
+        );
+    }
+
+    @IsTest
     static void toDeleteWithUserMode() {
         // Setup
         Case newCase = getCase(1);
@@ -7002,6 +7083,30 @@ private class DML_Full_Test {
         System.runAs(minimumAccessUser()) {
             try {
                 new DML().toDelete(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Access to entity \'Case\' denied', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toDeleteWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toDelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7100,6 +7205,34 @@ private class DML_Full_Test {
         System.runAs(minimumAccessUser()) {
             try {
                 new DML().toUndelete(newCase).userMode().commitWork();
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(expectedException.getMessage().contains('invalid record id'), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toUndeleteWithUserModeExplicitlySetAccessMode() {
+        // Setup
+        Case newCase = getCase(1);
+        insert newCase;
+
+        delete newCase;
+
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new DML().toUndelete(newCase).accessMode(System.AccessLevel.USER_MODE).commitWork();
             } catch (Exception e) {
                 expectedException = e;
             }
@@ -7652,6 +7785,240 @@ private class DML_Full_Test {
         Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
         Assert.isTrue(hook.beforeCalled, 'Before hook should be called.');
         Assert.isTrue(hook.afterCalled, 'After hook should be called.');
+    }
+
+    @IsTest
+    static void insertAndUpdateWithRelationships() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+        Contact contact1 = getContact(1);
+        Contact contact2 = getContact(2);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML()
+            .toInsert(account1)
+            .toInsert(account2)
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, account2))
+            .toUpdate(DML.Record(account1).with(Account.Description, 'Updated via UoW'))
+            .toUpdate(DML.Record(account2).with(Account.Description, 'Updated via UoW'))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed (Account insert, Contact insert, Account update).');
+        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts should be inserted.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Contact], 'Contacts should be inserted.');
+        Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact 1 should be linked to Account 1.');
+        Assert.areEqual(account2.Id, [SELECT AccountId FROM Contact WHERE Id = :contact2.Id].AccountId, 'Contact 2 should be linked to Account 2.');
+        Assert.areEqual('Updated via UoW', [SELECT Description FROM Account WHERE Id = :account1.Id].Description, 'Account 1 should be updated.');
+        Assert.areEqual('Updated via UoW', [SELECT Description FROM Account WHERE Id = :account2.Id].Description, 'Account 2 should be updated.');
+        Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
+        Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+        Assert.areEqual(2, result.updatesOf(Account.SObjectType).records().size(), 'Updated operation result should contain 2 records.');
+    }
+
+    @IsTest
+    static void insertUpdateDeleteWithMocking() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts().allUpdates().allDeletes();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .identifier('dmlMockId')
+            .toInsert(account1)
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toUpdate(DML.Record(account1).with(Account.Description, 'Updated'))
+            .toDelete(contact1)
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should exist in the database.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Contact], 'No records should exist in the database.');
+        Assert.areEqual(2, result.inserts().size(), 'Inserted operation result should contain 2 object types.');
+        Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+        Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+    }
+
+    @IsTest
+    static void customOperationOrder() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').exceptionOnInserts().exceptionOnDeletes();
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        try {
+            new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML, DML.OperationType.INSERT_DML })
+                .toInsert(account1)
+                .toDelete(contact1)
+                .identifier('dmlMockId')
+                .commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('Exception thrown for DELETE_DML operation.', expectedException.getMessage(), 'Delete should be executed before insert, so the delete exception should be thrown first.');
+    }
+
+    @IsTest
+    static void customOperationOrderWithMocking() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').allDmls();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML, DML.OperationType.INSERT_DML })
+            .toInsert(account1)
+            .toDelete(contact1)
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should exist in the database.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
+        Assert.isNotNull(account1.Id, 'Account should have mocked Id.');
+    }
+
+    @IsTest
+    static void customOperationOrderWithNotListedOperation() {
+        // Setup
+        Account account1 = getAccount(1);
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML }).toInsert(account1);
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual('INSERT_DML operation is not listed in the custom operation order.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void customOperationOrderDiscardWork() {
+        // Setup
+        Account account1 = getAccount(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.INSERT_DML })
+            .toInsert(account1)
+            .discardWork()
+            .commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted in the database.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
+        Assert.isNull(account1.Id, 'Account should not have an Id.');
+    }
+
+    @IsTest
+    static void customOperationOrderUndeleteBeforeUpdate() {
+        // Setup
+        Account account1 = getAccount(1);
+        insert account1;
+        delete account1;
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.UNDELETE_DML, DML.OperationType.UPDATE_DML })
+            .toUpdate(DML.Record(account1).with(Account.Description, 'Updated after undelete'))
+            .toUndelete(account1)
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Account undeletedAccount = [SELECT Description, IsDeleted FROM Account WHERE Id = :account1.Id];
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account undelete, Account update).');
+        Assert.isFalse(undeletedAccount.IsDeleted, 'Account should be undeleted.');
+        Assert.areEqual('Updated after undelete', undeletedAccount.Description, 'Undelete should be executed before update, so the update of the deleted record succeeds.');
+        Assert.areEqual(1, result.undeletes().size(), 'Undeleted operation result should contain 1 object type.');
+        Assert.areEqual(1, result.updates().size(), 'Updated operation result should contain 1 object type.');
+    }
+
+    @IsTest
+    static void customOperationOrderDeleteBeforeInsert() {
+        // Setup
+        List<Account> existingAccounts = insertAccounts();
+        Account account1 = getAccount(4);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML(new List<DML.OperationType>{ DML.OperationType.DELETE_DML, DML.OperationType.INSERT_DML })
+            .toInsert(account1)
+            .toDelete(existingAccounts)
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account delete, Account insert).');
+        Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Existing accounts should be deleted and the new account inserted.');
+        Assert.areEqual(account1.Id, [SELECT Id FROM Account LIMIT 1].Id, 'Only the newly inserted account should remain.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(1, result.deletes().size(), 'Deleted operation result should contain 1 object type.');
     }
 
     public class MyHook implements DML.Hook {

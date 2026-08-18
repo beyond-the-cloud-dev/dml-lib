@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.1.0
+ * v3.2.0
  *
  * PMD False Positives:
  * - MethodNamingConventions: Some methods are uppercase to indicate that they are "constructors" of other internal classes
@@ -23,7 +23,9 @@
 @SuppressWarnings(
     'PMD.MethodNamingConventions,PMD.ApexDoc,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions,PMD.AvoidGlobalModifier'
 )
+@NamespaceAccessible
 public inherited sharing class DML implements Commitable {
+    @NamespaceAccessible
     public static Commitable Shared {
         get {
             if (Shared == null) {
@@ -34,22 +36,27 @@ public inherited sharing class DML implements Commitable {
         private set;
     }
 
+    @NamespaceAccessible
     public static Record Record(SObject record) {
         return new DmlRecord(record);
     }
 
+    @NamespaceAccessible
     public static Record Record(Id recordId) {
         return new DmlRecord(recordId);
     }
 
+    @NamespaceAccessible
     public static Records Records(List<SObject> records) {
         return new DmlRecords(records);
     }
 
+    @NamespaceAccessible
     public static Records Records(Iterable<Id> recordIds) {
         return new DmlRecords(recordIds);
     }
 
+    @NamespaceAccessible
     public interface Commitable {
         // Insert
         Commitable toInsert(SObject record);
@@ -126,6 +133,7 @@ public inherited sharing class DML implements Commitable {
         // Field Level Security
         Commitable userMode();
         Commitable systemMode();
+        Commitable accessMode(System.AccessLevel accessMode);
         // Sharing Mode
         Commitable withSharing();
         Commitable withoutSharing();
@@ -142,6 +150,7 @@ public inherited sharing class DML implements Commitable {
         Result commitTransaction(); // make a savepoint and rollback on exception
     }
 
+    @NamespaceAccessible
     public interface Record {
         Record with(SObjectField field, Object value);
         Record withRelationship(SObjectField targetField, SObject relatedRecord);
@@ -152,6 +161,7 @@ public inherited sharing class DML implements Commitable {
         SObjectType getSObjectType();
     }
 
+    @NamespaceAccessible
     public interface Records {
         Records with(SObjectField field, Object value);
         Records withRelationship(SObjectField targetField, SObject relatedRecord);
@@ -162,6 +172,7 @@ public inherited sharing class DML implements Commitable {
         SObjectType getSObjectType();
     }
 
+    @NamespaceAccessible
     public interface Result {
         List<OperationResult> all();
         // Per Operation
@@ -182,6 +193,7 @@ public inherited sharing class DML implements Commitable {
         OperationResult eventsOf(SObjectType objectType);
     }
 
+    @NamespaceAccessible
     public interface OperationResult {
         // Metadata
         DML.OperationType operationType();
@@ -197,6 +209,7 @@ public inherited sharing class DML implements Commitable {
         List<RecordResult> recordResults();
     }
 
+    @NamespaceAccessible
     public interface RecordResult {
         Id id();
         SObject record();
@@ -204,6 +217,7 @@ public inherited sharing class DML implements Commitable {
         List<Error> errors();
     }
 
+    @NamespaceAccessible
     public interface Error {
         String message();
         System.StatusCode statusCode();
@@ -212,6 +226,7 @@ public inherited sharing class DML implements Commitable {
 
     // Mocking
 
+    @NamespaceAccessible
     public static DML.Mockable mock(String dmlIdentifier) {
         if (!dmlIdentifierToMock.containsKey(dmlIdentifier)) {
             dmlIdentifierToMock.put(dmlIdentifier, new DmlMock());
@@ -219,6 +234,7 @@ public inherited sharing class DML implements Commitable {
         return dmlIdentifierToMock.get(dmlIdentifier);
     }
 
+    @NamespaceAccessible
     public static DML.Result retrieveResultFor(String dmlIdentifier) {
         if (!dmlIdentifierToResult.containsKey(dmlIdentifier)) {
             return new DmlResult();
@@ -226,6 +242,7 @@ public inherited sharing class DML implements Commitable {
         return dmlIdentifierToResult.get(dmlIdentifier);
     }
 
+    @NamespaceAccessible
     public interface Mockable {
         Mockable allDmls();
         // Per Operation
@@ -264,6 +281,7 @@ public inherited sharing class DML implements Commitable {
 
     // Hooks
 
+    @NamespaceAccessible
     public interface Hook {
         void before();
         void after(Result result);
@@ -271,6 +289,7 @@ public inherited sharing class DML implements Commitable {
 
     // Implementation
 
+    @NamespaceAccessible
     public enum OperationType {
         INSERT_DML,
         UPSERT_DML,
@@ -283,8 +302,8 @@ public inherited sharing class DML implements Commitable {
 
     private Configuration configuration;
     private StrategiesStorage strategiesStorage;
-    private DependencyOrchestrator dependencyOrchestrator;
-    private LinearOrchestrator linearOrchestrator;
+
+    private Orchestrator orchestrator;
 
     private Hook hook;
 
@@ -293,43 +312,59 @@ public inherited sharing class DML implements Commitable {
     private static final Map<String, Result> dmlIdentifierToResult = new Map<String, Result>();
     private static final Map<String, DmlMock> dmlIdentifierToMock = new Map<String, DmlMock>();
 
+    @NamespaceAccessible
     public DML() {
         this.configuration = new Configuration();
         this.strategiesStorage = new StrategiesStorage();
-        this.dependencyOrchestrator = new DependencyOrchestrator();
-        this.linearOrchestrator = new LinearOrchestrator(this.configuration);
+        this.orchestrator = new DefaultOrchestrator(this.configuration);
+    }
+
+    @NamespaceAccessible
+    public DML(List<DML.OperationType> operationOrder) {
+        this.configuration = new Configuration();
+        this.configuration.customOperationOrder(operationOrder);
+        this.strategiesStorage = new StrategiesStorage();
+        this.orchestrator = new CustomOrderOrchestrator(this.configuration);
     }
 
     // Insert
 
+    @NamespaceAccessible
     public Commitable toInsert(SObject record) {
         return this.toInsert(Record(record));
     }
 
+    @NamespaceAccessible
     public Commitable toInsert(Record record) {
-        return this.registerInDependencyOrchestrator(this.getInsertStrategy(record.getSObjectType()), record);
+        return this.register(this.getInsertStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public Commitable toInsert(List<SObject> records) {
         return this.toInsert(Records(records));
     }
 
+    @NamespaceAccessible
     public Commitable toInsert(Records records) {
-        return this.registerInDependencyOrchestrator(this.getInsertStrategy(records.getSObjectType()), records);
+        return this.register(this.getInsertStrategy(records.getSObjectType()), records);
     }
 
+    @NamespaceAccessible
     public OperationResult insertImmediately(SObject record) {
         return this.insertImmediately(Record(record));
     }
 
+    @NamespaceAccessible
     public OperationResult insertImmediately(Record record) {
         return this.executeImmediately(this.getInsertStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public OperationResult insertImmediately(List<SObject> records) {
         return this.insertImmediately(Records(records));
     }
 
+    @NamespaceAccessible
     public OperationResult insertImmediately(Records records) {
         return this.executeImmediately(this.getInsertStrategy(records.getSObjectType()), records);
     }
@@ -340,34 +375,42 @@ public inherited sharing class DML implements Commitable {
 
     // Update
 
+    @NamespaceAccessible
     public Commitable toUpdate(SObject record) {
         return this.toUpdate(Record(record));
     }
 
+    @NamespaceAccessible
     public Commitable toUpdate(Record record) {
-        return this.registerInLinearOrchestrator(this.getUpdateStrategy(record.getSObjectType()), record);
+        return this.register(this.getUpdateStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public Commitable toUpdate(List<SObject> records) {
         return this.toUpdate(Records(records));
     }
 
+    @NamespaceAccessible
     public Commitable toUpdate(Records records) {
-        return this.registerInLinearOrchestrator(this.getUpdateStrategy(records.getSObjectType()), records);
+        return this.register(this.getUpdateStrategy(records.getSObjectType()), records);
     }
 
+    @NamespaceAccessible
     public OperationResult updateImmediately(SObject record) {
         return this.updateImmediately(Record(record));
     }
 
+    @NamespaceAccessible
     public OperationResult updateImmediately(Record record) {
         return this.executeImmediately(this.getUpdateStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public OperationResult updateImmediately(List<SObject> records) {
         return this.updateImmediately(Records(records));
     }
 
+    @NamespaceAccessible
     public OperationResult updateImmediately(Records records) {
         return this.executeImmediately(this.getUpdateStrategy(records.getSObjectType()), records);
     }
@@ -378,43 +421,53 @@ public inherited sharing class DML implements Commitable {
 
     // Upsert
 
+    @NamespaceAccessible
     public Commitable toUpsert(SObject record) {
         return this.toUpsert(Record(record));
     }
 
+    @NamespaceAccessible
     public Commitable toUpsert(SObject record, SObjectField externalIdField) {
-        return this.registerInDependencyOrchestrator(this.getUpsertStrategy(record.getSObjectType()).withExternalIdField(externalIdField), Record(record));
+        return this.register(this.getUpsertStrategy(record.getSObjectType()).withExternalIdField(externalIdField), Record(record));
     }
 
+    @NamespaceAccessible
     public Commitable toUpsert(Record record) {
-        return this.registerInDependencyOrchestrator(this.getUpsertStrategy(record.getSObjectType()), record);
+        return this.register(this.getUpsertStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public Commitable toUpsert(List<SObject> records) {
         return this.toUpsert(Records(records));
     }
 
+    @NamespaceAccessible
     public Commitable toUpsert(List<SObject> records, SObjectField externalIdField) {
         Records dmlRecords = Records(records);
-        return this.registerInDependencyOrchestrator(this.getUpsertStrategy(dmlRecords.getSObjectType()).withExternalIdField(externalIdField), dmlRecords);
+        return this.register(this.getUpsertStrategy(dmlRecords.getSObjectType()).withExternalIdField(externalIdField), dmlRecords);
     }
 
+    @NamespaceAccessible
     public Commitable toUpsert(Records records) {
-        return this.registerInDependencyOrchestrator(this.getUpsertStrategy(records.getSObjectType()), records);
+        return this.register(this.getUpsertStrategy(records.getSObjectType()), records);
     }
 
+    @NamespaceAccessible
     public OperationResult upsertImmediately(SObject record) {
         return this.upsertImmediately(Record(record));
     }
 
+    @NamespaceAccessible
     public OperationResult upsertImmediately(Record record) {
         return this.executeImmediately(this.getUpsertStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public OperationResult upsertImmediately(List<SObject> records) {
         return this.upsertImmediately(Records(records));
     }
 
+    @NamespaceAccessible
     public OperationResult upsertImmediately(Records records) {
         return this.executeImmediately(this.getUpsertStrategy(records.getSObjectType()), records);
     }
@@ -425,34 +478,40 @@ public inherited sharing class DML implements Commitable {
 
     // Delete
 
+    @NamespaceAccessible
     public Commitable toDelete(Id recordId) {
         return this.toDelete(Record(recordId));
     }
 
+    @NamespaceAccessible
     public Commitable toDelete(SObject record) {
         return this.toDelete(Record(record));
     }
 
     private Commitable toDelete(Record record) {
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(record.getSObjectType()), record);
+        return this.register(this.getDeleteStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public Commitable toDelete(Iterable<Id> recordIds) {
         return this.toDelete(Records(recordIds));
     }
 
+    @NamespaceAccessible
     public Commitable toDelete(List<SObject> records) {
         return this.toDelete(Records(records));
     }
 
     private Commitable toDelete(Records records) {
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(records.getSObjectType()), records);
+        return this.register(this.getDeleteStrategy(records.getSObjectType()), records);
     }
 
+    @NamespaceAccessible
     public OperationResult deleteImmediately(Id recordId) {
         return this.deleteImmediately(Record(recordId));
     }
 
+    @NamespaceAccessible
     public OperationResult deleteImmediately(SObject record) {
         return this.deleteImmediately(Record(record));
     }
@@ -461,10 +520,12 @@ public inherited sharing class DML implements Commitable {
         return this.executeImmediately(this.getDeleteStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public OperationResult deleteImmediately(Iterable<Id> recordIds) {
         return this.deleteImmediately(Records(recordIds));
     }
 
+    @NamespaceAccessible
     public OperationResult deleteImmediately(List<SObject> records) {
         return this.deleteImmediately(Records(records));
     }
@@ -479,56 +540,66 @@ public inherited sharing class DML implements Commitable {
 
     // Hard Delete
 
+    @NamespaceAccessible
     public Commitable toHardDelete(Id recordId) {
         Record dmlRecord = Record(recordId);
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
+        return this.register(this.getDeleteStrategy(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
     }
 
+    @NamespaceAccessible
     public Commitable toHardDelete(SObject record) {
         Record dmlRecord = Record(record);
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
+        return this.register(this.getDeleteStrategy(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
     }
 
+    @NamespaceAccessible
     public Commitable toHardDelete(Iterable<Id> recordIds) {
         Records dmlRecords = Records(recordIds);
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
+        return this.register(this.getDeleteStrategy(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
     }
 
+    @NamespaceAccessible
     public Commitable toHardDelete(List<SObject> records) {
         Records dmlRecords = Records(records);
-        return this.registerInLinearOrchestrator(this.getDeleteStrategy(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
+        return this.register(this.getDeleteStrategy(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
     }
 
     // Undelete
 
+    @NamespaceAccessible
     public Commitable toUndelete(Id recordId) {
         return this.toUndelete(Record(recordId));
     }
 
+    @NamespaceAccessible
     public Commitable toUndelete(SObject record) {
         return this.toUndelete(Record(record));
     }
 
     private Commitable toUndelete(Record record) {
-        return this.registerInLinearOrchestrator(this.getUndeleteStrategy(record.getSObjectType()), record);
+        return this.register(this.getUndeleteStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public Commitable toUndelete(Iterable<Id> recordIds) {
         return this.toUndelete(Records(recordIds));
     }
 
+    @NamespaceAccessible
     public Commitable toUndelete(List<SObject> records) {
         return this.toUndelete(Records(records));
     }
 
     private Commitable toUndelete(Records records) {
-        return this.registerInLinearOrchestrator(this.getUndeleteStrategy(records.getSObjectType()), records);
+        return this.register(this.getUndeleteStrategy(records.getSObjectType()), records);
     }
 
+    @NamespaceAccessible
     public OperationResult undeleteImmediately(Id recordId) {
         return this.undeleteImmediately(Record(recordId));
     }
 
+    @NamespaceAccessible
     public OperationResult undeleteImmediately(SObject record) {
         return this.undeleteImmediately(Record(record));
     }
@@ -537,10 +608,12 @@ public inherited sharing class DML implements Commitable {
         return this.executeImmediately(this.getUndeleteStrategy(record.getSObjectType()), record);
     }
 
+    @NamespaceAccessible
     public OperationResult undeleteImmediately(Iterable<Id> recordIds) {
         return this.undeleteImmediately(Records(recordIds));
     }
 
+    @NamespaceAccessible
     public OperationResult undeleteImmediately(List<SObject> records) {
         return this.undeleteImmediately(Records(records));
     }
@@ -555,32 +628,36 @@ public inherited sharing class DML implements Commitable {
 
     // Merge
 
+    @NamespaceAccessible
     public Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecord));
     }
 
+    @NamespaceAccessible
     public Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecordId));
     }
 
     private Commitable toMerge(MergeStrategy mergeStrategy, Record duplicatedRecord) {
-        return this.registerInLinearOrchestrator(mergeStrategy, duplicatedRecord);
+        return this.register(mergeStrategy, duplicatedRecord);
     }
 
+    @NamespaceAccessible
     public Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicateRecords));
     }
 
+    @NamespaceAccessible
     public Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeStrategy(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicatedRecordIds));
     }
 
     private Commitable toMerge(MergeStrategy mergeStrategy, Records duplicateRecords) {
-        return this.registerInLinearOrchestrator(mergeStrategy, duplicateRecords);
+        return this.register(mergeStrategy, duplicateRecords);
     }
 
     private MergeStrategy getMergeStrategy(SObjectType objectType, Record mergeToRecord) {
@@ -589,21 +666,25 @@ public inherited sharing class DML implements Commitable {
 
     // Platform Event
 
+    @NamespaceAccessible
     public Commitable toPublish(SObject record) {
         Record dmlRecord = Record(record);
-        return this.registerInLinearOrchestrator(this.getPlatformEventStrategy(dmlRecord.getSObjectType()), dmlRecord);
+        return this.register(this.getPlatformEventStrategy(dmlRecord.getSObjectType()), dmlRecord);
     }
 
+    @NamespaceAccessible
     public Commitable toPublish(List<SObject> records) {
         Records dmlRecords = Records(records);
-        return this.registerInLinearOrchestrator(this.getPlatformEventStrategy(dmlRecords.getSObjectType()), dmlRecords);
+        return this.register(this.getPlatformEventStrategy(dmlRecords.getSObjectType()), dmlRecords);
     }
 
+    @NamespaceAccessible
     public OperationResult publishImmediately(SObject record) {
         Record dmlRecord = Record(record);
         return this.executeImmediately(this.getPlatformEventStrategy(dmlRecord.getSObjectType()), dmlRecord);
     }
 
+    @NamespaceAccessible
     public OperationResult publishImmediately(List<SObject> records) {
         Records dmlRecords = Records(records);
         return this.executeImmediately(this.getPlatformEventStrategy(dmlRecords.getSObjectType()), dmlRecords);
@@ -629,32 +710,20 @@ public inherited sharing class DML implements Commitable {
         return result;
     }
 
-    private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Record record) {
-        DmlStrategy existing = this.strategiesStorage.intern(strategy);
-        this.dependencyOrchestrator.register(existing, record);
+    private Commitable register(DmlStrategy strategy, Record record) {
+        this.orchestrator.register(this.strategiesStorage.intern(strategy), record);
         return this;
     }
 
-    private Commitable registerInDependencyOrchestrator(DmlStrategy strategy, Records records) {
-        DmlStrategy existing = this.strategiesStorage.intern(strategy);
-        this.dependencyOrchestrator.register(existing, records);
+    private Commitable register(DmlStrategy strategy, Records records) {
+        this.orchestrator.register(this.strategiesStorage.intern(strategy), records);
         return this;
     }
 
-    private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Record record) {
-        DmlStrategy existing = this.strategiesStorage.intern(strategy);
-        this.linearOrchestrator.register(existing, record);
-        return this;
-    }
-
-    private Commitable registerInLinearOrchestrator(DmlStrategy strategy, Records records) {
-        DmlStrategy existing = this.strategiesStorage.intern(strategy);
-        this.linearOrchestrator.register(existing, records);
-        return this;
-    }
 
     // Identifier
 
+    @NamespaceAccessible
     public Commitable identifier(String dmlIdentifier) {
         this.configuration.identifier(dmlIdentifier);
         return this;
@@ -662,32 +731,39 @@ public inherited sharing class DML implements Commitable {
 
     // Debug
 
+    @NamespaceAccessible
     public void preview() {
         this.configuration.preview();
     }
 
     // Field Level Security
 
+    @NamespaceAccessible
     public Commitable userMode() {
-        return this.setAccessMode(System.AccessLevel.USER_MODE);
+        this.configuration.accessMode(System.AccessLevel.USER_MODE);
+        return this;
     }
 
+    @NamespaceAccessible
     public Commitable systemMode() {
-        return this.setAccessMode(System.AccessLevel.SYSTEM_MODE);
+        this.configuration.accessMode(System.AccessLevel.SYSTEM_MODE);
+        return this;
     }
 
-    private Commitable setAccessMode(System.AccessLevel accessMode) {
+    public Commitable accessMode(System.AccessLevel accessMode) {
         this.configuration.accessMode(accessMode);
         return this;
     }
 
     // Sharing Mode
 
+    @NamespaceAccessible
     public Commitable withSharing() {
         this.configuration.withSharing();
         return this;
     }
 
+    @NamespaceAccessible
     public Commitable withoutSharing() {
         this.configuration.withoutSharing();
         return this;
@@ -695,21 +771,25 @@ public inherited sharing class DML implements Commitable {
 
     // Other configs
 
+    @NamespaceAccessible
     public Commitable allowPartialSuccess() {
         this.configuration.allowPartialSuccess();
         return this;
     }
 
+    @NamespaceAccessible
     public Commitable skipDuplicateRules() {
         this.configuration.skipDuplicateRules();
         return this;
     }
 
+    @NamespaceAccessible
     public Commitable combineOnDuplicate() {
         this.configuration.combineOnDuplicate();
         return this;
     }
 
+    @NamespaceAccessible
     public Commitable options(Database.DmlOptions options) {
         this.configuration.options(options);
         return this;
@@ -722,11 +802,13 @@ public inherited sharing class DML implements Commitable {
 
     // Hooks
 
+    @NamespaceAccessible
     public Commitable commitHook(Hook callback) {
         this.hook = callback;
         return this;
     }
 
+    @NamespaceAccessible
     public Result dryRun() {
         Savepoint savePoint = Database.setSavepoint();
 
@@ -735,8 +817,7 @@ public inherited sharing class DML implements Commitable {
 
             this.hook?.before();
 
-            this.dependencyOrchestrator.execute(result);
-            this.linearOrchestrator.execute(result);
+            this.orchestrator.execute(result);
 
             this.hook?.after(result);
 
@@ -747,14 +828,14 @@ public inherited sharing class DML implements Commitable {
         }
     }
 
+    @NamespaceAccessible
     public Result commitWork() {
         DmlResult result = new DmlResult();
 
         try {
             this.hook?.before();
 
-            this.dependencyOrchestrator.execute(result);
-            this.linearOrchestrator.execute(result);
+            this.orchestrator.execute(result);
 
             this.storeResult(result);
 
@@ -790,6 +871,7 @@ public inherited sharing class DML implements Commitable {
         dmlIdentifierToResult.put(this.configuration.dmlIdentifier, result);
     }
 
+    @NamespaceAccessible
     public Result commitTransaction() {
         if (!this.configuration.allOrNone) {
             throw new DmlException('commitTransaction() is not supported when allOrNone=false');
@@ -808,8 +890,11 @@ public inherited sharing class DML implements Commitable {
     }
 
     private void reset() {
-        this.dependencyOrchestrator = new DependencyOrchestrator();
-        this.linearOrchestrator = new LinearOrchestrator(this.configuration);
+        if (this.configuration.customOperationOrder == null) {
+            this.orchestrator = new DefaultOrchestrator(this.configuration);
+        } else {
+            this.orchestrator = new CustomOrderOrchestrator(this.configuration);
+        }
     }
 
     private class StrategiesStorage {
@@ -829,28 +914,61 @@ public inherited sharing class DML implements Commitable {
         }
     }
 
-    private class DependencyOrchestrator {
+    public interface Orchestrator {
+        void register(DmlStrategy strategy, Records records);
+        void register(DmlStrategy strategy, Record record);
+        void execute(DmlResult result);
+    }
+
+    private class DefaultOrchestrator implements Orchestrator {
+        private LinearOrchestrator linearOrchestrator;
+        private Orchestrator dependencyOrchestrator;
+
+        private DefaultOrchestrator(Configuration configuration) {
+            this.linearOrchestrator = new LinearOrchestrator(configuration);
+            this.dependencyOrchestrator = new DependencyOrchestrator();
+        }
+
+        public void register(DmlStrategy strategy, Records records) {
+            this.route(strategy).register(strategy, records);
+        }
+
+        public void register(DmlStrategy strategy, Record record) {
+            this.route(strategy).register(strategy, record);
+        }
+
+        private Orchestrator route(DmlStrategy strategy) {
+            Boolean needsDependencyResolution = strategy.getOperationType() == OperationType.INSERT_DML || strategy.getOperationType() == OperationType.UPSERT_DML;
+            return needsDependencyResolution ? this.dependencyOrchestrator : this.linearOrchestrator;
+        }
+
+        public void execute(DmlResult result) {
+            this.dependencyOrchestrator.execute(result);
+            this.linearOrchestrator.execute(result);
+        }
+    }
+
+    private class DependencyOrchestrator implements Orchestrator {
         private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
         private List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
 
         private OrderDependencyGraph orderDependencyGraph = new OrderDependencyGraph();
 
-        private void register(DmlStrategy strategy, Records records) {
+        public void register(DmlStrategy strategy, Records records) {
             for (Record record : records.get()) {
                 this.register(strategy, record);
             }
         }
 
-        private void register(DmlStrategy strategy, Record record) {
+        public void register(DmlStrategy strategy, Record record) {
             EnhancedRecord enhancedRecord = record.get();
 
-            strategy.validate(enhancedRecord);
             enhancedRecord.setDatabaseStrategy(strategy);
 
             this.enhancedRecords.add(enhancedRecord);
         }
 
-        private void execute(DmlResult result) {
+        public void execute(DmlResult result) {
             this.addTemporaryIdsToBuildDependencyGraph();
 
             List<List<Id>> executionWaves = this.orderDependencyGraph.computeExecutionWaves();
@@ -898,7 +1016,7 @@ public inherited sharing class DML implements Commitable {
         }
     }
 
-    private class LinearOrchestrator {
+    private class LinearOrchestrator implements Orchestrator {
         private Map<String, ProcessingGroup> processingGroupByOperationId = new Map<String, ProcessingGroup>();
         private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>{
             OperationType.UPDATE_DML => new List<ProcessingGroup>(),
@@ -914,16 +1032,14 @@ public inherited sharing class DML implements Commitable {
             this.configuration = configuration;
         }
 
-        private void register(DmlStrategy strategy, Records records) {
+        public void register(DmlStrategy strategy, Records records) {
             for (Record record : records.get()) {
                 this.register(strategy, record);
             }
         }
 
-        private void register(DmlStrategy strategy, Record record) {
+        public void register(DmlStrategy strategy, Record record) {
             EnhancedRecord enhancedRecord = record.get();
-
-            strategy.validate(enhancedRecord);
 
             this.assignRecordToProcessingGroup(strategy, enhancedRecord);
         }
@@ -946,7 +1062,69 @@ public inherited sharing class DML implements Commitable {
             processingGroup.add(enhancedRecord);
         }
 
-        private void execute(DmlResult result) {
+        public void execute(DmlResult result) {
+            for (OperationType operationType : this.processingGroupsByOperationType.keySet()) {
+                for (ProcessingGroup processingGroup : this.processingGroupsByOperationType.get(operationType)) {
+                    result.add(processingGroup.strategy.commitWork(processingGroup.records));
+                }
+            }
+        }
+    }
+
+    private class CustomOrderOrchestrator implements Orchestrator {
+        private Map<String, ProcessingGroup> processingGroupByOperationId = new Map<String, ProcessingGroup>();
+        private Map<OperationType, List<ProcessingGroup>> processingGroupsByOperationType = new Map<OperationType, List<ProcessingGroup>>();
+
+        private Configuration configuration;
+
+        private CustomOrderOrchestrator(Configuration configuration) {
+            this.configuration = configuration;
+            this.initializeProcessingGroups();
+        }
+
+        private void initializeProcessingGroups() {
+            for (DML.OperationType operationType : this.configuration.customOperationOrder) {
+                if (!this.processingGroupsByOperationType.containsKey(operationType)) {
+                    this.processingGroupsByOperationType.put(operationType, new List<ProcessingGroup>());
+                }
+            }
+        }
+
+        public void register(DmlStrategy strategy, Records records) {
+            for (Record record : records.get()) {
+                this.register(strategy, record);
+            }
+        }
+
+        public void register(DmlStrategy strategy, Record record) {
+            EnhancedRecord enhancedRecord = record.get();
+
+            if (!this.processingGroupsByOperationType.containsKey(strategy.getOperationType())) {
+                throw new DmlException(strategy.getOperationType() + ' operation is not listed in the custom operation order.');
+            }
+
+            this.assignRecordToProcessingGroup(strategy, enhancedRecord);
+        }
+
+        private void assignRecordToProcessingGroup(DmlStrategy strategy, EnhancedRecord enhancedRecord) {
+            ProcessingGroup processingGroup = this.processingGroupByOperationId.get(strategy.operationId());
+
+            if (processingGroup == null) {
+                processingGroup = new ProcessingGroup(strategy, this.configuration.duplicateCombineStrategy);
+
+                this.processingGroupByOperationId.put(strategy.operationId(), processingGroup);
+                this.processingGroupsByOperationType.get(strategy.getOperationType()).add(processingGroup);
+            }
+
+            if (processingGroup.hasDuplicate(enhancedRecord)) {
+                processingGroup.executeDuplicateStrategy(enhancedRecord);
+                return;
+            }
+
+            processingGroup.add(enhancedRecord);
+        }
+
+        public void execute(DmlResult result) {
             for (OperationType operationType : this.processingGroupsByOperationType.keySet()) {
                 for (ProcessingGroup processingGroup : this.processingGroupsByOperationType.get(operationType)) {
                     result.add(processingGroup.strategy.commitWork(processingGroup.records));
@@ -1097,6 +1275,7 @@ public inherited sharing class DML implements Commitable {
         private DuplicateCombineStrategy duplicateCombineStrategy = new ThrownExceptionDuplicateStrategy();
         private Boolean allOrNone = true;
         private String dmlIdentifier = null;
+        private DML.OperationType[] customOperationOrder = null;
 
         private Configuration() {
             this.options.optAllOrNone = true;
@@ -1116,6 +1295,10 @@ public inherited sharing class DML implements Commitable {
 
         private void identifier(String dmlIdentifier) {
             this.dmlIdentifier = dmlIdentifier;
+        }
+
+        private void customOperationOrder(List<DML.OperationType> operationOrder) {
+            this.customOperationOrder = operationOrder;
         }
 
         private void allowPartialSuccess() {
@@ -1181,6 +1364,8 @@ public inherited sharing class DML implements Commitable {
         }
 
         private OperationResult execute(List<EnhancedRecord> records) {
+            this.validate(records);
+
             List<SObject> recordsToProcess = this.getRecordsToProcess(records);
 
             ExecutionResult result = new ExecutionResult(this.getOperationType(), this.objectType).setRecords(recordsToProcess);
@@ -1209,6 +1394,12 @@ public inherited sharing class DML implements Commitable {
         protected abstract DmlResultAdapter getResultAdapter();
         protected abstract List<Object> executeDml(List<SObject> recordsToProcess);
         protected abstract RecordSummary executeMockedDml(SObject record);
+
+        private void validate(List<EnhancedRecord> records) {
+            for (EnhancedRecord enhancedRecord : records) {
+                this.validate(enhancedRecord);
+            }
+        }
 
         protected virtual void validate(EnhancedRecord enhancedRecord) {
             return;
@@ -2094,6 +2285,7 @@ public inherited sharing class DML implements Commitable {
         }
     }
 
+    @NamespaceAccessible
     public class EnhancedRecord {
         private SObject currentRecord;
         private DmlStrategy strategy;

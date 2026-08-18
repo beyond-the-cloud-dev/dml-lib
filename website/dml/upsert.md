@@ -316,7 +316,7 @@ OperationResult upsertImmediately(DML.Records records);
 ```
 
 ::: tip
-All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `upsertImmediately`.
+All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `accessMode(System.AccessLevel)`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `upsertImmediately`.
 :::
 
 ### Single Record
