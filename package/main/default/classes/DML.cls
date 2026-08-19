@@ -704,7 +704,7 @@ global inherited sharing class DML implements Commitable {
         return this.accessMode(System.AccessLevel.SYSTEM_MODE);
     }
 
-    public Commitable accessMode(System.AccessLevel accessMode) {
+    global Commitable accessMode(System.AccessLevel accessMode) {
         this.configuration.accessMode(accessMode);
         return this;
     }
@@ -748,7 +748,7 @@ global inherited sharing class DML implements Commitable {
         return this;
     }
 
-    public Commitable discardWork() {
+    global Commitable discardWork() {
         this.reset();
         return this;
     }
@@ -933,6 +933,11 @@ global inherited sharing class DML implements Commitable {
         private void addTemporaryIdsToBuildDependencyGraph() {
             for (EnhancedRecord enhancedRecord : this.enhancedRecords) {
                 enhancedRecord.setTemporaryId();
+
+                if (this.enhancedRecordsById.containsKey(enhancedRecord.getRecordId())) {
+                    throw new DmlException('Duplicate records found during registration. Fix the code.');
+                }
+
                 enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
 
                 this.enhancedRecordsById.put(enhancedRecord.getRecordId(), enhancedRecord);
@@ -1264,6 +1269,7 @@ global inherited sharing class DML implements Commitable {
         private void options(Database.DmlOptions options) {
             this.options = options;
             this.options.optAllOrNone = this.options.optAllOrNone ?? this.allOrNone ?? true;
+            this.allOrNone = this.options.optAllOrNone;
         }
 
         private void preview() {
@@ -1335,11 +1341,10 @@ global inherited sharing class DML implements Commitable {
             try {
                 result.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
             } catch (Exception e) {
-                // The whole statement was rolled back, so every record failed.
                 this.log(result.setException(e).setRecordResults(this.getFailedRecordResults(recordsToProcess, e)));
 
                 if (this.globalConfiguration.includeOperationIdInErrorMessage) {
-                    throw new DmlException(e.getMessage() + ' | Contact your administrator with Error ID: ' + this.operationId, e);
+                    e.setMessage(e.getMessage() + ' | Contact your administrator with Error ID: ' + this.operationId);
                 }
 
                 throw e;
@@ -2180,6 +2185,10 @@ global inherited sharing class DML implements Commitable {
         private List<ExternalRelationship> externalRelationships = new List<ExternalRelationship>();
 
         private DmlRecords(List<SObject> records) {
+            if (records == null) {
+                throw new DmlException('Invalid argument: records. Records cannot be null.');
+            }
+
             this.objectType = this.resolveObjectType(records);
 
             for (SObject record : records) {
@@ -2423,6 +2432,10 @@ global inherited sharing class DML implements Commitable {
         }
 
         private void resolve(SObject currentRecord) {
+            if (this.relatedToEnhancedRecord.getRecordId() == null) {
+                return;
+            }
+
             currentRecord.put(this.relationshipField, this.relatedToEnhancedRecord.getRecordId());
         }
 

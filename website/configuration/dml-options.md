@@ -175,7 +175,7 @@ new DML()
 ```
 
 ::: warning
-`Database.DmlOptions` is only applied to insert and update — upsert, delete, undelete and merge take the `allOrNone` flag instead. Setting `optAllOrNone = false` through `options()` therefore enables partial success for inserts and updates only, and does not affect `commitTransaction()`, which still requires all-or-none. Use [`allowPartialSuccess()`](#allowpartialsuccess) when you want partial success for every operation.
+`Database.DmlOptions` itself is only applied to insert and update — upsert, delete, undelete and merge take the `allOrNone` flag instead. Setting `optAllOrNone = false` through `options()` also sets that flag, so partial success applies to every operation and `commitTransaction()` refuses to run, exactly as it does after [`allowPartialSuccess()`](#allowpartialsuccess).
 :::
 
 ### Allow Field Truncation
