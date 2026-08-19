@@ -70,7 +70,8 @@ const current = [
     text: 'Docs',
     items: [
       { text: 'Introduction', link: '/introduction' },
-      { text: 'Installation', link: '/installation' }
+      { text: 'Installation', link: '/installation' },
+      { text: 'Changelog', link: '/release' }
     ]
   },
   {
@@ -109,7 +110,8 @@ const current = [
     items: [
       { text: 'Field-Level Security', link: '/configuration/field-level-security' },
       { text: 'Sharing Mode', link: '/configuration/sharing-mode' },
-      { text: 'DmlOptions', link: '/configuration/dml-options' }
+      { text: 'DmlOptions', link: '/configuration/dml-options' },
+      { text: 'Operation Order', link: '/configuration/operation-order' }
     ]
   },
   {
@@ -118,7 +120,8 @@ const current = [
     items: [
       { text: 'Shared Instance', link: '/advanced/shared-instance' },
       { text: 'Commit Hooks', link: '/advanced/commit-hooks' },
-      { text: 'Execution Control', link: '/advanced/execution-control' }
+      { text: 'Execution Control', link: '/advanced/execution-control' },
+      { text: 'Error Logger', link: '/advanced/logger' }
     ]
   },
   {
