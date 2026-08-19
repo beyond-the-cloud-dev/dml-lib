@@ -270,6 +270,21 @@ global inherited sharing class DML implements Commitable {
         void after(Result result);
     }
 
+    // Logger
+
+    global interface Logger {
+        void log(OperationError error);
+    }
+
+    global interface OperationError {
+        Exception getException(); // null when allOrNone=false and the operation failed per record
+        DML.OperationType getOperationType();
+        SObjectType getObjectType();
+        List<SObject> getRecords();
+        List<DML.RecordResult> getFailedRecordResults(); // all processed records when allOrNone=true (everything is rolled back), only the failed ones when allOrNone=false
+        System.AccessLevel getAccessLevel();
+    }
+
     // Implementation
 
     global enum OperationType {
@@ -293,6 +308,31 @@ global inherited sharing class DML implements Commitable {
     private static final RandomIdGenerator randomIdGenerator = new RandomIdGenerator();
     private static final Map<String, Result> dmlIdentifierToResult = new Map<String, Result>();
     private static final Map<String, DmlMock> dmlIdentifierToMock = new Map<String, DmlMock>();
+
+    @TestVisible
+    private static Logger dmlLogger {
+        get {
+            if (dmlLogger == null) {
+                String className = DML.class.getName(); // 'DML' or 'btcdev.DML' when namespaced
+                String namespacePrefix = className.contains('.') ? className.substringBefore('.') : null;
+
+                List<ApexTypeImplementor> implementors = [
+                    SELECT ClassName, ClassNamespacePrefix
+                    FROM ApexTypeImplementor
+                    WHERE InterfaceName = 'DML.Logger' AND InterfaceNamespacePrefix = :namespacePrefix AND IsConcrete = true
+                    LIMIT 1
+                ];
+
+                if (!implementors.isEmpty()) {
+                    Object loggerInstance = Type.forName(implementors[0].ClassNamespacePrefix, implementors[0].ClassName)?.newInstance();
+                    dmlLogger = loggerInstance instanceof Logger ? (Logger) loggerInstance : null;
+                }
+            }
+
+            return dmlLogger;
+        }
+        private set;
+    }
 
     global DML() {
         this.configuration = new Configuration();
@@ -1288,7 +1328,76 @@ global inherited sharing class DML implements Commitable {
                 return result.setRecordResults(dmlMock.getMockedRecordResults(this, recordsToProcess));
             }
 
-            return result.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
+            try {
+                result.setRecordResults(this.getResultAdapter().get(this.executeDml(recordsToProcess), recordsToProcess));
+            } catch (Exception e) {
+                this.logError(e, recordsToProcess);
+                throw e;
+            }
+
+            this.logFailedRecords(result);
+
+            return result;
+        }
+
+        private void logError(Exception e, List<SObject> recordsToProcess) {
+            if (dmlLogger == null) {
+                return;
+            }
+
+            DmlOperationError operationError = this.buildOperationError(recordsToProcess);
+            operationError.dmlException = e;
+
+            List<RecordSummary> failedRecordSummaries = new List<RecordSummary>();
+
+            for (SObject record : recordsToProcess) {
+                RecordSummary failedRecordSummary = new RecordSummary().isSuccess(false).recordId(record.Id).record(record);
+
+                failedRecordSummaries.add(failedRecordSummary);
+                operationError.failedRecordResults.add(failedRecordSummary);
+            }
+
+            if (e instanceof DmlException) {
+                DmlException dmlException = (DmlException) e;
+
+                for (Integer i = 0; i < dmlException.getNumDml(); i++) {
+                    Integer failedRecordIndex = dmlException.getDmlIndex(i);
+
+                    if (failedRecordIndex >= 0 && failedRecordIndex < failedRecordSummaries.size()) {
+                        failedRecordSummaries[failedRecordIndex]
+                            .error(new RecordProcessingError().setMessage(dmlException.getDmlMessage(i)).setStatusCode(dmlException.getDmlType(i)).setFields(dmlException.getDmlFieldNames(i)));
+                    }
+                }
+            }
+
+            dmlLogger.log(operationError);
+        }
+
+        private void logFailedRecords(ExecutionResult result) {
+            if (dmlLogger == null || !result.hasFailures()) {
+                return;
+            }
+
+            DmlOperationError operationError = this.buildOperationError(result.records());
+
+            for (RecordResult recordResult : result.recordResults()) {
+                if (!recordResult.isSuccess()) {
+                    operationError.failedRecordResults.add(recordResult);
+                }
+            }
+
+            dmlLogger.log(operationError);
+        }
+
+        private DmlOperationError buildOperationError(List<SObject> recordsToProcess) {
+            DmlOperationError operationError = new DmlOperationError();
+
+            operationError.operationType = this.getOperationType();
+            operationError.objectType = this.objectType;
+            operationError.records = recordsToProcess;
+            operationError.accessLevel = this.globalConfiguration.accessMode;
+
+            return operationError;
         }
 
         private List<SObject> getRecordsToProcess(List<EnhancedRecord> records) {
@@ -1843,6 +1952,39 @@ global inherited sharing class DML implements Commitable {
 
         public List<String> fields() {
             return this.fields;
+        }
+    }
+
+    private class DmlOperationError implements OperationError {
+        private Exception dmlException;
+        private DML.OperationType operationType;
+        private SObjectType objectType;
+        private List<SObject> records;
+        private List<RecordResult> failedRecordResults = new List<RecordResult>();
+        private System.AccessLevel accessLevel;
+
+        public Exception getException() {
+            return this.dmlException;
+        }
+
+        public DML.OperationType getOperationType() {
+            return this.operationType;
+        }
+
+        public SObjectType getObjectType() {
+            return this.objectType;
+        }
+
+        public List<SObject> getRecords() {
+            return this.records;
+        }
+
+        public List<RecordResult> getFailedRecordResults() {
+            return this.failedRecordResults;
+        }
+
+        public System.AccessLevel getAccessLevel() {
+            return this.accessLevel;
         }
     }
 

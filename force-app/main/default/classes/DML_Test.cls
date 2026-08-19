@@ -3959,6 +3959,102 @@ private class DML_Test {
     }
 
 
+    @IsTest
+    static void loggerOnFailedDml() {
+        // Setup
+        TestLogger testLogger = new TestLogger();
+        DML.dmlLogger = testLogger;
+
+        Account account1 = getAccount(1);
+        account1.Id = DML.randomIdGenerator.get(Account.SObjectType);
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toUpdate(account1).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isNotNull(testLogger.capturedError, 'Logger should receive the failed operation.');
+        Assert.areEqual(expectedException.getMessage(), testLogger.capturedError.getException().getMessage(), 'Logger should receive the thrown exception.');
+        Assert.areEqual(DML.OperationType.UPDATE_DML, testLogger.capturedError.getOperationType(), 'Logger should receive the operation type.');
+        Assert.areEqual(Account.SObjectType, testLogger.capturedError.getObjectType(), 'Logger should receive the object type.');
+        Assert.areEqual(1, testLogger.capturedError.getRecords().size(), 'Logger should receive the processed records.');
+        Assert.areEqual(1, testLogger.capturedError.getFailedRecordResults().size(), 'All processed records should be failed record results when an exception is thrown.');
+        Assert.isFalse(testLogger.capturedError.getFailedRecordResults()[0].isSuccess(), 'Failed record result should not be successful.');
+        Assert.areEqual(expectedException.getDmlMessage(0), testLogger.capturedError.getFailedRecordResults()[0].errors()[0].message(), 'Failed record result should contain the row error message.');
+        Assert.areEqual(System.AccessLevel.USER_MODE, testLogger.capturedError.getAccessLevel(), 'Logger should receive the access level.');
+    }
+
+    @IsTest
+    static void loggerOnPartialSuccess() {
+        // Setup
+        TestLogger testLogger = new TestLogger();
+        DML.dmlLogger = testLogger;
+
+        Account account1 = new Account();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).allowPartialSuccess().commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isTrue(result.insertsOf(Account.SObjectType).hasFailures(), 'Insert should fail for the record without required fields.');
+        Assert.isNotNull(testLogger.capturedError, 'Logger should receive the failed operation.');
+        Assert.isNull(testLogger.capturedError.getException(), 'No exception should be captured when allOrNone=false.');
+        Assert.areEqual(DML.OperationType.INSERT_DML, testLogger.capturedError.getOperationType(), 'Logger should receive the operation type.');
+        Assert.areEqual(Account.SObjectType, testLogger.capturedError.getObjectType(), 'Logger should receive the object type.');
+        Assert.areEqual(1, testLogger.capturedError.getFailedRecordResults().size(), 'Logger should receive the failed record results.');
+        Assert.isFalse(testLogger.capturedError.getFailedRecordResults()[0].isSuccess(), 'Failed record result should not be successful.');
+        Assert.isTrue(testLogger.capturedError.getFailedRecordResults()[0].errors()[0].message().contains('Required fields are missing'), 'Failed record result should contain the error message.');
+    }
+
+    @IsTest
+    static void loggerNotCalledWithMocking() {
+        // Setup
+        TestLogger testLogger = new TestLogger();
+        DML.dmlLogger = testLogger;
+
+        Account account1 = getAccount(1);
+
+        DML.mock('dmlMockId').allDmls().exceptionOnInserts();
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        try {
+            new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isNull(testLogger.capturedError, 'Logger should not be called for mocked operations.');
+    }
+
+    public class TestLogger implements DML.Logger {
+        private DML.OperationError capturedError;
+
+        public void log(DML.OperationError error) {
+            capturedError = error;
+        }
+    }
+
     public class MyHook implements DML.Hook {
         private Boolean beforeCalled = false;
         private Boolean afterCalled = false;
