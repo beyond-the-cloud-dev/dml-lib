@@ -33,8 +33,8 @@ Account account = [SELECT Id, Name FROM Account LIMIT 1];
 
 new DML()
     .toUpdate(new Account(Id = account.Id, Name = 'New Account 1', Website = 'mywebsite.com'))
-    .toUpdate(new Account(Id = account.Id, Name = 'New Account 2'))
-    .commitWork(); // Throws: Duplicate records found during registration
+    .toUpdate(new Account(Id = account.Id, Name = 'New Account 2')) // Throws: Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.
+    .commitWork();
 ```
 
 ### combineOnDuplicate
@@ -119,7 +119,7 @@ When a validation rule is still violated at execution time (for example, updatin
 Two checks still run at registration time:
 
 - The `toMerge` merge-to record must have an Id when `toMerge()` is called — the master record identifies the merge operation itself, so it cannot receive its Id from an insert in the same unit of work.
-- [Duplicate detection](#deduplication-strategy) applies to records that have an Id at registration. Records that receive their Id from an insert in the same unit of work are not deduplicated — registering the same record twice for update surfaces as the standard platform `Duplicate id in list` error at execution time, and `combineOnDuplicate()` does not apply to them.
+- [Duplicate detection](#deduplication-strategy) applies to update, merge, delete, undelete and publish registrations that have an Id at registration time. Inserts and upserts are dependency-resolved instead and are never deduplicated, and neither are records that receive their Id from an insert in the same unit of work — those surface as the standard platform `Duplicate id in list` error at execution time, and `combineOnDuplicate()` does not apply to them.
 
 ::: warning
 `commitWork()` does not use a savepoint. If a validation exception is thrown mid-commit, operations that already executed stay committed. Use `commitTransaction()` when the whole unit of work must be atomic — see [Rollback](/architecture/rollback).

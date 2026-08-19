@@ -7,7 +7,7 @@ outline: deep
 Mock upsert operations in unit tests to avoid actual database upserts.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -235,7 +235,7 @@ static void shouldThrowExceptionOnUpsert() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Upsert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UPSERT_DML operation.'));
     }
 }
 ```
@@ -267,7 +267,7 @@ static void shouldThrowExceptionOnlyForContactUpserts() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Upsert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UPSERT_DML operation.'));
     }
 }
 ```

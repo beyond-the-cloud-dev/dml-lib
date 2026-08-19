@@ -40,7 +40,7 @@ We suggest using `.systemMode().withoutSharing()` in triggers, as trigger logic 
 
 ## withSharing
 
-By default, the DML library uses `with sharing`, meaning it respects the sharing context of the calling class. 
+By default, the DML library uses `inherited sharing`, meaning it respects the sharing context of the calling class. 
 Sharing mode is enforced by `userMode()`, which is the default mode.
 Only when `.systemMode()` or `.accessMode(System.AccessLevel.SYSTEM_MODE)` is used, `.withSharing()` can control the sharing mode.
 

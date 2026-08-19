@@ -11,7 +11,7 @@ The DML library provides comprehensive result handling through the [`Result`](#r
 When you call `commitWork()`, `commitTransaction()` or `dryRun()`, a `Result` object is returned containing detailed information about each DML operation performed.
 
 ::: info
-`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimcs standard DML behaviour.
+`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimics standard DML behavior.
 :::
 
 ```apex
@@ -60,6 +60,7 @@ erDiagram
         List~SObject~ failures()
         List~RecordResult~ recordResults()
         List~Error~ errors()
+        Exception exception()
     }
 
     RecordResult {
@@ -113,6 +114,7 @@ List<OperationResult> updates();
 List<OperationResult> upserts();
 List<OperationResult> deletes();
 List<OperationResult> undeletes();
+List<OperationResult> merges();
 List<OperationResult> events();
 ```
 
@@ -140,6 +142,7 @@ OperationResult updatesOf(Schema.SObjectType objectType);
 OperationResult upsertsOf(Schema.SObjectType objectType);
 OperationResult deletesOf(Schema.SObjectType objectType);
 OperationResult undeletesOf(Schema.SObjectType objectType);
+OperationResult mergesOf(Schema.SObjectType objectType);
 OperationResult eventsOf(Schema.SObjectType objectType);
 ```
 
@@ -169,11 +172,16 @@ OperationType operationType();      // DML operation type (INSERT_DML, UPDATE_DM
 Schema.SObjectType objectType();    // SObject type for this operation
 Boolean hasFailures();              // True if any records failed
 List<Error> errors();               // All errors from failed records
+Exception exception();              // Set only for results passed to a Logger, see below
 List<SObject> records();            // All records that were processed
 List<SObject> successes();          // Records that succeeded
 List<SObject> failures();           // Records that failed
 List<RecordResult> recordResults(); // Individual record results
 ```
+
+::: info
+`exception()` is `null` on results returned by `commitWork()`, `commitTransaction()` and `dryRun()` — when an operation throws, the exception propagates instead of being returned. It is populated only on the result handed to a [Logger](/advanced/logger).
+:::
 
 **Example**
 
@@ -277,6 +285,7 @@ The `DML.OperationType` enum identifies the type of DML operation.
 DML.OperationType.INSERT_DML
 DML.OperationType.UPDATE_DML
 DML.OperationType.UPSERT_DML
+DML.OperationType.MERGE_DML
 DML.OperationType.DELETE_DML
 DML.OperationType.UNDELETE_DML
 DML.OperationType.PUBLISH_DML

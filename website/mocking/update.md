@@ -7,7 +7,7 @@ outline: deep
 Mock update operations in unit tests to avoid actual database updates.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -231,7 +231,7 @@ static void shouldThrowExceptionOnUpdate() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Update failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UPDATE_DML operation.'));
     }
 }
 ```
@@ -264,7 +264,7 @@ static void shouldThrowExceptionOnlyForAccountUpdates() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Update failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UPDATE_DML operation.'));
     }
 }
 ```

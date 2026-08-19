@@ -6,15 +6,14 @@ outline: deep
 
 Control the order in which DML operations are executed during `commitWork()`.
 
-By default, operations run in a fixed order, with inserts and upserts resolving [record dependencies](/architecture/registration) first:
+By default, operations run in a fixed order:
 
-1. Insert
-2. Upsert
-3. Update
-4. Merge
-5. Delete
-6. Undelete
-7. Publish
+1. Insert and Upsert — executed together, ordered by [record dependencies](/architecture/registration)
+2. Update
+3. Merge
+4. Delete
+5. Undelete
+6. Publish
 
 This order does not fit every use case — for example, deleting old records before inserting their replacements. Pass a custom order to the `DML` constructor to change it.
 
@@ -45,5 +44,5 @@ Operations execute in the order of the list, regardless of the registration orde
 - The order is fixed for the lifetime of the `DML` instance — it survives `commitWork()` and `discardWork()`, like every other configuration.
 
 ::: warning
-With a custom operation order, records are grouped and executed strictly by the configured order. Operations placed before the insert/upsert phase lose the same-transaction Id guarantee described in [Deferred Validation](/architecture/registration#deferred-validation) — a record inserted in the same unit of work has no Id yet when an earlier phase executes. `commitWork()` does not use a savepoint, so if a later phase fails, earlier phases stay committed — use `commitTransaction()` when the whole unit of work must be atomic (see [Rollback](/architecture/rollback)).
+A custom operation order **disables the dependency graph**. Records are executed strictly in the configured order, and within a phase in the order they were registered — Kahn's algorithm, execution waves and temporary Ids are not used at all. As a result `withRelationship()` to a record inserted in the same unit of work only resolves when the parent was registered before the child, and an operation placed before the insert phase sees no Id at all for records inserted later, so the [Deferred Validation](/architecture/registration#deferred-validation) guarantee does not hold. `commitWork()` also does not use a savepoint, so if a later phase fails, earlier phases stay committed — use `commitTransaction()` when the whole unit of work must be atomic (see [Rollback](/architecture/rollback)).
 :::

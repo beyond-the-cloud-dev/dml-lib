@@ -32,7 +32,7 @@ features:
   - title: Relationship Handling
     details: Automatically resolve parent-child relationships across inserts. No need to manually assign IDs after parent inserts.
   - title: Security Controls
-    details: Full support for User/System mode and With/Without Sharing, plus field-level security stripping.
+    details: Full support for User/System mode and With/Without Sharing.
 ---
 
 <BTCFooter context="dml-lib" />

@@ -174,6 +174,10 @@ new DML()
     .commitWork();
 ```
 
+::: warning
+`Database.DmlOptions` is only applied to insert and update — upsert, delete, undelete and merge take the `allOrNone` flag instead. Setting `optAllOrNone = false` through `options()` therefore enables partial success for inserts and updates only, and does not affect `commitTransaction()`, which still requires all-or-none. Use [`allowPartialSuccess()`](#allowpartialsuccess) when you want partial success for every operation.
+:::
+
 ### Allow Field Truncation
 
 Automatically truncate field values that exceed the maximum length.

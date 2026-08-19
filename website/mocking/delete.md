@@ -7,7 +7,7 @@ outline: deep
 Mock delete operations in unit tests to avoid actual database deletes.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -227,7 +227,7 @@ static void shouldThrowExceptionOnDelete() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Delete failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for DELETE_DML operation.'));
     }
 }
 ```
@@ -262,7 +262,7 @@ static void shouldThrowExceptionOnlyForAccountDeletes() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Delete failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for DELETE_DML operation.'));
     }
 }
 ```

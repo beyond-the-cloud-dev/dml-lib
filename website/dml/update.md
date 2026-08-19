@@ -31,7 +31,7 @@ Register records for update. The actual DML is executed when `commitWork()` is c
 ```apex
 Commitable toUpdate(SObject record);
 Commitable toUpdate(DML.Record record);
-Commitable toUpdate(Iterable<SObject> records);
+Commitable toUpdate(List<SObject> records);
 Commitable toUpdate(DML.Records records);
 ```
 
@@ -128,7 +128,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpdate(Iterable<SObject> records);
+Commitable toUpdate(List<SObject> records);
 Commitable toUpdate(DML.Records records);
 ```
 

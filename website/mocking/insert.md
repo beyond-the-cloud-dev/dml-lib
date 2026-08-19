@@ -7,7 +7,7 @@ outline: deep
 Mock insert operations in unit tests to avoid actual database inserts.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -245,7 +245,7 @@ static void shouldThrowExceptionOnInsert() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Insert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for INSERT_DML operation.'));
     }
 }
 ```
@@ -277,7 +277,7 @@ static void shouldThrowExceptionOnlyForAccountInserts() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Insert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for INSERT_DML operation.'));
     }
 }
 ```

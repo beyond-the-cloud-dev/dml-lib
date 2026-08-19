@@ -15,7 +15,7 @@ Register records for insertion. The actual DML is executed when `commitWork()` i
 ```apex
 Commitable toInsert(SObject record);
 Commitable toInsert(DML.Record record);
-Commitable toInsert(Iterable<SObject> records);
+Commitable toInsert(List<SObject> records);
 Commitable toInsert(DML.Records records);
 ```
 
@@ -126,7 +126,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toInsert(Iterable<SObject> records);
+Commitable toInsert(List<SObject> records);
 Commitable toInsert(DML.Records records);
 ```
 
@@ -397,7 +397,7 @@ List<Contact> contacts = new List<Contact>{
 };
 
 DML.OperationResult result = new DML()
-    .insertImmediately(DML.Records(contacts).with(Contact.AccountId, account));
+    .insertImmediately(DML.Records(contacts).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field

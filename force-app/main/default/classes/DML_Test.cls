@@ -3981,15 +3981,15 @@ private class DML_Test {
 
         // Verify
         Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.isNotNull(testLogger.capturedError, 'Logger should receive the failed operation.');
-        Assert.areEqual(expectedException.getMessage(), testLogger.capturedError.getException().getMessage(), 'Logger should receive the thrown exception.');
-        Assert.areEqual(DML.OperationType.UPDATE_DML, testLogger.capturedError.getOperationType(), 'Logger should receive the operation type.');
-        Assert.areEqual(Account.SObjectType, testLogger.capturedError.getObjectType(), 'Logger should receive the object type.');
-        Assert.areEqual(1, testLogger.capturedError.getRecords().size(), 'Logger should receive the processed records.');
-        Assert.areEqual(1, testLogger.capturedError.getFailedRecordResults().size(), 'All processed records should be failed record results when an exception is thrown.');
-        Assert.isFalse(testLogger.capturedError.getFailedRecordResults()[0].isSuccess(), 'Failed record result should not be successful.');
-        Assert.areEqual(expectedException.getDmlMessage(0), testLogger.capturedError.getFailedRecordResults()[0].errors()[0].message(), 'Failed record result should contain the row error message.');
-        Assert.areEqual(System.AccessLevel.USER_MODE, testLogger.capturedError.getAccessLevel(), 'Logger should receive the access level.');
+        Assert.isNotNull(testLogger.capturedResult, 'Logger should receive the failed operation.');
+        Assert.areEqual(expectedException.getMessage(), testLogger.capturedResult.exception().getMessage(), 'Logger should receive the thrown exception.');
+        Assert.areEqual(DML.OperationType.UPDATE_DML, testLogger.capturedResult.operationType(), 'Logger should receive the operation type.');
+        Assert.areEqual(Account.SObjectType, testLogger.capturedResult.objectType(), 'Logger should receive the object type.');
+        Assert.areEqual(1, testLogger.capturedResult.records().size(), 'Logger should receive the processed records.');
+        Assert.isTrue(testLogger.capturedResult.hasFailures(), 'Result should have failures.');
+        Assert.areEqual(1, testLogger.capturedResult.failures().size(), 'All processed records should be marked as failed when an exception is thrown.');
+        Assert.areEqual(0, testLogger.capturedResult.successes().size(), 'No record should be marked as successful when an exception is thrown.');
+        Assert.areEqual(expectedException.getDmlMessage(0), testLogger.capturedResult.errors()[0].message(), 'Failed record result should contain the row error message.');
     }
 
     @IsTest
@@ -4007,13 +4007,13 @@ private class DML_Test {
 
         // Verify
         Assert.isTrue(result.insertsOf(Account.SObjectType).hasFailures(), 'Insert should fail for the record without required fields.');
-        Assert.isNotNull(testLogger.capturedError, 'Logger should receive the failed operation.');
-        Assert.isNull(testLogger.capturedError.getException(), 'No exception should be captured when allOrNone=false.');
-        Assert.areEqual(DML.OperationType.INSERT_DML, testLogger.capturedError.getOperationType(), 'Logger should receive the operation type.');
-        Assert.areEqual(Account.SObjectType, testLogger.capturedError.getObjectType(), 'Logger should receive the object type.');
-        Assert.areEqual(1, testLogger.capturedError.getFailedRecordResults().size(), 'Logger should receive the failed record results.');
-        Assert.isFalse(testLogger.capturedError.getFailedRecordResults()[0].isSuccess(), 'Failed record result should not be successful.');
-        Assert.isTrue(testLogger.capturedError.getFailedRecordResults()[0].errors()[0].message().contains('Required fields are missing'), 'Failed record result should contain the error message.');
+        Assert.isNotNull(testLogger.capturedResult, 'Logger should receive the failed operation.');
+        Assert.isNull(testLogger.capturedResult.exception(), 'No exception should be captured when allOrNone=false.');
+        Assert.areEqual(DML.OperationType.INSERT_DML, testLogger.capturedResult.operationType(), 'Logger should receive the operation type.');
+        Assert.areEqual(Account.SObjectType, testLogger.capturedResult.objectType(), 'Logger should receive the object type.');
+        Assert.isTrue(testLogger.capturedResult.hasFailures(), 'Result should have failures.');
+        Assert.areEqual(1, testLogger.capturedResult.failures().size(), 'Logger should receive the failed records.');
+        Assert.isTrue(testLogger.capturedResult.errors()[0].message().contains('Required fields are missing'), 'Failed record result should contain the error message.');
     }
 
     @IsTest
@@ -4044,14 +4044,84 @@ private class DML_Test {
         // Verify
         Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
         Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.isNull(testLogger.capturedError, 'Logger should not be called for mocked operations.');
+        Assert.isNull(testLogger.capturedResult, 'Logger should not be called for mocked operations.');
+    }
+
+    @IsTest
+    static void operationIdIsExposedOnResult() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toInsert(contact1).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        String accountOperationId = result.insertsOf(Account.SObjectType).operationId();
+        String contactOperationId = result.insertsOf(Contact.SObjectType).operationId();
+
+        Assert.isNotNull(accountOperationId, 'Account insert should have an operation id.');
+        Assert.isNotNull(contactOperationId, 'Contact insert should have an operation id.');
+        Assert.areNotEqual(accountOperationId, contactOperationId, 'Each operation should have its own operation id.');
+        Assert.areEqual(UUID.fromString(accountOperationId).toString(), accountOperationId, 'Operation id should be a UUID.');
+        Assert.isFalse(accountOperationId.contains('Account'), 'Operation id should not expose operation details.');
+    }
+
+    @IsTest
+    static void includeOperationIdInErrorMessage() {
+        // Setup
+        Account account1 = new Account();
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(account1).includeOperationIdInErrorMessage().commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(expectedException.getMessage().contains('Required fields are missing'), 'Standard error message should be preserved.');
+        Assert.isTrue(
+            expectedException.getMessage().contains(' | Contact your administrator with Error ID: '),
+            'Error message should contain the operation id.'
+        );
+    }
+
+    @IsTest
+    static void operationIdIsNotInErrorMessageByDefault() {
+        // Setup
+        Account account1 = new Account();
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(account1).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isFalse(expectedException.getMessage().contains('Error ID'), 'Operation id should not be included by default.');
     }
 
     public class TestLogger implements DML.Logger {
-        private DML.OperationError capturedError;
+        private DML.OperationResult capturedResult;
 
-        public void log(DML.OperationError error) {
-            capturedError = error;
+        public void log(DML.OperationResult result) {
+            capturedResult = result;
         }
     }
 

@@ -164,7 +164,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpsert(Iterable<SObject> records);
+Commitable toUpsert(List<SObject> records);
 Commitable toUpsert(DML.Records records);
 ```
 

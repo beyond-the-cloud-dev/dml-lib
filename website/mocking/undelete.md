@@ -7,7 +7,7 @@ outline: deep
 Mock undelete operations in unit tests to avoid actual database undeletes.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -227,7 +227,7 @@ static void shouldThrowExceptionOnUndelete() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Undelete failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UNDELETE_DML operation.'));
     }
 }
 ```
@@ -262,7 +262,7 @@ static void shouldThrowExceptionOnlyForAccountUndeletes() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Undelete failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for UNDELETE_DML operation.'));
     }
 }
 ```
