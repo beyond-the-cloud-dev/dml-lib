@@ -233,6 +233,29 @@ new DML()
     .commitWork();
 ```
 
+## includeOperationIdInErrorMessage
+
+Append the operation's [Error ID](/advanced/logger#error-id) to the thrown `DmlException`, so a user can pass it to their administrator.
+
+**Signature**
+
+```apex
+Commitable includeOperationIdInErrorMessage();
+```
+
+**Example**
+
+```apex
+new DML()
+    .toInsert(account)
+    .includeOperationIdInErrorMessage()
+    .commitWork();
+```
+
+::: warning
+Only useful together with a [`DML.Logger`](/advanced/logger) implementation — the logger is what records the failed records and errors the Error ID refers to.
+:::
+
 ## Combining Options
 
 You can combine multiple configuration methods.

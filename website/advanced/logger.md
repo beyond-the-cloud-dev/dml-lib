@@ -62,6 +62,43 @@ The logger is **not** called for mocked operations, or for validation errors rai
 A `DML.Logger` implementation must not throw. The library does not guard against it, so an exception raised inside `log()` replaces the DML failure that was being reported.
 :::
 
+## Error ID
+
+Every operation gets a random `operationId` — a UUID available on the result through [`operationId()`](/result#operationresult-interface):
+
+```apex
+DML.Result result = new DML().toInsert(accounts).commitWork();
+
+System.debug(result.insertsOf(Account.SObjectType).operationId()); // 749d9deb-4e6a-4b0b-8116-5b11a1893eed
+```
+
+It is generated per operation and carries no information about the records, so it is safe to show to end users. `includeOperationIdInErrorMessage()` appends it to the exception message:
+
+**Signature**
+
+```apex
+Commitable includeOperationIdInErrorMessage();
+```
+
+**Example**
+
+```apex
+new DML()
+    .toInsert(account)
+    .includeOperationIdInErrorMessage()
+    .commitWork();
+```
+
+When the DML fails, the thrown `DmlException` carries the standard message plus the id:
+
+```
+Insert failed. First exception on row 0; first error: REQUIRED_FIELD_MISSING, Required fields are missing: [Name]: [Name] | Contact your administrator with Error ID: 749d9deb-4e6a-4b0b-8116-5b11a1893eed
+```
+
+::: warning
+This option only makes sense together with a `DML.Logger` implementation. The user sees the Error ID in the error message and passes it to their administrator, who finds the matching entry — with the failed records and their errors — in the log the `DML.Logger` wrote. Without a logger, nothing records what the id refers to, so the id in the message points to nothing.
+:::
+
 ## Discovery
 
 The implementation is resolved via `ApexTypeImplementor` — the first concrete class implementing `DML.Logger` found in the org is used. Keep exactly one implementation in your org.

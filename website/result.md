@@ -55,6 +55,7 @@ erDiagram
     OperationResult {
         OperationType operationType()
         SObjectType objectType()
+        String operationId()
         Boolean hasFailures()
         List~SObject~ successes()
         List~SObject~ failures()
@@ -170,6 +171,7 @@ The `OperationResult` interface provides detailed information about a specific D
 ```apex
 OperationType operationType();      // DML operation type (INSERT_DML, UPDATE_DML, etc.)
 Schema.SObjectType objectType();    // SObject type for this operation
+String operationId();               // Random UUID identifying this operation, for logging and support
 Boolean hasFailures();              // True if any records failed
 List<Error> errors();               // All errors from failed records
 Exception exception();              // Set only for results passed to a Logger, see below
