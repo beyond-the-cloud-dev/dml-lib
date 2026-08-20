@@ -10,11 +10,11 @@
 
 Install the DML Lib unlocked package with `btcdev` namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP60000036moDIAQ`
+`/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP60000036moDIAQ)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP60000036moDIAQ)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2)
 
 ## Install via Unmanaged Package
 
