@@ -16,7 +16,7 @@ try-catch | savepoint | allOrNone | rollback | rethrow exception |  Is rollback 
 
 ## Conclusions
 
-- `allOrNone=false` will never throw DmlException, and bacause of it partial commit will be made.
+- `allOrNone=false` will never throw DmlException, and because of it partial commit will be made.
 - `Savepoint` makes sense only when `allOrNone=true`, so DmlException is thrown and rollback can be called.
 
 - **Unhandled exceptions roll back the entire transaction.** If a DmlException (or any unhandled exception) escapes your code path, Salesforce undoes all DML from that transaction.  ￼

@@ -174,6 +174,10 @@ new DML()
     .commitWork();
 ```
 
+::: warning
+`Database.DmlOptions` itself is only applied to insert and update — upsert, delete, undelete and merge take the `allOrNone` flag instead. Setting `optAllOrNone = false` through `options()` also sets that flag, so partial success applies to every operation and `commitTransaction()` refuses to run, exactly as it does after [`allowPartialSuccess()`](#allowpartialsuccess).
+:::
+
 ### Allow Field Truncation
 
 Automatically truncate field values that exceed the maximum length.
@@ -228,6 +232,29 @@ new DML()
     .options(options)
     .commitWork();
 ```
+
+## includeOperationIdInErrorMessage
+
+Append the operation's [Error ID](/advanced/logger#error-id) to the thrown `DmlException`, so a user can pass it to their administrator.
+
+**Signature**
+
+```apex
+Commitable includeOperationIdInErrorMessage();
+```
+
+**Example**
+
+```apex
+new DML()
+    .toInsert(account)
+    .includeOperationIdInErrorMessage()
+    .commitWork();
+```
+
+::: warning
+Only useful together with a [`DML.Logger`](/advanced/logger) implementation — the logger is what records the failed records and errors the Error ID refers to.
+:::
 
 ## Combining Options
 

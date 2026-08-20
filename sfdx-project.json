@@ -16,7 +16,7 @@
   "name": "dml-lib",
   "namespace": "btcdev",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "65.0",
+  "sourceApiVersion": "66.0",
   "packageAliases": {
     "DML Lib": "0HoP600000001IfKAI",
     "DML Lib@0.1.0-1": "04tP6000002A7BxIAK",

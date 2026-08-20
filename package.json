@@ -30,12 +30,19 @@
     "eslint-plugin-jest": "^29.5.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "mermaid": "^11.16.1",
     "prettier": "^3.7.4",
     "prettier-plugin-apex": "^2.2.6",
     "vitepress": "^1.6.4",
-    "vue": "^3.5.26",
-    "mermaid": "^11.16.1",
-    "vitepress-plugin-mermaid": "^2.0.17"
+    "vitepress-plugin-llms": "^1.13.5",
+    "vitepress-plugin-mermaid": "^2.0.17",
+    "vue": "^3.5.26"
+  },
+  "overrides": {
+    "vite": "6.4.3",
+    "esbuild": "0.25.12",
+    "launch-editor": "2.14.1",
+    "@babel/core": "7.29.6"
   },
   "overrides": {
     "vite": "6.4.3",

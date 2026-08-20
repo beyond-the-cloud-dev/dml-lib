@@ -7,7 +7,7 @@ outline: deep
 Mock merge operations in unit tests to avoid actual database merges.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -91,11 +91,11 @@ public class MergeService {
 static void shouldMockMergeOperation() {
     // Setup
     Account master = new Account(
-        Id = DML.randomIdGenerator.get(Account.SObjectType)
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
         Name = 'Master'
     );
     Account duplicate = new Account(
-        Id = DML.randomIdGenerator.get(Account.SObjectType)
+        Id = DML.randomIdGenerator.get(Account.SObjectType),
         Name = 'Duplicate'
     );
 
@@ -158,6 +158,8 @@ static void shouldMockOnlyLeadMerges() {
     Test.stopTest();
 
     // Verify
+    DML.Result result = DML.retrieveResultFor('MergeService.mergeRecords');
+
     Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account merge executed - only master remains');
     Assert.areEqual(1, result.mergesOf(Lead.SObjectType).successes().size(), 'Lead merge mocked');
 }
@@ -268,7 +270,7 @@ static void shouldThrowExceptionOnMerge() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Merge failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for MERGE_DML operation.'));
     }
 }
 ```
@@ -310,7 +312,7 @@ static void shouldThrowExceptionOnlyForLeadMerges() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Merge failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for MERGE_DML operation.'));
     }
 }
 ```

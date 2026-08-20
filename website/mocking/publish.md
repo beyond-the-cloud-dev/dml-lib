@@ -7,7 +7,7 @@ outline: deep
 Mock platform event publish operations in unit tests to avoid actual event publishing.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -41,14 +41,14 @@ static void shouldPublishAccountCreatedEvent() {
     // Setup
     DML.mock('NotificationService.notifyAccountCreated').allPublishes();
 
-    Account account = new Account(
+    Account newAccount = new Account(
         Id = DML.randomIdGenerator.get(Account.SObjectType),
         Name = 'Test Account'
     );
 
     // Test
     Test.startTest();
-    new NotificationService().notifyAccountCreated(account);
+    new NotificationService().notifyAccountCreated(newAccount);
     Test.stopTest();
 
     // Verify
@@ -227,7 +227,7 @@ static void shouldThrowExceptionOnPublish() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Publish failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for PUBLISH_DML operation.'));
     }
 }
 ```
@@ -259,7 +259,7 @@ static void shouldThrowExceptionOnlyForOrderEvents() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Publish failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for PUBLISH_DML operation.'));
     }
 }
 ```

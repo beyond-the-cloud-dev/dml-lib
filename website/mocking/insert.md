@@ -7,7 +7,7 @@ outline: deep
 Mock insert operations in unit tests to avoid actual database inserts.
 
 ::: warning
-The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and should only be used in test classes.
+The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in test classes.
 :::
 
 ::: tip
@@ -23,11 +23,11 @@ The `DML.mock()` and `DML.retrieveResultFor()` methods are `@TestVisible` and sh
 public class AccountService {
     public void createAccountWithContacts() {
         Account account = new Account(Name = 'Test Account');
-        Contact contact = new Contact(LastName = 'Doe');
+        Contact newContact = new Contact(LastName = 'Doe');
 
         new DML()
             .toInsert(account)
-            .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+            .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
             .identifier('AccountService.createAccountWithContacts')
             .commitWork();
     }
@@ -245,7 +245,7 @@ static void shouldThrowExceptionOnInsert() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Insert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for INSERT_DML operation.'));
     }
 }
 ```
@@ -277,7 +277,7 @@ static void shouldThrowExceptionOnlyForAccountInserts() {
             .commitWork();
         Assert.fail('Expected exception');
     } catch (DmlException e) {
-        Assert.isTrue(e.getMessage().contains('Insert failed'));
+        Assert.isTrue(e.getMessage().contains('Exception thrown for INSERT_DML operation.'));
     }
 }
 ```

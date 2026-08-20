@@ -15,12 +15,12 @@ DML Lib is a lightweight Apex library for managing DML operations with a fluent,
 
 ```apex
 Account account = new Account(Name = 'Acme Corp');
-Contact contact = new Contact(LastName = 'Smith');
+Contact newContact = new Contact(LastName = 'Smith');
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 
-// contact.AccountId is automatically set to account.Id
+// newContact.AccountId is automatically set to account.Id
 ```

@@ -8,4 +8,4 @@ Statements like:
 
 issue DMLs.
 
-Due to that behavior Savepoint has to be explicitly invoke. Default Lib behavior shoudn't create savepoints.
+Due to that behavior Savepoint has to be explicitly invoke. Default Lib behavior shouldn't create savepoints.

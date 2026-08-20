@@ -11,7 +11,7 @@ The DML library provides comprehensive result handling through the [`Result`](#r
 When you call `commitWork()`, `commitTransaction()` or `dryRun()`, a `Result` object is returned containing detailed information about each DML operation performed.
 
 ::: info
-`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimcs standard DML behaviour.
+`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimics standard DML behavior.
 :::
 
 ```apex
@@ -55,11 +55,13 @@ erDiagram
     OperationResult {
         OperationType operationType()
         SObjectType objectType()
+        String operationId()
         Boolean hasFailures()
         List~SObject~ successes()
         List~SObject~ failures()
         List~RecordResult~ recordResults()
         List~Error~ errors()
+        Exception exception()
     }
 
     RecordResult {
@@ -113,6 +115,7 @@ List<OperationResult> updates();
 List<OperationResult> upserts();
 List<OperationResult> deletes();
 List<OperationResult> undeletes();
+List<OperationResult> merges();
 List<OperationResult> events();
 ```
 
@@ -140,6 +143,7 @@ OperationResult updatesOf(Schema.SObjectType objectType);
 OperationResult upsertsOf(Schema.SObjectType objectType);
 OperationResult deletesOf(Schema.SObjectType objectType);
 OperationResult undeletesOf(Schema.SObjectType objectType);
+OperationResult mergesOf(Schema.SObjectType objectType);
 OperationResult eventsOf(Schema.SObjectType objectType);
 ```
 
@@ -167,13 +171,19 @@ The `OperationResult` interface provides detailed information about a specific D
 ```apex
 OperationType operationType();      // DML operation type (INSERT_DML, UPDATE_DML, etc.)
 Schema.SObjectType objectType();    // SObject type for this operation
+String operationId();               // Random UUID identifying this operation, for logging and support
 Boolean hasFailures();              // True if any records failed
 List<Error> errors();               // All errors from failed records
+Exception exception();              // Set only for results passed to a Logger, see below
 List<SObject> records();            // All records that were processed
 List<SObject> successes();          // Records that succeeded
 List<SObject> failures();           // Records that failed
 List<RecordResult> recordResults(); // Individual record results
 ```
+
+::: info
+`exception()` is `null` on results returned by `commitWork()`, `commitTransaction()` and `dryRun()` — when an operation throws, the exception propagates instead of being returned. It is populated only on the result handed to a [Logger](/advanced/logger).
+:::
 
 **Example**
 
@@ -277,6 +287,7 @@ The `DML.OperationType` enum identifies the type of DML operation.
 DML.OperationType.INSERT_DML
 DML.OperationType.UPDATE_DML
 DML.OperationType.UPSERT_DML
+DML.OperationType.MERGE_DML
 DML.OperationType.DELETE_DML
 DML.OperationType.UNDELETE_DML
 DML.OperationType.PUBLISH_DML
@@ -287,10 +298,10 @@ DML.OperationType.PUBLISH_DML
 ### Basic Insert with Result
 
 ```apex
-Account account = new Account(Name = 'Test Account');
+Account newAccount = new Account(Name = 'Test Account');
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .commitWork();
 
 // Verify result
@@ -308,7 +319,7 @@ Assert.areEqual(Account.SObjectType, operationResult.objectType());
 DML.RecordResult recordResult = operationResult.recordResults()[0];
 Assert.isTrue(recordResult.isSuccess());
 Assert.isNotNull(recordResult.id());
-Assert.areEqual(account.Id, recordResult.id());
+Assert.areEqual(newAccount.Id, recordResult.id());
 ```
 
 ### Partial Success Handling
@@ -351,13 +362,13 @@ for (DML.RecordResult rr : operationResult.recordResults()) {
 ### Multiple Operation Types
 
 ```apex
-Account account = new Account(Name = 'New Account');
+Account newAccount = new Account(Name = 'New Account');
 Contact existingContact = [SELECT Id, FirstName FROM Contact LIMIT 1];
 existingContact.FirstName = 'Updated';
 Lead leadToDelete = [SELECT Id FROM Lead LIMIT 1];
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .toUpdate(existingContact)
     .toDelete(leadToDelete)
     .commitWork();
@@ -376,14 +387,14 @@ Assert.isFalse(result.deletesOf(Lead.SObjectType).hasFailures());
 ### Multiple SObject Types Same Operation
 
 ```apex
-Account account = new Account(Name = 'Test Account');
-Contact contact = new Contact(FirstName = 'Test', LastName = 'Contact');
-Lead lead = new Lead(FirstName = 'Test', LastName = 'Lead', Company = 'Test Co');
+Account newAccount = new Account(Name = 'Test Account');
+Contact newContact = new Contact(FirstName = 'Test', LastName = 'Contact');
+Lead newLead = new Lead(FirstName = 'Test', LastName = 'Lead', Company = 'Test Co');
 
 DML.Result result = new DML()
-    .toInsert(account)
-    .toInsert(contact)
-    .toInsert(lead)
+    .toInsert(newAccount)
+    .toInsert(newContact)
+    .toInsert(newLead)
     .commitWork();
 
 // Get all insert results (3 - one per SObject type)
@@ -399,10 +410,10 @@ Assert.areEqual(1, result.insertsOf(Lead.SObjectType).records().size());
 ### Dry Run Results
 
 ```apex
-Account account = new Account(Name = 'Test Account');
+Account newAccount = new Account(Name = 'Test Account');
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .dryRun();
 
 // Result is returned but database is rolled back
@@ -464,10 +475,10 @@ for (DML.OperationResult operationResult : result.all()) {
 ```apex
 @IsTest
 static void testAccountCreation() {
-    Account account = new Account(Name = 'Test');
+    Account newAccount = new Account(Name = 'Test');
     
     DML.Result result = new DML()
-        .toInsert(account)
+        .toInsert(newAccount)
         .commitWork();
     
     // Use result for comprehensive assertions

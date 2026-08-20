@@ -10,11 +10,11 @@ Update existing records in the database.
 
 ```apex
 Account account = new Account(Name = 'New Parent');
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
     .toInsert(account)
-    .toUpdate(DML.Record(contact)
+    .toUpdate(DML.Record(existingContact)
         .withRelationship(Contact.AccountId, account)
     )
     .systemMode()
@@ -31,7 +31,7 @@ Register records for update. The actual DML is executed when `commitWork()` is c
 ```apex
 Commitable toUpdate(SObject record);
 Commitable toUpdate(DML.Record record);
-Commitable toUpdate(Iterable<SObject> records);
+Commitable toUpdate(List<SObject> records);
 Commitable toUpdate(DML.Records records);
 ```
 
@@ -87,11 +87,11 @@ update contact;
 
 ```apex
 Account account = new Account(Name = 'New Parent');
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
     .toInsert(account)
-    .toUpdate(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toUpdate(DML.Record(existingContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
@@ -116,10 +116,10 @@ update contact;
 **DML Lib**
 
 ```apex
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
-    .toUpdate(DML.Record(contact).with(Contact.Email, 'updated@example.com'))
+    .toUpdate(DML.Record(existingContact).with(Contact.Email, 'updated@example.com'))
     .commitWork();
 ```
 
@@ -128,7 +128,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpdate(Iterable<SObject> records);
+Commitable toUpdate(List<SObject> records);
 Commitable toUpdate(DML.Records records);
 ```
 
@@ -232,7 +232,7 @@ OperationResult updateImmediately(DML.Records records);
 ```
 
 ::: tip
-All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `updateImmediately`.
+All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `accessMode(System.AccessLevel)`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `updateImmediately`.
 :::
 
 ### Single Record
@@ -286,9 +286,9 @@ Database.SaveResult contactResult = Database.update(contact);
 Account account = new Account(Name = 'New Parent');
 new DML().insertImmediately(account);
 
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 DML.OperationResult result = new DML()
-    .updateImmediately(DML.Record(contact).withRelationship(Contact.AccountId, account));
+    .updateImmediately(DML.Record(existingContact).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field
@@ -312,9 +312,9 @@ Database.SaveResult result = Database.update(contact);
 **DML Lib**
 
 ```apex
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 DML.OperationResult result = new DML()
-    .updateImmediately(DML.Record(contact).with(Contact.Email, 'updated@example.com'));
+    .updateImmediately(DML.Record(existingContact).with(Contact.Email, 'updated@example.com'));
 ```
 
 ### Multiple Records

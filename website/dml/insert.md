@@ -15,7 +15,7 @@ Register records for insertion. The actual DML is executed when `commitWork()` i
 ```apex
 Commitable toInsert(SObject record);
 Commitable toInsert(DML.Record record);
-Commitable toInsert(Iterable<SObject> records);
+Commitable toInsert(List<SObject> records);
 Commitable toInsert(DML.Records records);
 ```
 
@@ -23,11 +23,11 @@ Commitable toInsert(DML.Records records);
 
 ```apex
 Account account = new Account(Name = 'My Account');
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact)
+    .toInsert(DML.Record(newContact)
         .withRelationship(Contact.AccountId, account)
     )
     .systemMode()
@@ -85,11 +85,11 @@ insert contact;
 
 ```apex
 Account account = new Account(Name = 'Parent Account');
-Contact contact = new Contact(FirstName = 'John', LastName = 'Doe');
+Contact newContact = new Contact(FirstName = 'John', LastName = 'Doe');
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
@@ -114,10 +114,10 @@ insert contact;
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
-    .toInsert(DML.Record(contact).with(Contact.Email, 'john@example.com'))
+    .toInsert(DML.Record(newContact).with(Contact.Email, 'john@example.com'))
     .commitWork();
 ```
 
@@ -126,7 +126,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toInsert(Iterable<SObject> records);
+Commitable toInsert(List<SObject> records);
 Commitable toInsert(DML.Records records);
 ```
 
@@ -245,7 +245,7 @@ OperationResult insertImmediately(DML.Records records);
 ```
 
 ::: tip
-All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `insertImmediately`.
+All DML settings configured on the `DML` instance (such as `userMode()`, `systemMode()`, `accessMode(System.AccessLevel)`, `withSharing()`, `withoutSharing()`, `allowPartialSuccess()`) are inherited when executing `insertImmediately`.
 :::
 
 ### Single Record
@@ -300,9 +300,9 @@ Database.SaveResult contactResult = Database.insert(contact);
 Account account = new Account(Name = 'Parent Account');
 new DML().insertImmediately(account);
 
-Contact contact = new Contact(FirstName = 'John', LastName = 'Doe');
+Contact newContact = new Contact(FirstName = 'John', LastName = 'Doe');
 DML.OperationResult result = new DML()
-    .insertImmediately(DML.Record(contact).withRelationship(Contact.AccountId, account));
+    .insertImmediately(DML.Record(newContact).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field
@@ -326,9 +326,9 @@ Database.SaveResult result = Database.insert(contact);
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 DML.OperationResult result = new DML()
-    .insertImmediately(DML.Record(contact).with(Contact.Email, 'john@example.com'));
+    .insertImmediately(DML.Record(newContact).with(Contact.Email, 'john@example.com'));
 ```
 
 ### Multiple Records
@@ -397,7 +397,7 @@ List<Contact> contacts = new List<Contact>{
 };
 
 DML.OperationResult result = new DML()
-    .insertImmediately(DML.Records(contacts).with(Contact.AccountId, account));
+    .insertImmediately(DML.Records(contacts).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field
