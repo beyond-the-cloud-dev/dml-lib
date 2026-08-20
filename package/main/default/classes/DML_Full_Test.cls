@@ -3070,24 +3070,21 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
-        Exception expectedException = null;
-        try {
-            new DML()
-                .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
-                .toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
-                .toInsert(account1)
-                .commitWork();
-        } catch (Exception e) {
-            expectedException = e;
-        }
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
+            .toInsert(account1)
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
         Test.stopTest();
 
         // Verify
-        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.isTrue(
-            expectedException.getMessage().contains('Relationship was registered for a record that has not been registered yet.'),
-            'Expected exception message should be thrown.'
-        );
+        Assert.areEqual(3, dmlsAfter - dmlsBefore, '3 DML statements should be executed (Account insert, Contact insert, Opportunity insert).');
+        Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact should be related to the account.');
+        Assert.areEqual(account1.Id, [SELECT AccountId FROM Opportunity WHERE Id = :opportunity1.Id].AccountId, 'Opportunity should be related to the account.');
     }
 
     @IsTest
@@ -7602,7 +7599,7 @@ private class DML_Full_Test {
 
         // Verify
         Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
-        Assert.areEqual('Only new records can be registered as new.', expectedException.getMessage(), 'Expected exception message should be thrown.');
+        Assert.areEqual('Only records without an Id can be registered as new.', expectedException.getMessage(), 'Expected exception message should be thrown.');
     }
 
     @IsTest
@@ -8287,6 +8284,194 @@ private class DML_Full_Test {
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Both records should be inserted in the database.');
         Assert.areEqual(2, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain 2 records.');
         Assert.areNotEqual(account1.Id, account2.Id, 'Records should have different Ids.');
+    }
+
+    @IsTest
+    static void combineOnDuplicateWithParentRelationshipField() {
+        // Setup
+        Account account1 = getAccount(1);
+        insert account1;
+
+        Contact contact1 = getContact(1);
+        contact1.AccountId = account1.Id;
+        insert contact1;
+
+        Contact queriedContact = [SELECT Id, LastName, Account.Name FROM Contact WHERE Id = :contact1.Id];
+
+        // Test
+        Test.startTest();
+        new DML().combineOnDuplicate().toUpdate(new Contact(Id = contact1.Id, Title = 'Test Title')).toUpdate(queriedContact).commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual('Test Title', [SELECT Title FROM Contact WHERE Id = :contact1.Id].Title, 'Combined record should keep the field value.');
+    }
+
+    @IsTest
+    static void combineOnDuplicateKeepsRelationship() {
+        // Setup
+        Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+        Account parentAccount = new Account(Id = DML.randomIdGenerator.get(Account.SObjectType));
+
+        DML.mock('dmlMockId').allUpdates();
+
+        // Test
+        Test.startTest();
+        new DML()
+            .combineOnDuplicate()
+            .toUpdate(new Account(Id = accountId, Description = 'Combined'))
+            .toUpdate(DML.Record(new Account(Id = accountId)).withRelationship(Account.ParentId, parentAccount))
+            .identifier('dmlMockId')
+            .commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+        Account combinedAccount = (Account) result.updatesOf(Account.SObjectType).records()[0];
+
+        Assert.areEqual(1, result.updatesOf(Account.SObjectType).records().size(), 'Records should be combined into one.');
+        Assert.areEqual('Combined', combinedAccount.Description, 'Combined record should keep the field value.');
+        Assert.areEqual(parentAccount.Id, combinedAccount.ParentId, 'Combined record should keep the relationship.');
+    }
+
+    @IsTest
+    static void toInsertChildBeforeParentWithRealDml() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML().toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1)).toInsert(account1).commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account insert, Contact insert).');
+        Assert.areEqual(account1.Id, [SELECT AccountId FROM Contact WHERE Id = :contact1.Id].AccountId, 'Contact should be related to the account in the database.');
+    }
+
+    @IsTest
+    static void toInsertChildBeforeParent() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        new DML()
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account1))
+            .toInsert(account1)
+            .identifier('dmlMockId')
+            .commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(account1.Id, 'Account should be inserted.');
+        Assert.areEqual(account1.Id, contact1.AccountId, 'Contact should be related to the account registered after it.');
+    }
+
+    @IsTest
+    static void toInsertHierarchyRegisteredBottomUp() {
+        // Setup
+        Account grandParentAccount = getAccount(1);
+        Account parentAccount = getAccount(2);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        new DML()
+            .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, parentAccount))
+            .toInsert(DML.Record(parentAccount).withRelationship(Account.ParentId, grandParentAccount))
+            .toInsert(grandParentAccount)
+            .identifier('dmlMockId')
+            .commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(parentAccount.Id, contact1.AccountId, 'Contact should be related to the parent account.');
+        Assert.areEqual(grandParentAccount.Id, parentAccount.ParentId, 'Parent account should be related to the grandparent account.');
+    }
+
+    @IsTest
+    static void toInsertWithUnregisteredParent() {
+        // Setup
+        Account unregisteredAccount = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, unregisteredAccount)).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual(
+            'Related record has no Id and is not registered in the unit of work.',
+            expectedException.getMessage(),
+            'Expected exception message should be thrown.'
+        );
+    }
+
+    @IsTest
+    static void commitWorkKeepsResultsStoredByImmediateOperations() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        DML.Commitable db = new DML().identifier('dmlMockId');
+
+        db.insertImmediately(account1);
+        db.toInsert(account2).commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        Assert.areEqual(2, result.insertsOf(Account.SObjectType).records().size(), 'Stored result should contain records from both operations.');
+    }
+
+    @IsTest
+    static void combineOnDuplicateRegisteredAfterFirstRecord() {
+        // Setup
+        Id accountId = DML.randomIdGenerator.get(Account.SObjectType);
+
+        DML.mock('dmlMockId').allUpdates();
+
+        // Test
+        Test.startTest();
+        new DML()
+            .toUpdate(new Account(Id = accountId, Website = 'mywebsite.com'))
+            .combineOnDuplicate()
+            .toUpdate(new Account(Id = accountId, Description = 'Combined'))
+            .identifier('dmlMockId')
+            .commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+        Account combinedAccount = (Account) result.updatesOf(Account.SObjectType).records()[0];
+
+        Assert.areEqual(1, result.updatesOf(Account.SObjectType).records().size(), 'Records should be combined into one.');
+        Assert.areEqual('mywebsite.com', combinedAccount.Website, 'Combined record should keep the first registration value.');
+        Assert.areEqual('Combined', combinedAccount.Description, 'Combined record should keep the second registration value.');
     }
 
     public class TestLogger implements DML.Logger {

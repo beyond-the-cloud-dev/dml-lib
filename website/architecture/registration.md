@@ -110,7 +110,7 @@ When a validation rule is still violated at execution time (for example, updatin
 
 | Operation | Exception Message |
 |-----------|-------------------|
-| `toInsert` | `Only new records can be registered as new.` |
+| `toInsert` | `Only records without an Id can be registered as new.` |
 | `toUpdate` | `Only existing records can be updated.` |
 | `toDelete` / `toHardDelete` | `Only existing records can be registered as deleted.` |
 | `toUndelete` | `Only deleted records can be undeleted.` |

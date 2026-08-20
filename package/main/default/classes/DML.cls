@@ -298,6 +298,8 @@ global inherited sharing class DML implements Commitable {
 
     private Hook hook;
 
+    private static Boolean isLoggerInitialized = false;
+
     @TestVisible
     private static final RandomIdGenerator randomIdGenerator = new RandomIdGenerator();
     private static final Map<String, Result> resultByDmlIdentifier = new Map<String, Result>();
@@ -306,7 +308,7 @@ global inherited sharing class DML implements Commitable {
     @TestVisible
     private static Logger dmlLogger {
         get {
-            if (dmlLogger == null) {
+            if (!isLoggerInitialized) {
                 String className = DML.class.getName(); // 'DML' or 'btcdev.DML' when namespaced
                 String namespacePrefix = className.contains('.') ? className.substringBefore('.') : null;
 
@@ -322,6 +324,8 @@ global inherited sharing class DML implements Commitable {
                     Object loggerInstance = Type.forName(implementors[0].ClassNamespacePrefix, implementors[0].ClassName)?.newInstance();
                     dmlLogger = loggerInstance instanceof Logger ? (Logger) loggerInstance : null;
                 }
+
+                isLoggerInitialized = true;
             }
 
             return dmlLogger;
@@ -802,7 +806,9 @@ global inherited sharing class DML implements Commitable {
             return;
         }
 
-        resultByDmlIdentifier.put(this.configuration.dmlIdentifier, result);
+        for (OperationResult operationResult : result.all()) {
+            this.storeResult(operationResult);
+        }
     }
 
     private void storeResult(OperationResult operationResult) {
@@ -938,9 +944,11 @@ global inherited sharing class DML implements Commitable {
                     throw new DmlException('Duplicate records found during registration. Fix the code.');
                 }
 
-                enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
-
                 this.enhancedRecordsById.put(enhancedRecord.getRecordId(), enhancedRecord);
+            }
+
+            for (EnhancedRecord enhancedRecord : this.enhancedRecords) {
+                enhancedRecord.addToDependencyGraph(this.orderDependencyGraph);
             }
         }
 
@@ -1003,7 +1011,7 @@ global inherited sharing class DML implements Commitable {
             OperationBucket operationBucket = this.bucketByKey.get(operation.bucketKey());
 
             if (operationBucket == null) {
-                operationBucket = new OperationBucket(operation, this.configuration.duplicateCombineStrategy);
+                operationBucket = new OperationBucket(operation, this.configuration);
 
                 this.bucketByKey.put(operation.bucketKey(), operationBucket);
                 this.bucketsByOperationType.get(operation.getOperationType()).add(operationBucket);
@@ -1065,7 +1073,7 @@ global inherited sharing class DML implements Commitable {
             OperationBucket operationBucket = this.bucketByKey.get(operation.bucketKey());
 
             if (operationBucket == null) {
-                operationBucket = new OperationBucket(operation, this.configuration.duplicateCombineStrategy);
+                operationBucket = new OperationBucket(operation, this.configuration);
 
                 this.bucketByKey.put(operation.bucketKey(), operationBucket);
                 this.bucketsByOperationType.get(operation.getOperationType()).add(operationBucket);
@@ -1090,7 +1098,7 @@ global inherited sharing class DML implements Commitable {
 
     private class OperationBucket {
         private DmlOperation operation;
-        private DuplicateCombineStrategy duplicateCombineStrategy;
+        private Configuration configuration;
 
         private Map<Id, EnhancedRecord> recordsById = new Map<Id, EnhancedRecord>();
         private List<EnhancedRecord> records = new List<EnhancedRecord>();
@@ -1099,9 +1107,9 @@ global inherited sharing class DML implements Commitable {
             this.operation = operation;
         }
 
-        private OperationBucket(DmlOperation operation, DuplicateCombineStrategy duplicateCombineStrategy) {
+        private OperationBucket(DmlOperation operation, Configuration configuration) {
             this(operation);
-            this.duplicateCombineStrategy = duplicateCombineStrategy;
+            this.configuration = configuration;
         }
 
         private Boolean hasDuplicate(EnhancedRecord newRecord) {
@@ -1111,7 +1119,7 @@ global inherited sharing class DML implements Commitable {
         private void executeDuplicateStrategy(EnhancedRecord newRecord) {
             EnhancedRecord existingRecord = this.recordsById.get(newRecord.getRecordId());
 
-            this.duplicateCombineStrategy.combine(existingRecord, newRecord);
+            this.configuration.duplicateCombineStrategy.combine(existingRecord, newRecord);
         }
 
         private void add(EnhancedRecord newRecord) {
@@ -1452,7 +1460,7 @@ global inherited sharing class DML implements Commitable {
 
         protected override void validate(EnhancedRecord enhancedRecord) {
             if (enhancedRecord.hasId()) {
-                throw new DmlException('Only new records can be registered as new.');
+                throw new DmlException('Only records without an Id can be registered as new.');
             }
         }
 
@@ -1760,9 +1768,22 @@ global inherited sharing class DML implements Commitable {
         public void combine(EnhancedRecord mergeToRecord, EnhancedRecord duplicateRecord) {
             SObject existingRecord = mergeToRecord.getRecord();
             SObject newRecord = duplicateRecord.getRecord();
+            Map<String, SObjectField> fieldByName = existingRecord.getSObjectType().getDescribe().fields.getMap();
 
             for (String field : newRecord.getPopulatedFieldsAsMap().keySet()) {
+                if (!fieldByName.containsKey(field.toLowerCase())) {
+                    continue;
+                }
+
                 existingRecord.put(field, newRecord.get(field));
+            }
+
+            for (ParentRelationship parentRelationship : duplicateRecord.parentRelationships) {
+                mergeToRecord.withRelationship(parentRelationship);
+            }
+
+            for (ExternalRelationship externalRelationship : duplicateRecord.externalRelationships) {
+                mergeToRecord.withRelationship(externalRelationship);
             }
         }
     }
@@ -2514,7 +2535,7 @@ global inherited sharing class DML implements Commitable {
             }
 
             if (prerequisite.getRecordId() == null) {
-                throw new DmlException('Relationship was registered for a record that has not been registered yet.');
+                throw new DmlException('Related record has no Id and is not registered in the unit of work.');
             }
 
             this.ensureRecordIsTracked(prerequisite);
