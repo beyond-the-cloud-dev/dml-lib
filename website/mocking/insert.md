@@ -23,11 +23,11 @@ The `DML.mock()` and `DML.retrieveResultFor()` methods should only be used in te
 public class AccountService {
     public void createAccountWithContacts() {
         Account account = new Account(Name = 'Test Account');
-        Contact contact = new Contact(LastName = 'Doe');
+        Contact newContact = new Contact(LastName = 'Doe');
 
         new DML()
             .toInsert(account)
-            .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+            .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
             .identifier('AccountService.createAccountWithContacts')
             .commitWork();
     }

@@ -39,7 +39,11 @@ new DML()
 
 ### combineOnDuplicate
 
-Use `combineOnDuplicate()` to automatically merge duplicate registrations into a single record. When the same record ID is registered multiple times, field values from later registrations override earlier ones, while preserving fields that are only set in earlier registrations.
+Use `combineOnDuplicate()` to automatically merge duplicate registrations into a single record. When the same record ID is registered multiple times, field values from later registrations override earlier ones, while preserving fields that are only set in earlier registrations. Relationships declared with `withRelationship()` on a combined registration are carried over to the surviving record, and the method can appear anywhere in the chain — before or after the registrations it applies to.
+
+::: info
+`combineOnDuplicate()` applies to update, merge, delete, undelete and publish. Inserts and upserts are resolved through the dependency graph, where a record registered twice is always rejected.
+:::
 
 **Signature**
 
@@ -77,13 +81,13 @@ DML Lib uses Kahn's algorithm (topological sort) to resolve dependencies between
 
 ```apex
 Account account = new Account(Name = 'Acme');
-Contact contact = new Contact(LastName = 'Smith');
-Opportunity opportunity = new Opportunity(Name = 'Deal', StageName = 'New', CloseDate = Date.today());
+Contact newContact = new Contact(LastName = 'Smith');
+Opportunity newOpportunity = new Opportunity(Name = 'Deal', StageName = 'New', CloseDate = Date.today());
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
-    .toInsert(DML.Record(opportunity).withRelationship(Opportunity.AccountId, account))
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
+    .toInsert(DML.Record(newOpportunity).withRelationship(Opportunity.AccountId, account))
     .commitWork();
 ```
 
@@ -96,13 +100,13 @@ This makes it possible to insert a record and update or delete it within the sam
 **Example**
 
 ```apex
-Account account = new Account(Name = 'Acme');
-Contact contact = new Contact(LastName = 'Smith');
+Account newAccount = new Account(Name = 'Acme');
+Contact newContact = new Contact(LastName = 'Smith');
 
 new DML()
-    .toInsert(account)
-    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
-    .toUpdate(DML.Record(account).with(Account.Description, 'Updated via UoW'))
+    .toInsert(newAccount)
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount))
+    .toUpdate(DML.Record(newAccount).with(Account.Description, 'Updated via UoW'))
     .commitWork(); // Account insert, Contact insert, Account update — 3 DML statements
 ```
 
@@ -119,7 +123,7 @@ When a validation rule is still violated at execution time (for example, updatin
 Two checks still run at registration time:
 
 - The `toMerge` merge-to record must have an Id when `toMerge()` is called — the master record identifies the merge operation itself, so it cannot receive its Id from an insert in the same unit of work.
-- [Duplicate detection](#deduplication-strategy) applies to update, merge, delete, undelete and publish registrations that have an Id at registration time. Inserts and upserts are dependency-resolved instead and are never deduplicated, and neither are records that receive their Id from an insert in the same unit of work — those surface as the standard platform `Duplicate id in list` error at execution time, and `combineOnDuplicate()` does not apply to them.
+- [Duplicate detection](#deduplication-strategy) rejects the same record registered twice, for every operation. Update, merge, delete, undelete and publish support `combineOnDuplicate()`, so their message points to it. Inserts and upserts are dependency-resolved and cannot be combined, so they throw `Duplicate records found during registration. Fix the code.` Records that merely hold equal field values are not duplicates — they are separate records and are inserted separately, matching standard DML.
 
 ::: warning
 `commitWork()` does not use a savepoint. If a validation exception is thrown mid-commit, operations that already executed stay committed. Use `commitTransaction()` when the whole unit of work must be atomic — see [Rollback](/architecture/rollback).

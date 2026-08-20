@@ -10,11 +10,11 @@ Update existing records in the database.
 
 ```apex
 Account account = new Account(Name = 'New Parent');
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
     .toInsert(account)
-    .toUpdate(DML.Record(contact)
+    .toUpdate(DML.Record(existingContact)
         .withRelationship(Contact.AccountId, account)
     )
     .systemMode()
@@ -87,11 +87,11 @@ update contact;
 
 ```apex
 Account account = new Account(Name = 'New Parent');
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
     .toInsert(account)
-    .toUpdate(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toUpdate(DML.Record(existingContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
@@ -116,10 +116,10 @@ update contact;
 **DML Lib**
 
 ```apex
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 
 new DML()
-    .toUpdate(DML.Record(contact).with(Contact.Email, 'updated@example.com'))
+    .toUpdate(DML.Record(existingContact).with(Contact.Email, 'updated@example.com'))
     .commitWork();
 ```
 
@@ -286,9 +286,9 @@ Database.SaveResult contactResult = Database.update(contact);
 Account account = new Account(Name = 'New Parent');
 new DML().insertImmediately(account);
 
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 DML.OperationResult result = new DML()
-    .updateImmediately(DML.Record(contact).withRelationship(Contact.AccountId, account));
+    .updateImmediately(DML.Record(existingContact).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field
@@ -312,9 +312,9 @@ Database.SaveResult result = Database.update(contact);
 **DML Lib**
 
 ```apex
-Contact contact = [SELECT Id FROM Contact LIMIT 1];
+Contact existingContact = [SELECT Id FROM Contact LIMIT 1];
 DML.OperationResult result = new DML()
-    .updateImmediately(DML.Record(contact).with(Contact.Email, 'updated@example.com'));
+    .updateImmediately(DML.Record(existingContact).with(Contact.Email, 'updated@example.com'));
 ```
 
 ### Multiple Records

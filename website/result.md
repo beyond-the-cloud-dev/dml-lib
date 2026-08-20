@@ -298,10 +298,10 @@ DML.OperationType.PUBLISH_DML
 ### Basic Insert with Result
 
 ```apex
-Account account = new Account(Name = 'Test Account');
+Account newAccount = new Account(Name = 'Test Account');
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .commitWork();
 
 // Verify result
@@ -319,7 +319,7 @@ Assert.areEqual(Account.SObjectType, operationResult.objectType());
 DML.RecordResult recordResult = operationResult.recordResults()[0];
 Assert.isTrue(recordResult.isSuccess());
 Assert.isNotNull(recordResult.id());
-Assert.areEqual(account.Id, recordResult.id());
+Assert.areEqual(newAccount.Id, recordResult.id());
 ```
 
 ### Partial Success Handling
@@ -362,13 +362,13 @@ for (DML.RecordResult rr : operationResult.recordResults()) {
 ### Multiple Operation Types
 
 ```apex
-Account account = new Account(Name = 'New Account');
+Account newAccount = new Account(Name = 'New Account');
 Contact existingContact = [SELECT Id, FirstName FROM Contact LIMIT 1];
 existingContact.FirstName = 'Updated';
 Lead leadToDelete = [SELECT Id FROM Lead LIMIT 1];
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .toUpdate(existingContact)
     .toDelete(leadToDelete)
     .commitWork();
@@ -387,14 +387,14 @@ Assert.isFalse(result.deletesOf(Lead.SObjectType).hasFailures());
 ### Multiple SObject Types Same Operation
 
 ```apex
-Account account = new Account(Name = 'Test Account');
-Contact contact = new Contact(FirstName = 'Test', LastName = 'Contact');
-Lead lead = new Lead(FirstName = 'Test', LastName = 'Lead', Company = 'Test Co');
+Account newAccount = new Account(Name = 'Test Account');
+Contact newContact = new Contact(FirstName = 'Test', LastName = 'Contact');
+Lead newLead = new Lead(FirstName = 'Test', LastName = 'Lead', Company = 'Test Co');
 
 DML.Result result = new DML()
-    .toInsert(account)
-    .toInsert(contact)
-    .toInsert(lead)
+    .toInsert(newAccount)
+    .toInsert(newContact)
+    .toInsert(newLead)
     .commitWork();
 
 // Get all insert results (3 - one per SObject type)
@@ -410,10 +410,10 @@ Assert.areEqual(1, result.insertsOf(Lead.SObjectType).records().size());
 ### Dry Run Results
 
 ```apex
-Account account = new Account(Name = 'Test Account');
+Account newAccount = new Account(Name = 'Test Account');
 
 DML.Result result = new DML()
-    .toInsert(account)
+    .toInsert(newAccount)
     .dryRun();
 
 // Result is returned but database is rolled back
@@ -475,10 +475,10 @@ for (DML.OperationResult operationResult : result.all()) {
 ```apex
 @IsTest
 static void testAccountCreation() {
-    Account account = new Account(Name = 'Test');
+    Account newAccount = new Account(Name = 'Test');
     
     DML.Result result = new DML()
-        .toInsert(account)
+        .toInsert(newAccount)
         .commitWork();
     
     // Use result for comprehensive assertions

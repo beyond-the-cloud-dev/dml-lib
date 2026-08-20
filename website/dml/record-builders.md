@@ -10,11 +10,11 @@ Build records dynamically — set field values and parent relationships with the
 
 ```apex
 Account account = new Account(Name = 'My Account');
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact)
+    .toInsert(DML.Record(newContact)
         .with(Contact.Email, 'john@example.com')
         .withRelationship(Contact.AccountId, account)
     )
@@ -57,10 +57,10 @@ insert contact;
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
-    .toInsert(DML.Record(contact).with(Contact.Email, 'john@example.com'))
+    .toInsert(DML.Record(newContact).with(Contact.Email, 'john@example.com'))
     .commitWork();
 ```
 
@@ -204,10 +204,10 @@ insert contact;
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
-    .toInsert(DML.Record(contact).with(Contact.Email, 'john@example.com'))
+    .toInsert(DML.Record(newContact).with(Contact.Email, 'john@example.com'))
     .commitWork();
 ```
 
@@ -240,11 +240,11 @@ insert contact;
 
 ```apex
 Account account = new Account(Name = 'Parent Account');
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
     .toInsert(account)
-    .toInsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
@@ -278,10 +278,10 @@ insert contact;
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Smith');
+Contact newContact = new Contact(LastName = 'Smith');
 
 new DML()
-    .toInsert(DML.Record(contact)
+    .toInsert(DML.Record(newContact)
         .withRelationship(Contact.AccountId, Account.ExternalId__c, 'EXT-001')
     )
     .commitWork();

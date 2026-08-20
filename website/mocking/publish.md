@@ -41,14 +41,14 @@ static void shouldPublishAccountCreatedEvent() {
     // Setup
     DML.mock('NotificationService.notifyAccountCreated').allPublishes();
 
-    Account account = new Account(
+    Account newAccount = new Account(
         Id = DML.randomIdGenerator.get(Account.SObjectType),
         Name = 'Test Account'
     );
 
     // Test
     Test.startTest();
-    new NotificationService().notifyAccountCreated(account);
+    new NotificationService().notifyAccountCreated(newAccount);
     Test.stopTest();
 
     // Verify

@@ -71,6 +71,7 @@ const current = [
     items: [
       { text: 'Introduction', link: '/introduction' },
       { text: 'Installation', link: '/installation' },
+      { text: 'Examples', link: '/examples' },
       { text: 'Changelog', link: '/release' }
     ]
   },

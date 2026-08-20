@@ -90,11 +90,11 @@ upsert contact;
 
 ```apex
 Account account = new Account(Name = 'Parent Account');
-Contact contact = new Contact(FirstName = 'John', LastName = 'Doe');
+Contact newContact = new Contact(FirstName = 'John', LastName = 'Doe');
 
 new DML()
     .toUpsert(account)
-    .toUpsert(DML.Record(contact).withRelationship(Contact.AccountId, account))
+    .toUpsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
     .commitWork();
 ```
 
@@ -119,10 +119,10 @@ upsert contact;
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 
 new DML()
-    .toUpsert(DML.Record(contact).with(Contact.Email, 'john@example.com'))
+    .toUpsert(DML.Record(newContact).with(Contact.Email, 'john@example.com'))
     .commitWork();
 ```
 
@@ -139,23 +139,23 @@ Commitable toUpsert(SObject record, SObjectField externalIdField);
 **Standard DML**
 
 ```apex
-Account account = new Account(
+Account newAccount = new Account(
     MyExternalId__c = 'EXT-001',
     Name = 'Acme Corp'
 );
-Database.upsert(account, Account.MyExternalId__c);
+Database.upsert(newAccount, Account.MyExternalId__c);
 ```
 
 **DML Lib**
 
 ```apex
-Account account = new Account(
+Account newAccount = new Account(
     MyExternalId__c = 'EXT-001',
     Name = 'Acme Corp'
 );
 
 new DML()
-    .toUpsert(account, Account.MyExternalId__c)
+    .toUpsert(newAccount, Account.MyExternalId__c)
     .commitWork();
 ```
 
@@ -371,9 +371,9 @@ Database.UpsertResult contactResult = Database.upsert(contact);
 Account account = new Account(Name = 'Parent Account');
 new DML().upsertImmediately(account);
 
-Contact contact = new Contact(FirstName = 'John', LastName = 'Doe');
+Contact newContact = new Contact(FirstName = 'John', LastName = 'Doe');
 DML.OperationResult result = new DML()
-    .upsertImmediately(DML.Record(contact).withRelationship(Contact.AccountId, account));
+    .upsertImmediately(DML.Record(newContact).withRelationship(Contact.AccountId, account));
 ```
 
 #### With Field
@@ -397,9 +397,9 @@ Database.UpsertResult result = Database.upsert(contact);
 **DML Lib**
 
 ```apex
-Contact contact = new Contact(LastName = 'Doe');
+Contact newContact = new Contact(LastName = 'Doe');
 DML.OperationResult result = new DML()
-    .upsertImmediately(DML.Record(contact).with(Contact.Email, 'john@example.com'));
+    .upsertImmediately(DML.Record(newContact).with(Contact.Email, 'john@example.com'));
 ```
 
 ### Multiple Records

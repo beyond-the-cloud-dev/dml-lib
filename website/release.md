@@ -18,7 +18,7 @@ outline: deep
 **Changes**
 
 - Salesforce API version updated to v66.0.
-- Documentation: new pages for [Hard Delete](/dml/hard-delete), [Record & Records](/dml/record-builders), [Shared Instance](/advanced/shared-instance), [Commit Hooks](/advanced/commit-hooks), and [Execution Control](/advanced/execution-control); documentation is now versioned — use the version switcher in the top navigation.
+- Documentation: new pages for [Examples](/examples), [Hard Delete](/dml/hard-delete), [Record & Records](/dml/record-builders), [Shared Instance](/advanced/shared-instance), [Commit Hooks](/advanced/commit-hooks), and [Execution Control](/advanced/execution-control); documentation is now versioned — use the version switcher in the top navigation.
 
 ## Older Releases
 
