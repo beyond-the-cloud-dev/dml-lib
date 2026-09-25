@@ -126,7 +126,7 @@ new DML()
     .commitWork();
 ```
 
-#### With External Id Field
+#### With External ID Field
 
 Upsert using a custom external ID field instead of the standard Id field.
 
@@ -269,7 +269,7 @@ new DML()
     .commitWork();
 ```
 
-#### With External Id Field
+#### With External ID Field
 
 Upsert multiple records using a custom external ID field instead of the standard Id field.
 

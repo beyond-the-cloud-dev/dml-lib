@@ -29,7 +29,7 @@ private class DML_Test {
         // Verify
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
-        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 1 results.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
         Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
@@ -58,7 +58,7 @@ private class DML_Test {
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
-        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 result.');
+        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
         Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
         Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');

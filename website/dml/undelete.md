@@ -4,7 +4,7 @@ outline: deep
 
 # Undelete
 
-Restore deleted records from the recycle bin.
+Restore deleted records from the Recycle Bin.
 
 **Example**
 
