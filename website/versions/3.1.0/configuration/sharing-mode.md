@@ -49,7 +49,7 @@ Execute DML operations enforcing sharing rules. Records the user doesn't have ac
 **Signature**
 
 ```apex
-Commitable withSharing();
+Committable withSharing();
 ```
 
 **Standard DML**
@@ -81,7 +81,7 @@ To use `.withoutSharing()`, the `.systemMode()` must be enabled.
 **Signature**
 
 ```apex
-Commitable withoutSharing();
+Committable withoutSharing();
 ```
 
 **Standard DML**

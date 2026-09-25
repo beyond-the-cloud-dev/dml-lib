@@ -29,12 +29,12 @@ Register records for upsert. The actual DML is executed when `commitWork()` is c
 **Signature**
 
 ```apex
-Commitable toUpsert(SObject record);
-Commitable toUpsert(SObject record, SObjectField externalIdField);
-Commitable toUpsert(DML.Record record);
-Commitable toUpsert(List<SObject> records);
-Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
-Commitable toUpsert(DML.Records records);
+Committable toUpsert(SObject record);
+Committable toUpsert(SObject record, SObjectField externalIdField);
+Committable toUpsert(DML.Record record);
+Committable toUpsert(List<SObject> records);
+Committable toUpsert(List<SObject> records, SObjectField externalIdField);
+Committable toUpsert(DML.Records records);
 ```
 
 ### Single Record
@@ -42,7 +42,7 @@ Commitable toUpsert(DML.Records records);
 **Signature**
 
 ```apex
-Commitable toUpsert(SObject record);
+Committable toUpsert(SObject record);
 ```
 
 **Standard DML**
@@ -69,7 +69,7 @@ Handle parent-child relationships automatically.
 **Signature**
 
 ```apex
-Commitable toUpsert(DML.Record record);
+Committable toUpsert(DML.Record record);
 ```
 
 **Standard DML**
@@ -105,7 +105,7 @@ Set field values dynamically using `DML.Record`.
 **Signature**
 
 ```apex
-Commitable toUpsert(DML.Record record);
+Committable toUpsert(DML.Record record);
 ```
 
 **Standard DML**
@@ -133,7 +133,7 @@ Upsert using a custom external ID field instead of the standard Id field.
 **Signature**
 
 ```apex
-Commitable toUpsert(SObject record, SObjectField externalIdField);
+Committable toUpsert(SObject record, SObjectField externalIdField);
 ```
 
 **Standard DML**
@@ -164,8 +164,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpsert(List<SObject> records);
-Commitable toUpsert(DML.Records records);
+Committable toUpsert(List<SObject> records);
+Committable toUpsert(DML.Records records);
 ```
 
 **Standard DML**
@@ -196,7 +196,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpsert(DML.Records records);
+Committable toUpsert(DML.Records records);
 ```
 
 **Standard DML**
@@ -239,7 +239,7 @@ Set field values dynamically for multiple records using `DML.Records`.
 **Signature**
 
 ```apex
-Commitable toUpsert(DML.Records records);
+Committable toUpsert(DML.Records records);
 ```
 
 **Standard DML**
@@ -276,7 +276,7 @@ Upsert multiple records using a custom external ID field instead of the standard
 **Signature**
 
 ```apex
-Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
+Committable toUpsert(List<SObject> records, SObjectField externalIdField);
 ```
 
 **Standard DML**

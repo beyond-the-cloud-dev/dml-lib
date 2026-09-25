@@ -29,10 +29,10 @@ Register records for deletion. The actual DML is executed when `commitWork()` is
 **Signature**
 
 ```apex
-Commitable toDelete(Id recordId);
-Commitable toDelete(SObject record);
-Commitable toDelete(Iterable<Id> recordIds);
-Commitable toDelete(List<SObject> records);
+Committable toDelete(Id recordId);
+Committable toDelete(SObject record);
+Committable toDelete(Iterable<Id> recordIds);
+Committable toDelete(List<SObject> records);
 ```
 
 ### Single Record
@@ -40,7 +40,7 @@ Commitable toDelete(List<SObject> records);
 **Signature**
 
 ```apex
-Commitable toDelete(SObject record);
+Committable toDelete(SObject record);
 ```
 
 **Standard DML**
@@ -67,7 +67,7 @@ Delete using a record ID directly.
 **Signature**
 
 ```apex
-Commitable toDelete(Id recordId);
+Committable toDelete(Id recordId);
 ```
 
 **Standard DML**
@@ -92,8 +92,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toDelete(List<SObject> records);
-Commitable toDelete(Iterable<Id> recordIds);
+Committable toDelete(List<SObject> records);
+Committable toDelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**
@@ -120,7 +120,7 @@ Delete using a collection of record IDs.
 **Signature**
 
 ```apex
-Commitable toDelete(Iterable<Id> recordIds);
+Committable toDelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**

@@ -13,10 +13,10 @@ Register records for insertion. The actual DML is executed when `commitWork()` i
 **Signature**
 
 ```apex
-Commitable toInsert(SObject record);
-Commitable toInsert(DML.Record record);
-Commitable toInsert(Iterable<SObject> records);
-Commitable toInsert(DML.Records records);
+Committable toInsert(SObject record);
+Committable toInsert(DML.Record record);
+Committable toInsert(Iterable<SObject> records);
+Committable toInsert(DML.Records records);
 ```
 
 **Example**
@@ -40,7 +40,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toInsert(SObject record);
+Committable toInsert(SObject record);
 ```
 
 **Standard DML**
@@ -64,7 +64,7 @@ Handle parent-child relationships automatically.
 **Signature**
 
 ```apex
-Commitable toInsert(DML.Record record);
+Committable toInsert(DML.Record record);
 ```
 
 **Standard DML**
@@ -100,7 +100,7 @@ Set field values dynamically using `DML.Record`.
 **Signature**
 
 ```apex
-Commitable toInsert(DML.Record record);
+Committable toInsert(DML.Record record);
 ```
 
 **Standard DML**
@@ -126,8 +126,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toInsert(Iterable<SObject> records);
-Commitable toInsert(DML.Records records);
+Committable toInsert(Iterable<SObject> records);
+Committable toInsert(DML.Records records);
 ```
 
 **Standard DML**
@@ -158,7 +158,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toInsert(DML.Records records);
+Committable toInsert(DML.Records records);
 ```
 
 **Standard DML**
@@ -201,7 +201,7 @@ Set field values dynamically for multiple records using `DML.Records`.
 **Signature**
 
 ```apex
-Commitable toInsert(DML.Records records);
+Committable toInsert(DML.Records records);
 ```
 
 **Standard DML**

@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.2.0
+ * v4.0.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -8436,7 +8436,7 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
-        DML.Commitable db = new DML().identifier('dmlMockId');
+        DML.Committable db = new DML().identifier('dmlMockId');
 
         db.insertImmediately(account1);
         db.toInsert(account2).commitWork();

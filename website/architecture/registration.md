@@ -48,7 +48,7 @@ Use `combineOnDuplicate()` to automatically merge duplicate registrations into a
 **Signature**
 
 ```apex
-Commitable combineOnDuplicate();
+Committable combineOnDuplicate();
 ```
 
 **Example**

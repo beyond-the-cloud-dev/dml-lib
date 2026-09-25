@@ -27,10 +27,10 @@ Register records for merging. The actual DML is executed when `commitWork()` is 
 **Signature**
 
 ```apex
-Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
-Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
-Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
-Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
+Committable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
+Committable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
+Committable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
+Committable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
 ```
 
 ### Single Duplicate Record
@@ -38,7 +38,7 @@ Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
 **Signature**
 
 ```apex
-Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
+Committable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
 ```
 
 **Standard DML**
@@ -68,7 +68,7 @@ Merge using a duplicate record ID directly.
 **Signature**
 
 ```apex
-Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
+Committable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
 ```
 
 **Standard DML**
@@ -96,8 +96,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
-Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
+Committable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
+Committable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
 ```
 
 **Standard DML**
@@ -127,7 +127,7 @@ Merge using a collection of duplicate record IDs.
 **Signature**
 
 ```apex
-Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
+Committable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
 ```
 
 **Standard DML**

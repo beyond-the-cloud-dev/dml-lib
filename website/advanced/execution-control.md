@@ -9,7 +9,7 @@ Control the lifecycle of a unit of work — discard registered operations before
 **Example**
 
 ```apex
-DML.Commitable unitOfWork = new DML()
+DML.Committable unitOfWork = new DML()
     .toInsert(account)
     .toInsert(contact)
     .systemMode();
@@ -28,7 +28,7 @@ Drop all registered but uncommitted operations without executing any DML.
 **Signature**
 
 ```apex
-Commitable discardWork();
+Committable discardWork();
 ```
 
 `discardWork()` clears only the queued work — the configuration (access mode, sharing mode, DML options, identifier, and commit hook) is kept. Calling `commitWork()` after `discardWork()` executes nothing, consumes zero DML statements, and returns an empty `Result`.
@@ -48,7 +48,7 @@ if (isAccountEligible) {
 **DML Lib**
 
 ```apex
-DML.Commitable unitOfWork = new DML()
+DML.Committable unitOfWork = new DML()
     .toInsert(new Account(Name = 'Acme'))
     .toInsert(new Account(Name = 'Globex'));
 
@@ -70,7 +70,7 @@ Only the registered operations are discarded. The same instance can be reused wi
 **Example**
 
 ```apex
-DML.Commitable unitOfWork = new DML()
+DML.Committable unitOfWork = new DML()
     .toInsert(invalidAccount)
     .systemMode()
     .allowPartialSuccess();
@@ -97,7 +97,7 @@ void preview();
 **Example**
 
 ```apex
-DML.Commitable unitOfWork = new DML()
+DML.Committable unitOfWork = new DML()
     .toInsert(account)
     .systemMode();
 
@@ -110,7 +110,7 @@ unitOfWork.commitWork();
 :::
 
 ::: warning
-`preview()` returns `void`, so it cannot be chained in the middle of a fluent call. Hold the `DML.Commitable` instance in a variable, call `preview()`, then continue with `commitWork()`.
+`preview()` returns `void`, so it cannot be chained in the middle of a fluent call. Hold the `DML.Committable` instance in a variable, call `preview()`, then continue with `commitWork()`.
 :::
 
 ::: info

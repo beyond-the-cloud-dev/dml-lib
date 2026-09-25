@@ -77,7 +77,7 @@ It is generated per operation and carries no information about the records, so i
 **Signature**
 
 ```apex
-Commitable includeOperationIdInErrorMessage();
+Committable includeOperationIdInErrorMessage();
 ```
 
 **Example**

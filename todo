@@ -126,7 +126,7 @@ DML dml = new DML();
 
 dml.toInsert(record);
 
-DML.Commitable db = new DML();
+DML.Committable db = new DML();
 
 ```
 
