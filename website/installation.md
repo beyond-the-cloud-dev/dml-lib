@@ -5,16 +5,16 @@
 <!--
  sf package version create --package "DML Lib" --target-dev-hub beyondthecloud-prod --installation-key-bypass --wait 30 --code-coverage
 
- sf package version promote --package "DML Lib@3.2.0-1"  --target-dev-hub beyondthecloud-prod
+ sf package version promote --package "DML Lib@4.0.0-1"  --target-dev-hub beyondthecloud-prod
 --> 
 
 Install the DML Lib unlocked package with `btcdev` namespace to your Salesforce environment:
 
-`/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2`
+`/packaging/installPackage.apexp?p0=04tP6000003jdptIAA`
 
-[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2)
+[Install on Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003jdptIAA)
 
-[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003eIHRIA2)
+[Install on Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP6000003jdptIAA)
 
 ## Install via Unmanaged Package
 
