@@ -35,4 +35,3 @@ features:
     details: Full support for User/System mode and With/Without Sharing.
 ---
 
-<BTCFooter context="dml-lib" />
