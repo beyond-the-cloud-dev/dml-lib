@@ -31,7 +31,7 @@ Allow some records to succeed while others fail, without rolling back the entire
 **Signature**
 
 ```apex
-Commitable allowPartialSuccess();
+Committable allowPartialSuccess();
 ```
 
 **Standard DML**
@@ -106,7 +106,7 @@ Skip duplicate rule evaluation during DML operations.
 **Signature**
 
 ```apex
-Commitable skipDuplicateRules();
+Committable skipDuplicateRules();
 ```
 
 **Standard DML**
@@ -149,7 +149,7 @@ Provide custom `Database.DmlOptions` for fine-grained control over DML behavior.
 **Signature**
 
 ```apex
-Commitable options(Database.DmlOptions options);
+Committable options(Database.DmlOptions options);
 ```
 
 **Standard DML**

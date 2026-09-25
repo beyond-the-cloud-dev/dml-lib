@@ -11,7 +11,7 @@ The DML library provides comprehensive result handling through the [`Result`](#r
 When you call `commitWork()`, `commitTransaction()` or `dryRun()`, a `Result` object is returned containing detailed information about each DML operation performed.
 
 ::: info
-`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimcs standard DML behaviour.
+`Result` is returned only when **no errors occur** or `allowPartialSuccess()` is enabled. Otherwise, a `DmlException` will be thrown, which mimics standard DML behavior.
 :::
 
 ```apex

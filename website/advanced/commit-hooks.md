@@ -56,7 +56,7 @@ Register a hook on the DML instance.
 **Signature**
 
 ```apex
-Commitable commitHook(DML.Hook callback);
+Committable commitHook(DML.Hook callback);
 ```
 
 **Standard DML**
@@ -117,7 +117,7 @@ The hook is part of the instance configuration, not registered work. It survives
 **Example**
 
 ```apex
-DML.Commitable dml = new DML().commitHook(new CommitLogger());
+DML.Committable dml = new DML().commitHook(new CommitLogger());
 
 dml.toInsert(accounts)
     .commitWork(); // hook fires

@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.2.0
+ * v4.0.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -310,7 +310,7 @@ private class DML_Full_Test {
         // Verify
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
-        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 1 results.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
         Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
@@ -528,7 +528,7 @@ private class DML_Full_Test {
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
-        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 result.');
+        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
         Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
         Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
@@ -1532,7 +1532,7 @@ private class DML_Full_Test {
         Test.stopTest();
 
         // Verify
-        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statement should be executed.');
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be hard deleted.');
         // No assertion with ALL ROWS, because there is Salesforce error
     }
@@ -1552,7 +1552,7 @@ private class DML_Full_Test {
         Test.stopTest();
 
         // Verify
-        Assert.areEqual(2, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be hard deleted.');
         // No assertion with ALL ROWS, because there is Salesforce error
 
@@ -1590,7 +1590,7 @@ private class DML_Full_Test {
         Test.stopTest();
 
         // Verify
-        Assert.areEqual(2, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
         // No assertion with ALL ROWS, because there is Salesforce error
 
@@ -1625,7 +1625,7 @@ private class DML_Full_Test {
         Test.stopTest();
 
         // Verify
-        Assert.areEqual(2, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
         // No assertion with ALL ROWS, because there is Salesforce error
     }
@@ -1647,7 +1647,7 @@ private class DML_Full_Test {
         Test.stopTest();
 
         // Verify
-        Assert.areEqual(2, dmlsAfter - dmlsBefore, '1 DML statement should be executed.');
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed.');
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be hard deleted.');
         // No assertion with ALL ROWS, because there is Salesforce error
     }
@@ -2978,7 +2978,7 @@ private class DML_Full_Test {
         DML.OperationResult operationResult = result.updatesOf(Account.SObjectType);
 
         Assert.areEqual(1, operationResult.records().size(), 'Updated operation result should contain the updated record.');
-        Assert.areEqual(0, operationResult.successes().size(), 'Updated operation result should contain 0 success record.');
+        Assert.areEqual(0, operationResult.successes().size(), 'Updated operation result should contain 0 success records.');
         Assert.areEqual(1, operationResult.failures().size(), 'Updated operation result should contain 1 failure record.');
 
         Assert.areEqual(1, operationResult.recordResults().size(), 'Updated operation result should contain the updated record results.');
@@ -8436,7 +8436,7 @@ private class DML_Full_Test {
 
         // Test
         Test.startTest();
-        DML.Commitable db = new DML().identifier('dmlMockId');
+        DML.Committable db = new DML().identifier('dmlMockId');
 
         db.insertImmediately(account1);
         db.toInsert(account2).commitWork();

@@ -55,7 +55,7 @@ A lazily-initialized, transaction-wide singleton `DML` instance. It supports the
 **Signature**
 
 ```apex
-public static Commitable Shared { get; }
+public static Committable Shared { get; }
 ```
 
 Because every class in the transaction sees the same instance, work registered from different places is bulkified together and committed in minimal DML statements.

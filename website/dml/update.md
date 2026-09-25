@@ -29,10 +29,10 @@ Register records for update. The actual DML is executed when `commitWork()` is c
 **Signature**
 
 ```apex
-Commitable toUpdate(SObject record);
-Commitable toUpdate(DML.Record record);
-Commitable toUpdate(List<SObject> records);
-Commitable toUpdate(DML.Records records);
+Committable toUpdate(SObject record);
+Committable toUpdate(DML.Record record);
+Committable toUpdate(List<SObject> records);
+Committable toUpdate(DML.Records records);
 ```
 
 ### Single Record
@@ -40,7 +40,7 @@ Commitable toUpdate(DML.Records records);
 **Signature**
 
 ```apex
-Commitable toUpdate(SObject record);
+Committable toUpdate(SObject record);
 ```
 
 **Standard DML**
@@ -69,7 +69,7 @@ Update parent-child relationships automatically.
 **Signature**
 
 ```apex
-Commitable toUpdate(DML.Record record);
+Committable toUpdate(DML.Record record);
 ```
 
 **Standard DML**
@@ -102,7 +102,7 @@ Set field values dynamically using `DML.Record`.
 **Signature**
 
 ```apex
-Commitable toUpdate(DML.Record record);
+Committable toUpdate(DML.Record record);
 ```
 
 **Standard DML**
@@ -128,8 +128,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpdate(List<SObject> records);
-Commitable toUpdate(DML.Records records);
+Committable toUpdate(List<SObject> records);
+Committable toUpdate(DML.Records records);
 ```
 
 **Standard DML**
@@ -160,7 +160,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUpdate(DML.Records records);
+Committable toUpdate(DML.Records records);
 ```
 
 **Standard DML**
@@ -195,7 +195,7 @@ Set field values dynamically for multiple records using `DML.Records`.
 **Signature**
 
 ```apex
-Commitable toUpdate(DML.Records records);
+Committable toUpdate(DML.Records records);
 ```
 
 **Standard DML**

@@ -17,7 +17,7 @@ public with sharing class OrderImportService {
         Contact newContact = new Contact(LastName = payload.contactLastName, Email = payload.contactEmail);
         Order newOrder = new Order(EffectiveDate = Date.today(), Status = 'Draft');
 
-        DML.Commitable unitOfWork = new DML()
+        DML.Committable unitOfWork = new DML()
             .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
             .toInsert(DML.Record(newOrder).withRelationship(Order.AccountId, account))
             .toInsert(account)

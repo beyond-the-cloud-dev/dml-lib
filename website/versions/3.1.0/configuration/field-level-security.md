@@ -24,7 +24,7 @@ Execute DML operations respecting user permissions. This is the **default behavi
 **Signature**
 
 ```apex
-Commitable userMode();
+Committable userMode();
 ```
 
 **Standard DML**
@@ -49,7 +49,7 @@ Execute DML operations bypassing user permissions. Use this when you need to per
 **Signature**
 
 ```apex
-Commitable systemMode();
+Committable systemMode();
 ```
 
 **Standard DML**

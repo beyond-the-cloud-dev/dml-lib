@@ -29,10 +29,10 @@ Register records for hard deletion. The actual DML is executed when `commitWork(
 **Signature**
 
 ```apex
-Commitable toHardDelete(Id recordId);
-Commitable toHardDelete(SObject record);
-Commitable toHardDelete(Iterable<Id> recordIds);
-Commitable toHardDelete(List<SObject> records);
+Committable toHardDelete(Id recordId);
+Committable toHardDelete(SObject record);
+Committable toHardDelete(Iterable<Id> recordIds);
+Committable toHardDelete(List<SObject> records);
 ```
 
 Records registered with `toHardDelete` must have an Id by the time the operation executes — otherwise a `DmlException` with the message `Only existing records can be registered as deleted.` is thrown when `commitWork()` runs. A record inserted earlier in the same unit of work receives its Id from the insert, so it can be registered for hard delete in the same commit. Operations that executed earlier in the same `commitWork()` are not rolled back when the exception is thrown — use `commitTransaction()` when the whole unit of work must be atomic (see [Deferred Validation](/architecture/registration#deferred-validation)).
@@ -52,7 +52,7 @@ There is no `hardDeleteImmediately` variant — hard delete is deferred-only and
 **Signature**
 
 ```apex
-Commitable toHardDelete(SObject record);
+Committable toHardDelete(SObject record);
 ```
 
 **Standard DML**
@@ -80,7 +80,7 @@ Hard delete using a record ID directly.
 **Signature**
 
 ```apex
-Commitable toHardDelete(Id recordId);
+Committable toHardDelete(Id recordId);
 ```
 
 **Standard DML**
@@ -106,8 +106,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toHardDelete(List<SObject> records);
-Commitable toHardDelete(Iterable<Id> recordIds);
+Committable toHardDelete(List<SObject> records);
+Committable toHardDelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**
@@ -135,7 +135,7 @@ Hard delete using a collection of record IDs.
 **Signature**
 
 ```apex
-Commitable toHardDelete(Iterable<Id> recordIds);
+Committable toHardDelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**

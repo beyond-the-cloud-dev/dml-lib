@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.2.0
+ * v4.0.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -29,7 +29,7 @@ private class DML_Test {
         // Verify
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
         Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be executed.');
-        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 1 results.');
+        Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
         Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
@@ -58,7 +58,7 @@ private class DML_Test {
 
         Assert.areEqual(0, result.inserts().size(), 'Inserted operation result should contain 0 results.');
         Assert.areEqual(0, result.upserts().size(), 'Upserted operation result should contain 0 results.');
-        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 result.');
+        Assert.areEqual(0, result.updates().size(), 'Updated operation result should contain 0 results.');
         Assert.areEqual(0, result.deletes().size(), 'Deleted operation result should contain 0 results.');
         Assert.areEqual(0, result.undeletes().size(), 'Undeleted operation result should contain 0 results.');
         Assert.areEqual(0, result.merges().size(), 'Merged operation result should contain 0 results.');
@@ -4007,7 +4007,7 @@ private class DML_Test {
 
         // Test
         Test.startTest();
-        DML.Commitable db = new DML().identifier('dmlMockId');
+        DML.Committable db = new DML().identifier('dmlMockId');
 
         db.insertImmediately(account1);
         db.toInsert(account2).commitWork();

@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v3.2.0
+ * v4.0.0
  *
  * PMD False Positives:
  * - MethodNamingConventions: Some methods are uppercase to indicate that they are "constructors" of other internal classes
@@ -24,9 +24,9 @@
     'PMD.MethodNamingConventions,PMD.ApexDoc,PMD.CyclomaticComplexity,PMD.CognitiveComplexity,PMD.ExcessivePublicCount,PMD.FieldDeclarationsShouldBeAtStart,PMD.AvoidDebugStatements,PMD.OperationWithLimitsInLoop,PMD.ApexCRUDViolation,PMD.ExcessiveClassLength,PMD.NcssTypeCount,PMD.PropertyNamingConventions,PMD.FieldNamingConventions,PMD.AvoidGlobalModifier'
 )
 @NamespaceAccessible
-public inherited sharing class DML implements Commitable {
+public inherited sharing class DML implements Committable {
     @NamespaceAccessible
-    public static Commitable Shared {
+    public static Committable Shared {
         get {
             if (Shared == null) {
                 Shared = new DML();
@@ -57,47 +57,47 @@ public inherited sharing class DML implements Commitable {
     }
 
     @NamespaceAccessible
-    public interface Commitable {
+    public interface Committable {
         // Insert
-        Commitable toInsert(SObject record);
-        Commitable toInsert(DML.Record record);
-        Commitable toInsert(List<SObject> records);
-        Commitable toInsert(DML.Records records);
+        Committable toInsert(SObject record);
+        Committable toInsert(DML.Record record);
+        Committable toInsert(List<SObject> records);
+        Committable toInsert(DML.Records records);
         // Update
-        Commitable toUpdate(SObject record);
-        Commitable toUpdate(DML.Record record);
-        Commitable toUpdate(List<SObject> records);
-        Commitable toUpdate(DML.Records records);
+        Committable toUpdate(SObject record);
+        Committable toUpdate(DML.Record record);
+        Committable toUpdate(List<SObject> records);
+        Committable toUpdate(DML.Records records);
         // Upsert
-        Commitable toUpsert(SObject record);
-        Commitable toUpsert(SObject record, SObjectField externalIdField);
-        Commitable toUpsert(DML.Record record);
-        Commitable toUpsert(List<SObject> records);
-        Commitable toUpsert(List<SObject> records, SObjectField externalIdField);
-        Commitable toUpsert(DML.Records records);
+        Committable toUpsert(SObject record);
+        Committable toUpsert(SObject record, SObjectField externalIdField);
+        Committable toUpsert(DML.Record record);
+        Committable toUpsert(List<SObject> records);
+        Committable toUpsert(List<SObject> records, SObjectField externalIdField);
+        Committable toUpsert(DML.Records records);
         // Delete
-        Commitable toDelete(Id recordId);
-        Commitable toDelete(SObject record);
-        Commitable toDelete(Iterable<Id> recordIds);
-        Commitable toDelete(List<SObject> records);
+        Committable toDelete(Id recordId);
+        Committable toDelete(SObject record);
+        Committable toDelete(Iterable<Id> recordIds);
+        Committable toDelete(List<SObject> records);
         // Hard Delete
-        Commitable toHardDelete(Id recordId);
-        Commitable toHardDelete(SObject record);
-        Commitable toHardDelete(Iterable<Id> recordIds);
-        Commitable toHardDelete(List<SObject> records);
+        Committable toHardDelete(Id recordId);
+        Committable toHardDelete(SObject record);
+        Committable toHardDelete(Iterable<Id> recordIds);
+        Committable toHardDelete(List<SObject> records);
         // Undelete
-        Commitable toUndelete(Id recordId);
-        Commitable toUndelete(SObject record);
-        Commitable toUndelete(Iterable<Id> recordIds);
-        Commitable toUndelete(List<SObject> records);
+        Committable toUndelete(Id recordId);
+        Committable toUndelete(SObject record);
+        Committable toUndelete(Iterable<Id> recordIds);
+        Committable toUndelete(List<SObject> records);
         // Merge
-        Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
-        Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
-        Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
-        Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
+        Committable toMerge(SObject mergeToRecord, SObject duplicatedRecord);
+        Committable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords);
+        Committable toMerge(SObject mergeToRecord, Id duplicatedRecordId);
+        Committable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds);
         // Platform Event
-        Commitable toPublish(SObject record);
-        Commitable toPublish(List<SObject> records);
+        Committable toPublish(SObject record);
+        Committable toPublish(List<SObject> records);
         // Immediate Insert
         OperationResult insertImmediately(SObject record);
         OperationResult insertImmediately(DML.Record record);
@@ -127,24 +127,24 @@ public inherited sharing class DML implements Commitable {
         OperationResult publishImmediately(SObject record);
         OperationResult publishImmediately(List<SObject> records);
         // Mocking
-        Commitable identifier(String dmlIdentifier); // used for mocking and tracking results
+        Committable identifier(String dmlIdentifier); // used for mocking and tracking results
         // Debug
         void preview();
         // Field Level Security
-        Commitable userMode();
-        Commitable systemMode();
-        Commitable accessMode(System.AccessLevel accessMode);
+        Committable userMode();
+        Committable systemMode();
+        Committable accessMode(System.AccessLevel accessMode);
         // Sharing Mode
-        Commitable withSharing();
-        Commitable withoutSharing();
+        Committable withSharing();
+        Committable withoutSharing();
         // Other configs
-        Commitable allowPartialSuccess();
-        Commitable skipDuplicateRules();
-        Commitable includeOperationIdInErrorMessage();
-        Commitable options(Database.DmlOptions options);
-        Commitable discardWork();
-        Commitable commitHook(DML.Hook callback);
-        Commitable combineOnDuplicate();
+        Committable allowPartialSuccess();
+        Committable skipDuplicateRules();
+        Committable includeOperationIdInErrorMessage();
+        Committable options(Database.DmlOptions options);
+        Committable discardWork();
+        Committable commitHook(DML.Hook callback);
+        Committable combineOnDuplicate();
         // Save
         Result dryRun();
         Result commitWork();
@@ -370,22 +370,22 @@ public inherited sharing class DML implements Commitable {
     // Insert
 
     @NamespaceAccessible
-    public Commitable toInsert(SObject record) {
+    public Committable toInsert(SObject record) {
         return this.toInsert(Record(record));
     }
 
     @NamespaceAccessible
-    public Commitable toInsert(Record record) {
+    public Committable toInsert(Record record) {
         return this.register(this.getInsertOperation(record.getSObjectType()), record);
     }
 
     @NamespaceAccessible
-    public Commitable toInsert(List<SObject> records) {
+    public Committable toInsert(List<SObject> records) {
         return this.toInsert(Records(records));
     }
 
     @NamespaceAccessible
-    public Commitable toInsert(Records records) {
+    public Committable toInsert(Records records) {
         return this.register(this.getInsertOperation(records.getSObjectType()), records);
     }
 
@@ -416,22 +416,22 @@ public inherited sharing class DML implements Commitable {
     // Update
 
     @NamespaceAccessible
-    public Commitable toUpdate(SObject record) {
+    public Committable toUpdate(SObject record) {
         return this.toUpdate(Record(record));
     }
 
     @NamespaceAccessible
-    public Commitable toUpdate(Record record) {
+    public Committable toUpdate(Record record) {
         return this.register(this.getUpdateOperation(record.getSObjectType()), record);
     }
 
     @NamespaceAccessible
-    public Commitable toUpdate(List<SObject> records) {
+    public Committable toUpdate(List<SObject> records) {
         return this.toUpdate(Records(records));
     }
 
     @NamespaceAccessible
-    public Commitable toUpdate(Records records) {
+    public Committable toUpdate(Records records) {
         return this.register(this.getUpdateOperation(records.getSObjectType()), records);
     }
 
@@ -462,33 +462,33 @@ public inherited sharing class DML implements Commitable {
     // Upsert
 
     @NamespaceAccessible
-    public Commitable toUpsert(SObject record) {
+    public Committable toUpsert(SObject record) {
         return this.toUpsert(Record(record));
     }
 
     @NamespaceAccessible
-    public Commitable toUpsert(SObject record, SObjectField externalIdField) {
+    public Committable toUpsert(SObject record, SObjectField externalIdField) {
         return this.register(this.getUpsertOperation(record.getSObjectType()).withExternalIdField(externalIdField), Record(record));
     }
 
     @NamespaceAccessible
-    public Commitable toUpsert(Record record) {
+    public Committable toUpsert(Record record) {
         return this.register(this.getUpsertOperation(record.getSObjectType()), record);
     }
 
     @NamespaceAccessible
-    public Commitable toUpsert(List<SObject> records) {
+    public Committable toUpsert(List<SObject> records) {
         return this.toUpsert(Records(records));
     }
 
     @NamespaceAccessible
-    public Commitable toUpsert(List<SObject> records, SObjectField externalIdField) {
+    public Committable toUpsert(List<SObject> records, SObjectField externalIdField) {
         Records dmlRecords = Records(records);
         return this.register(this.getUpsertOperation(dmlRecords.getSObjectType()).withExternalIdField(externalIdField), dmlRecords);
     }
 
     @NamespaceAccessible
-    public Commitable toUpsert(Records records) {
+    public Committable toUpsert(Records records) {
         return this.register(this.getUpsertOperation(records.getSObjectType()), records);
     }
 
@@ -519,30 +519,30 @@ public inherited sharing class DML implements Commitable {
     // Delete
 
     @NamespaceAccessible
-    public Commitable toDelete(Id recordId) {
+    public Committable toDelete(Id recordId) {
         return this.toDelete(Record(recordId));
     }
 
     @NamespaceAccessible
-    public Commitable toDelete(SObject record) {
+    public Committable toDelete(SObject record) {
         return this.toDelete(Record(record));
     }
 
-    private Commitable toDelete(Record record) {
+    private Committable toDelete(Record record) {
         return this.register(this.getDeleteOperation(record.getSObjectType()), record);
     }
 
     @NamespaceAccessible
-    public Commitable toDelete(Iterable<Id> recordIds) {
+    public Committable toDelete(Iterable<Id> recordIds) {
         return this.toDelete(Records(recordIds));
     }
 
     @NamespaceAccessible
-    public Commitable toDelete(List<SObject> records) {
+    public Committable toDelete(List<SObject> records) {
         return this.toDelete(Records(records));
     }
 
-    private Commitable toDelete(Records records) {
+    private Committable toDelete(Records records) {
         return this.register(this.getDeleteOperation(records.getSObjectType()), records);
     }
 
@@ -581,25 +581,25 @@ public inherited sharing class DML implements Commitable {
     // Hard Delete
 
     @NamespaceAccessible
-    public Commitable toHardDelete(Id recordId) {
+    public Committable toHardDelete(Id recordId) {
         Record dmlRecord = Record(recordId);
         return this.register(this.getDeleteOperation(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
     }
 
     @NamespaceAccessible
-    public Commitable toHardDelete(SObject record) {
+    public Committable toHardDelete(SObject record) {
         Record dmlRecord = Record(record);
         return this.register(this.getDeleteOperation(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
     }
 
     @NamespaceAccessible
-    public Commitable toHardDelete(Iterable<Id> recordIds) {
+    public Committable toHardDelete(Iterable<Id> recordIds) {
         Records dmlRecords = Records(recordIds);
         return this.register(this.getDeleteOperation(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
     }
 
     @NamespaceAccessible
-    public Commitable toHardDelete(List<SObject> records) {
+    public Committable toHardDelete(List<SObject> records) {
         Records dmlRecords = Records(records);
         return this.register(this.getDeleteOperation(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
     }
@@ -607,30 +607,30 @@ public inherited sharing class DML implements Commitable {
     // Undelete
 
     @NamespaceAccessible
-    public Commitable toUndelete(Id recordId) {
+    public Committable toUndelete(Id recordId) {
         return this.toUndelete(Record(recordId));
     }
 
     @NamespaceAccessible
-    public Commitable toUndelete(SObject record) {
+    public Committable toUndelete(SObject record) {
         return this.toUndelete(Record(record));
     }
 
-    private Commitable toUndelete(Record record) {
+    private Committable toUndelete(Record record) {
         return this.register(this.getUndeleteOperation(record.getSObjectType()), record);
     }
 
     @NamespaceAccessible
-    public Commitable toUndelete(Iterable<Id> recordIds) {
+    public Committable toUndelete(Iterable<Id> recordIds) {
         return this.toUndelete(Records(recordIds));
     }
 
     @NamespaceAccessible
-    public Commitable toUndelete(List<SObject> records) {
+    public Committable toUndelete(List<SObject> records) {
         return this.toUndelete(Records(records));
     }
 
-    private Commitable toUndelete(Records records) {
+    private Committable toUndelete(Records records) {
         return this.register(this.getUndeleteOperation(records.getSObjectType()), records);
     }
 
@@ -669,34 +669,34 @@ public inherited sharing class DML implements Commitable {
     // Merge
 
     @NamespaceAccessible
-    public Commitable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
+    public Committable toMerge(SObject mergeToRecord, SObject duplicatedRecord) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeOperation(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecord));
     }
 
     @NamespaceAccessible
-    public Commitable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
+    public Committable toMerge(SObject mergeToRecord, Id duplicatedRecordId) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeOperation(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Record(duplicatedRecordId));
     }
 
-    private Commitable toMerge(MergeOperation mergeOperation, Record duplicatedRecord) {
+    private Committable toMerge(MergeOperation mergeOperation, Record duplicatedRecord) {
         return this.register(mergeOperation, duplicatedRecord);
     }
 
     @NamespaceAccessible
-    public Commitable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
+    public Committable toMerge(SObject mergeToRecord, List<SObject> duplicateRecords) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeOperation(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicateRecords));
     }
 
     @NamespaceAccessible
-    public Commitable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
+    public Committable toMerge(SObject mergeToRecord, Iterable<Id> duplicatedRecordIds) {
         Record dmlMergeToRecord = Record(mergeToRecord);
         return this.toMerge(this.getMergeOperation(dmlMergeToRecord.getSObjectType(), dmlMergeToRecord), Records(duplicatedRecordIds));
     }
 
-    private Commitable toMerge(MergeOperation mergeOperation, Records duplicateRecords) {
+    private Committable toMerge(MergeOperation mergeOperation, Records duplicateRecords) {
         return this.register(mergeOperation, duplicateRecords);
     }
 
@@ -707,13 +707,13 @@ public inherited sharing class DML implements Commitable {
     // Platform Event
 
     @NamespaceAccessible
-    public Commitable toPublish(SObject record) {
+    public Committable toPublish(SObject record) {
         Record dmlRecord = Record(record);
         return this.register(this.getPlatformEventOperation(dmlRecord.getSObjectType()), dmlRecord);
     }
 
     @NamespaceAccessible
-    public Commitable toPublish(List<SObject> records) {
+    public Committable toPublish(List<SObject> records) {
         Records dmlRecords = Records(records);
         return this.register(this.getPlatformEventOperation(dmlRecords.getSObjectType()), dmlRecords);
     }
@@ -750,12 +750,12 @@ public inherited sharing class DML implements Commitable {
         return result;
     }
 
-    private Commitable register(DmlOperation operation, Record record) {
+    private Committable register(DmlOperation operation, Record record) {
         this.orchestrator.register(this.operationsStorage.getOrRegister(operation), record);
         return this;
     }
 
-    private Commitable register(DmlOperation operation, Records records) {
+    private Committable register(DmlOperation operation, Records records) {
         this.orchestrator.register(this.operationsStorage.getOrRegister(operation), records);
         return this;
     }
@@ -763,7 +763,7 @@ public inherited sharing class DML implements Commitable {
     // Identifier
 
     @NamespaceAccessible
-    public Commitable identifier(String dmlIdentifier) {
+    public Committable identifier(String dmlIdentifier) {
         this.configuration.identifier(dmlIdentifier);
         return this;
     }
@@ -778,17 +778,17 @@ public inherited sharing class DML implements Commitable {
     // Field Level Security
 
     @NamespaceAccessible
-    public Commitable userMode() {
+    public Committable userMode() {
         return this.accessMode(System.AccessLevel.USER_MODE);
     }
 
     @NamespaceAccessible
-    public Commitable systemMode() {
+    public Committable systemMode() {
         return this.accessMode(System.AccessLevel.SYSTEM_MODE);
     }
 
     @NamespaceAccessible
-    public Commitable accessMode(System.AccessLevel accessMode) {
+    public Committable accessMode(System.AccessLevel accessMode) {
         this.configuration.accessMode(accessMode);
         return this;
     }
@@ -796,13 +796,13 @@ public inherited sharing class DML implements Commitable {
     // Sharing Mode
 
     @NamespaceAccessible
-    public Commitable withSharing() {
+    public Committable withSharing() {
         this.configuration.withSharing();
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable withoutSharing() {
+    public Committable withoutSharing() {
         this.configuration.withoutSharing();
         return this;
     }
@@ -810,37 +810,37 @@ public inherited sharing class DML implements Commitable {
     // Other configs
 
     @NamespaceAccessible
-    public Commitable allowPartialSuccess() {
+    public Committable allowPartialSuccess() {
         this.configuration.allowPartialSuccess();
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable skipDuplicateRules() {
+    public Committable skipDuplicateRules() {
         this.configuration.skipDuplicateRules();
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable includeOperationIdInErrorMessage() {
+    public Committable includeOperationIdInErrorMessage() {
         this.configuration.includeOperationIdInErrorMessage();
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable combineOnDuplicate() {
+    public Committable combineOnDuplicate() {
         this.configuration.combineOnDuplicate();
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable options(Database.DmlOptions options) {
+    public Committable options(Database.DmlOptions options) {
         this.configuration.options(options);
         return this;
     }
 
     @NamespaceAccessible
-    public Commitable discardWork() {
+    public Committable discardWork() {
         this.reset();
         return this;
     }
@@ -848,7 +848,7 @@ public inherited sharing class DML implements Commitable {
     // Hooks
 
     @NamespaceAccessible
-    public Commitable commitHook(Hook callback) {
+    public Committable commitHook(Hook callback) {
         this.hook = callback;
         return this;
     }

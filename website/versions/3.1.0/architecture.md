@@ -2,7 +2,7 @@
 
 ## DML Transaction Control
 
-When rollback is happening? 
+When is rollback happening?
 
 try-catch | savepoint | allOrNone | rollback | rethrow exception |  Is rollback happening?
 --------- | --------- | --------- | -------- | ----------------- | -----------------------
@@ -16,15 +16,15 @@ try-catch | savepoint | allOrNone | rollback | rethrow exception |  Is rollback 
 
 ## Conclusions
 
-- `allOrNone=false` will never throw DmlException, and bacause of it partial commit will be made.
+- `allOrNone=false` will never throw DmlException, and because of it partial commit will be made.
 - `Savepoint` makes sense only when `allOrNone=true`, so DmlException is thrown and rollback can be called.
 
-- **Unhandled exceptions roll back the entire transaction.** If a DmlException (or any unhandled exception) escapes your code path, Salesforce undoes all DML from that transaction.  ￼
-- **allOrNone=true is atomic per call. Any row error makes the single Database.** call fail as a unit and throws (same behavior as DML keywords). Earlier successful calls aren’t automatically undone unless the exception remains unhandled.  ￼
-- **allOrNone=false returns SaveResult[] (no row-error exception)**. Successful rows commit; failed rows don’t. You must check results yourself. Other exceptions (e.g., limit/mixed DML) can still occur and roll back the transaction if unhandled.  ￼
-- **Catching without rethrowing does not roll back prior successes**. With allOrNone=true, the failing call reverts itself, but earlier successful DML remains unless you escalate (rethrow) or manually roll back.  ￼
-- **Savepoints give cross-call atomicity (your whole UoW)**: wrap many DML calls in Database.setSavepoint() and call Database.rollback(sp) on any failure to undo everything since the savepoint. Works with either allOrNone mode.  ￼
-- **Savepoint mechanics & limits**: each setSavepoint()/rollback() consumes DML resources; rollback returns to the last savepoint only. Plan chunking and logging accordingly.  ￼
+- **Unhandled exceptions roll back the entire transaction.** If a DmlException (or any unhandled exception) escapes your code path, Salesforce undoes all DML from that transaction.
+- **allOrNone=true is atomic per call. Any row error makes the single Database.** call fail as a unit and throws (same behavior as DML keywords). Earlier successful calls aren’t automatically undone unless the exception remains unhandled.
+- **allOrNone=false returns SaveResult[] (no row-error exception)**. Successful rows commit; failed rows don’t. You must check results yourself. Other exceptions (e.g., limit/mixed DML) can still occur and roll back the transaction if unhandled.
+- **Catching without rethrowing does not roll back prior successes**. With allOrNone=true, the failing call reverts itself, but earlier successful DML remains unless you escalate (rethrow) or manually roll back.
+- **Savepoints give cross-call atomicity (your whole UoW)**: wrap many DML calls in Database.setSavepoint() and call Database.rollback(sp) on any failure to undo everything since the savepoint. Works with either allOrNone mode.
+- **Savepoint mechanics & limits**: each setSavepoint()/rollback() consumes DML resources; rollback returns to the last savepoint only. Plan chunking and logging accordingly.
 
 A) allOrNone=true
 

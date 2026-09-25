@@ -4,7 +4,7 @@ outline: deep
 
 # Changelog
 
-## v3.2.0
+## v4.0.0
 
 **New Features**
 

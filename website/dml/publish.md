@@ -25,8 +25,8 @@ Register platform events for publishing. The actual publish is executed when `co
 **Signature**
 
 ```apex
-Commitable toPublish(SObject record);
-Commitable toPublish(List<SObject> records);
+Committable toPublish(SObject record);
+Committable toPublish(List<SObject> records);
 ```
 
 ### Single Event
@@ -34,7 +34,7 @@ Commitable toPublish(List<SObject> records);
 **Signature**
 
 ```apex
-Commitable toPublish(SObject record);
+Committable toPublish(SObject record);
 ```
 
 **Standard DML**
@@ -59,7 +59,7 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toPublish(List<SObject> records);
+Committable toPublish(List<SObject> records);
 ```
 
 **Standard DML**

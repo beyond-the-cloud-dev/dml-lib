@@ -4,7 +4,7 @@ outline: deep
 
 # Undelete
 
-Restore deleted records from the recycle bin.
+Restore deleted records from the Recycle Bin.
 
 **Example**
 
@@ -29,10 +29,10 @@ Register records for undeletion. The actual DML is executed when `commitWork()` 
 **Signature**
 
 ```apex
-Commitable toUndelete(Id recordId);
-Commitable toUndelete(SObject record);
-Commitable toUndelete(Iterable<Id> recordIds);
-Commitable toUndelete(List<SObject> records);
+Committable toUndelete(Id recordId);
+Committable toUndelete(SObject record);
+Committable toUndelete(Iterable<Id> recordIds);
+Committable toUndelete(List<SObject> records);
 ```
 
 ### Single Record
@@ -40,7 +40,7 @@ Commitable toUndelete(List<SObject> records);
 **Signature**
 
 ```apex
-Commitable toUndelete(SObject record);
+Committable toUndelete(SObject record);
 ```
 
 **Standard DML**
@@ -67,7 +67,7 @@ Undelete using a record ID directly.
 **Signature**
 
 ```apex
-Commitable toUndelete(Id recordId);
+Committable toUndelete(Id recordId);
 ```
 
 **Standard DML**
@@ -92,8 +92,8 @@ new DML()
 **Signature**
 
 ```apex
-Commitable toUndelete(List<SObject> records);
-Commitable toUndelete(Iterable<Id> recordIds);
+Committable toUndelete(List<SObject> records);
+Committable toUndelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**
@@ -120,7 +120,7 @@ Undelete using a collection of record IDs.
 **Signature**
 
 ```apex
-Commitable toUndelete(Iterable<Id> recordIds);
+Committable toUndelete(Iterable<Id> recordIds);
 ```
 
 **Standard DML**

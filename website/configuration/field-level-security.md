@@ -24,7 +24,7 @@ Set access mode explicitly using the Salesforce `System.AccessLevel` enum.
 **Signature**
 
 ```apex
-Commitable accessMode(System.AccessLevel accessMode);
+Committable accessMode(System.AccessLevel accessMode);
 ```
 
 Use `accessMode(System.AccessLevel.USER_MODE)` as an alternative to `userMode()`, and `accessMode(System.AccessLevel.SYSTEM_MODE)` as an alternative to `systemMode()`.
@@ -57,7 +57,7 @@ Execute DML operations respecting user permissions. This is the **default behavi
 **Signature**
 
 ```apex
-Commitable userMode();
+Committable userMode();
 ```
 
 **Standard DML**
@@ -82,7 +82,7 @@ Execute DML operations bypassing user permissions. Use this when you need to per
 **Signature**
 
 ```apex
-Commitable systemMode();
+Committable systemMode();
 ```
 
 **Standard DML**
