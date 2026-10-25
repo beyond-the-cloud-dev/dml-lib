@@ -207,6 +207,11 @@ export default withMermaid({
       ['link', { rel: 'canonical', href: canonicalUrl || siteUrl }],
       ['meta', { property: 'og:url', content: canonicalUrl || siteUrl }]
     )
+    // Markdown twin built by vitepress-plugin-llms (llms.txt for the home page; none for archived versions), served by middleware.js on Accept: text/markdown
+    const markdownPath = pageData.relativePath === 'index.md' ? 'llms.txt' : pageData.relativePath.replace(/\/index\.md$/, '.md')
+    if (!pageData.filePath.startsWith('versions/')) {
+      pageData.frontmatter.head.push(['link', { rel: 'alternate', type: 'text/markdown', href: `${siteUrl}/${markdownPath}` }])
+    }
     const pageTitle = pageData.frontmatter.title || pageData.title
     pageData.frontmatter.head.push(
       ['meta', { property: 'og:title', content: pageTitle && pageTitle !== siteTitle ? `${pageTitle} | ${siteTitle}` : siteTitle }],
