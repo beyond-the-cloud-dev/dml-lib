@@ -7614,6 +7614,66 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void deleteImmediatelyWithSystemModeAndWithoutSharing() {
+        // Setup
+        Case newCase = getCase(1);
+        insert as system newCase;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            new DML().systemMode().withoutSharing().deleteImmediately(newCase);
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Case should be deleted, because withoutSharing() ignores sharing rules.');
+    }
+
+    @IsTest
+    static void deleteImmediatelyMultipleRecordsWithSystemModeAndWithoutSharing() {
+        // Setup
+        Case newCase1 = getCase(1);
+        Case newCase2 = getCase(2);
+        insert as system new List<Case>{ newCase1, newCase2 };
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            new DML().systemMode().withoutSharing().deleteImmediately(new List<Case>{ newCase1, newCase2 });
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted, because withoutSharing() ignores sharing rules.');
+    }
+
+    @IsTest
+    static void deleteImmediatelyWithSystemModeAndWithSharing() {
+        // Setup
+        Case newCase = getCase(1);
+        insert as system newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new WithoutSharingService().deleteImmediatelyWithSystemModeAndWithSharing(newCase);
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(1, [SELECT COUNT() FROM Case], 'Case should not be deleted, because withSharing() enforces sharing rules.');
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(expectedException.getMessage().contains('insufficient access rights on object id'), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
     static void toInsertWithInvalidRelationshipSingleRecord() {
         // Setup
         Account newAccount = getAccount(1);
@@ -8811,6 +8871,10 @@ private class DML_Full_Test {
     private without sharing class WithoutSharingService {
         public void deleteWithSystemMode(SObject record) {
             new DML().toDelete(record).systemMode().commitWork();
+        }
+
+        public void deleteImmediatelyWithSystemModeAndWithSharing(SObject record) {
+            new DML().systemMode().withSharing().deleteImmediately(record);
         }
     }
 

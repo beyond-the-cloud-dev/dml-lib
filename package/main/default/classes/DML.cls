@@ -664,14 +664,14 @@ global inherited sharing class DML implements Committable {
 
     private OperationResult executeImmediately(DmlOperation operation, Record record) {
         DmlOperation existing = this.operationsStorage.getOrRegister(operation);
-        OperationResult result = existing.execute(new List<EnhancedRecord>{ record.get() });
+        OperationResult result = existing.commitWork(new List<EnhancedRecord>{ record.get() });
         this.storeResult(result);
         return result;
     }
 
     private OperationResult executeImmediately(DmlOperation operation, Records records) {
         DmlOperation existing = this.operationsStorage.getOrRegister(operation);
-        OperationResult result = existing.execute(records);
+        OperationResult result = existing.commitWork(records);
         this.storeResult(result);
         return result;
     }
@@ -1336,14 +1336,14 @@ global inherited sharing class DML implements Committable {
             return this.globalConfiguration.sharingExecutor.execute(this, records);
         }
 
-        private OperationResult execute(Records records) {
+        private OperationResult commitWork(Records records) {
             List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
 
             for (Record record : records.get()) {
                 enhancedRecords.add(record.get());
             }
 
-            return this.execute(enhancedRecords);
+            return this.commitWork(enhancedRecords);
         }
 
         private OperationResult execute(List<EnhancedRecord> records) {
