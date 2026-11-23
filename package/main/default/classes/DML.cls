@@ -1837,13 +1837,11 @@ global inherited sharing class DML implements Committable {
         private SObjectType objectType;
         private List<RecordResult> recordResults = new List<RecordResult>();
         private List<SObject> records = new List<SObject>();
+        private List<SObject> successes = new List<SObject>();
+        private List<SObject> failures = new List<SObject>();
+        private List<Error> errors = new List<Error>();
         private Exception dmlException;
         private String operationId;
-
-        private Boolean isResultsCached = false;
-        private List<SObject> cachedSuccesses = new List<SObject>();
-        private List<SObject> cachedFailures = new List<SObject>();
-        private List<Error> cachedErrors = new List<Error>();
 
         private DmlOperationResult(OperationType type, SObjectType objectType) {
             this.type = type;
@@ -1871,8 +1869,7 @@ global inherited sharing class DML implements Committable {
         }
 
         public List<Error> errors() {
-            this.cacheResults();
-            return this.cachedErrors;
+            return this.errors;
         }
 
         public List<SObject> records() {
@@ -1880,35 +1877,29 @@ global inherited sharing class DML implements Committable {
         }
 
         public List<SObject> successes() {
-            this.cacheResults();
-            return this.cachedSuccesses;
+            return this.successes;
         }
 
         public List<SObject> failures() {
-            this.cacheResults();
-            return this.cachedFailures;
+            return this.failures;
         }
 
         public List<RecordResult> recordResults() {
             return this.recordResults;
         }
 
-        private void cacheResults() {
-            if (this.isResultsCached) {
-                return;
-            }
+        private void addRecordResults(List<RecordResult> recordResults) {
+            this.recordResults.addAll(recordResults);
 
-            for (RecordResult recordResult : this.recordResults) {
+            for (RecordResult recordResult : recordResults) {
                 if (recordResult.isSuccess()) {
-                    this.cachedSuccesses.add(recordResult.record());
+                    this.successes.add(recordResult.record());
                     continue;
                 }
 
-                this.cachedErrors.addAll(recordResult.errors());
-                this.cachedFailures.add(recordResult.record());
+                this.errors.addAll(recordResult.errors());
+                this.failures.add(recordResult.record());
             }
-
-            this.isResultsCached = true;
         }
     }
 
@@ -1924,7 +1915,7 @@ global inherited sharing class DML implements Committable {
         }
 
         private ExecutionResult setRecordResults(List<RecordResult> recordResults) {
-            this.recordResults = recordResults;
+            this.addRecordResults(recordResults);
             return this;
         }
 
@@ -1940,7 +1931,7 @@ global inherited sharing class DML implements Committable {
         }
 
         private SObjectAggregatedResult add(OperationResult recordResult) {
-            this.recordResults.addAll(recordResult.recordResults());
+            this.addRecordResults(recordResult.recordResults());
             this.records.addAll(recordResult.records());
             this.operationId = this.operationId ?? recordResult.operationId();
             return this;

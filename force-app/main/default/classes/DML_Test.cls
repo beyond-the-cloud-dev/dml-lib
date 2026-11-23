@@ -3413,6 +3413,60 @@ private class DML_Test {
         Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
     }
 
+    @IsTest
+    static void retrieveResultForWhenCommittedTwiceWithSameIdentifier() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.areEqual(1, DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).successes().size(), 'Result should contain the first successful record.');
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(2, result.successes().size(), 'Result should contain successful records from both commits.');
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+    }
+
+    @IsTest
+    static void retrieveResultForWhenSecondCommitWithSameIdentifierFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.isFalse(DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).hasFailures(), 'Result should not have failures after the first commit.');
+
+        DML.mock('dmlMockId').exceptionOnInserts();
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(1, result.successes().size(), 'Result should contain the successful record from the first commit.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain the failed record from the second commit.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain the error from the second commit.');
+        Assert.isTrue(result.hasFailures(), 'Result should have failures after the second commit.');
+    }
+
 
     @IsTest
     static void sharedDmlInstanceWithMocking() {
