@@ -3132,6 +3132,116 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toInsertWithTwoRelationshipsToSameParent() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account insert, Asset insert).');
+
+        Asset insertedAsset = [SELECT AccountId, AssetServicedById FROM Asset WHERE Id = :newAsset.Id];
+        Assert.areEqual(newAccount.Id, insertedAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, insertedAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentMultipleRecords() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset1 = getAsset(1);
+        Asset newAsset2 = getAsset(2);
+
+        List<Asset> assets = new List<Asset>{ newAsset1, newAsset2 };
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Records(assets).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account insert, Asset insert).');
+        Assert.areEqual(2, [SELECT COUNT() FROM Asset WHERE AccountId = :newAccount.Id], 'Assets should be related to Account.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Asset WHERE AssetServicedById = :newAccount.Id], 'Assets should be serviced by the same Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameExistingParent() {
+        // Setup
+        Account existingAccount = getAccount(1);
+        insert as system existingAccount;
+
+        Asset newAsset = getAsset(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML().toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, existingAccount).withRelationship(Asset.AssetServicedById, existingAccount)).commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed (Asset insert).');
+
+        Asset insertedAsset = [SELECT AccountId, AssetServicedById FROM Asset WHERE Id = :newAsset.Id];
+        Assert.areEqual(existingAccount.Id, insertedAsset.AccountId, 'Asset should be related to the existing Account.');
+        Assert.areEqual(existingAccount.Id, insertedAsset.AssetServicedById, 'Asset should be serviced by the same existing Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentWithMocking() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(1, result.insertsOf(Account.SObjectType).records().size(), 'Account should be inserted.');
+        Assert.areEqual(1, result.insertsOf(Asset.SObjectType).records().size(), 'Asset should be inserted.');
+        Assert.isNotNull(newAccount.Id, 'Account should have mocked Id.');
+        Assert.areEqual(newAccount.Id, newAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, newAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
+    }
+
+    @IsTest
     static void registerComplex() {
         // Setup
         DML uow = new DML();
@@ -8739,6 +8849,10 @@ private class DML_Full_Test {
 
     static Case getCase(Integer index) {
         return new Case(Status = 'New', Origin = 'Web', Subject = 'Test ' + index);
+    }
+
+    static Asset getAsset(Integer index) {
+        return new Asset(Name = 'Test Asset ' + index);
     }
 
     static Account insertAccount() {

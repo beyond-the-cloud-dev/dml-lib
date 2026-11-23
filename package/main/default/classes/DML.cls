@@ -882,7 +882,7 @@ global inherited sharing class DML implements Committable {
         void execute(DmlResult result);
     }
 
-    private class DefaultOrchestrator implements Orchestrator {
+    private inherited sharing class DefaultOrchestrator implements Orchestrator {
         private LinearOrchestrator linearOrchestrator;
         private Orchestrator dependencyOrchestrator;
 
@@ -910,7 +910,7 @@ global inherited sharing class DML implements Committable {
         }
     }
 
-    private class DependencyOrchestrator implements Orchestrator {
+    private inherited sharing class DependencyOrchestrator implements Orchestrator {
         private Map<Id, EnhancedRecord> enhancedRecordsById = new Map<Id, EnhancedRecord>();
         private List<EnhancedRecord> enhancedRecords = new List<EnhancedRecord>();
 
@@ -985,7 +985,7 @@ global inherited sharing class DML implements Committable {
         }
     }
 
-    private class LinearOrchestrator implements Orchestrator {
+    private inherited sharing class LinearOrchestrator implements Orchestrator {
         private Map<String, OperationBucket> bucketByKey = new Map<String, OperationBucket>();
         private Map<OperationType, List<OperationBucket>> bucketsByOperationType = new Map<OperationType, List<OperationBucket>>{
             OperationType.UPDATE_DML => new List<OperationBucket>(),
@@ -1040,7 +1040,7 @@ global inherited sharing class DML implements Committable {
         }
     }
 
-    private class CustomOrderOrchestrator implements Orchestrator {
+    private inherited sharing class CustomOrderOrchestrator implements Orchestrator {
         private Map<String, OperationBucket> bucketByKey = new Map<String, OperationBucket>();
         private Map<OperationType, List<OperationBucket>> bucketsByOperationType = new Map<OperationType, List<OperationBucket>>();
 
@@ -1318,7 +1318,7 @@ global inherited sharing class DML implements Committable {
         }
     }
 
-    private abstract class DmlOperation {
+    private abstract inherited sharing class DmlOperation {
         private SObjectType objectType;
         private Configuration globalConfiguration;
         private final String operationId = UUID.randomUUID().toString();
@@ -2588,8 +2588,9 @@ global inherited sharing class DML implements Committable {
             Id prerequisiteId = prerequisite.getRecordId();
             Id dependentId = dependent.getRecordId();
 
-            this.dependentRecordsById.get(prerequisiteId).add(dependentId);
-            this.prerequisiteCountById.put(dependentId, this.prerequisiteCountById.get(dependentId) + 1);
+            if (this.dependentRecordsById.get(prerequisiteId).add(dependentId)) {
+                this.prerequisiteCountById.put(dependentId, this.prerequisiteCountById.get(dependentId) + 1);
+            }
         }
 
         private List<List<Id>> computeExecutionWaves() {

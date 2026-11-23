@@ -481,6 +481,38 @@ private class DML_Test {
     }
 
     @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentWithMocking() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(1, result.insertsOf(Account.SObjectType).records().size(), 'Account should be inserted.');
+        Assert.areEqual(1, result.insertsOf(Asset.SObjectType).records().size(), 'Asset should be inserted.');
+        Assert.isNotNull(newAccount.Id, 'Account should have mocked Id.');
+        Assert.areEqual(newAccount.Id, newAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, newAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
+    }
+
+    @IsTest
     static void toInsertSingleRecordWithMocking() {
         // Setup
         Account account1 = getAccount(1);
@@ -4155,6 +4187,10 @@ private class DML_Test {
 
     static Case getCase(Integer index) {
         return new Case(Status = 'New', Origin = 'Web', Subject = 'Test ' + index);
+    }
+
+    static Asset getAsset(Integer index) {
+        return new Asset(Name = 'Test Asset ' + index);
     }
 
     @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')
