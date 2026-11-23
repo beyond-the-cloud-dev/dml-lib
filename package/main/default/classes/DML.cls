@@ -351,7 +351,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable toInsert(Record record) {
-        return this.register(this.getInsertOperation(record.getSObjectType()), record);
+        return this.register(new InsertOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global Committable toInsert(List<SObject> records) {
@@ -359,7 +359,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable toInsert(Records records) {
-        return this.register(this.getInsertOperation(records.getSObjectType()), records);
+        return this.register(new InsertOperation(records.getSObjectType(), this.configuration), records);
     }
 
     global OperationResult insertImmediately(SObject record) {
@@ -367,7 +367,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult insertImmediately(Record record) {
-        return this.executeImmediately(this.getInsertOperation(record.getSObjectType()), record);
+        return this.executeImmediately(new InsertOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global OperationResult insertImmediately(List<SObject> records) {
@@ -375,11 +375,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult insertImmediately(Records records) {
-        return this.executeImmediately(this.getInsertOperation(records.getSObjectType()), records);
-    }
-
-    private InsertOperation getInsertOperation(SObjectType objectType) {
-        return new InsertOperation(objectType, this.configuration);
+        return this.executeImmediately(new InsertOperation(records.getSObjectType(), this.configuration), records);
     }
 
     // Update
@@ -389,7 +385,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable toUpdate(Record record) {
-        return this.register(this.getUpdateOperation(record.getSObjectType()), record);
+        return this.register(new UpdateOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global Committable toUpdate(List<SObject> records) {
@@ -397,7 +393,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable toUpdate(Records records) {
-        return this.register(this.getUpdateOperation(records.getSObjectType()), records);
+        return this.register(new UpdateOperation(records.getSObjectType(), this.configuration), records);
     }
 
     global OperationResult updateImmediately(SObject record) {
@@ -405,7 +401,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult updateImmediately(Record record) {
-        return this.executeImmediately(this.getUpdateOperation(record.getSObjectType()), record);
+        return this.executeImmediately(new UpdateOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global OperationResult updateImmediately(List<SObject> records) {
@@ -413,11 +409,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult updateImmediately(Records records) {
-        return this.executeImmediately(this.getUpdateOperation(records.getSObjectType()), records);
-    }
-
-    private UpdateOperation getUpdateOperation(SObjectType objectType) {
-        return new UpdateOperation(objectType, this.configuration);
+        return this.executeImmediately(new UpdateOperation(records.getSObjectType(), this.configuration), records);
     }
 
     // Upsert
@@ -427,11 +419,11 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable toUpsert(SObject record, SObjectField externalIdField) {
-        return this.register(this.getUpsertOperation(record.getSObjectType()).withExternalIdField(externalIdField), Record(record));
+        return this.register(new UpsertOperation(record.getSObjectType(), this.configuration).withExternalIdField(externalIdField), Record(record));
     }
 
     global Committable toUpsert(Record record) {
-        return this.register(this.getUpsertOperation(record.getSObjectType()), record);
+        return this.register(new UpsertOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global Committable toUpsert(List<SObject> records) {
@@ -440,11 +432,11 @@ global inherited sharing class DML implements Committable {
 
     global Committable toUpsert(List<SObject> records, SObjectField externalIdField) {
         Records dmlRecords = Records(records);
-        return this.register(this.getUpsertOperation(dmlRecords.getSObjectType()).withExternalIdField(externalIdField), dmlRecords);
+        return this.register(new UpsertOperation(dmlRecords.getSObjectType(), this.configuration).withExternalIdField(externalIdField), dmlRecords);
     }
 
     global Committable toUpsert(Records records) {
-        return this.register(this.getUpsertOperation(records.getSObjectType()), records);
+        return this.register(new UpsertOperation(records.getSObjectType(), this.configuration), records);
     }
 
     global OperationResult upsertImmediately(SObject record) {
@@ -452,7 +444,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult upsertImmediately(Record record) {
-        return this.executeImmediately(this.getUpsertOperation(record.getSObjectType()), record);
+        return this.executeImmediately(new UpsertOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global OperationResult upsertImmediately(List<SObject> records) {
@@ -460,11 +452,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global OperationResult upsertImmediately(Records records) {
-        return this.executeImmediately(this.getUpsertOperation(records.getSObjectType()), records);
-    }
-
-    private UpsertOperation getUpsertOperation(SObjectType objectType) {
-        return new UpsertOperation(objectType, this.configuration);
+        return this.executeImmediately(new UpsertOperation(records.getSObjectType(), this.configuration), records);
     }
 
     // Delete
@@ -478,7 +466,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private Committable toDelete(Record record) {
-        return this.register(this.getDeleteOperation(record.getSObjectType()), record);
+        return this.register(new DeleteOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global Committable toDelete(Iterable<Id> recordIds) {
@@ -490,7 +478,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private Committable toDelete(Records records) {
-        return this.register(this.getDeleteOperation(records.getSObjectType()), records);
+        return this.register(new DeleteOperation(records.getSObjectType(), this.configuration), records);
     }
 
     global OperationResult deleteImmediately(Id recordId) {
@@ -502,7 +490,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private OperationResult deleteImmediately(Record record) {
-        return this.executeImmediately(this.getDeleteOperation(record.getSObjectType()), record);
+        return this.executeImmediately(new DeleteOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global OperationResult deleteImmediately(Iterable<Id> recordIds) {
@@ -514,33 +502,29 @@ global inherited sharing class DML implements Committable {
     }
 
     private OperationResult deleteImmediately(Records records) {
-        return this.executeImmediately(this.getDeleteOperation(records.getSObjectType()), records);
-    }
-
-    private DeleteOperation getDeleteOperation(SObjectType objectType) {
-        return new DeleteOperation(objectType, this.configuration);
+        return this.executeImmediately(new DeleteOperation(records.getSObjectType(), this.configuration), records);
     }
 
     // Hard Delete
 
     global Committable toHardDelete(Id recordId) {
         Record dmlRecord = Record(recordId);
-        return this.register(this.getDeleteOperation(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
+        return this.register(new DeleteOperation(dmlRecord.getSObjectType(), this.configuration).withHardDelete(), dmlRecord);
     }
 
     global Committable toHardDelete(SObject record) {
         Record dmlRecord = Record(record);
-        return this.register(this.getDeleteOperation(dmlRecord.getSObjectType()).withHardDelete(), dmlRecord);
+        return this.register(new DeleteOperation(dmlRecord.getSObjectType(), this.configuration).withHardDelete(), dmlRecord);
     }
 
     global Committable toHardDelete(Iterable<Id> recordIds) {
         Records dmlRecords = Records(recordIds);
-        return this.register(this.getDeleteOperation(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
+        return this.register(new DeleteOperation(dmlRecords.getSObjectType(), this.configuration).withHardDelete(), dmlRecords);
     }
 
     global Committable toHardDelete(List<SObject> records) {
         Records dmlRecords = Records(records);
-        return this.register(this.getDeleteOperation(dmlRecords.getSObjectType()).withHardDelete(), dmlRecords);
+        return this.register(new DeleteOperation(dmlRecords.getSObjectType(), this.configuration).withHardDelete(), dmlRecords);
     }
 
     // Undelete
@@ -554,7 +538,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private Committable toUndelete(Record record) {
-        return this.register(this.getUndeleteOperation(record.getSObjectType()), record);
+        return this.register(new UndeleteOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global Committable toUndelete(Iterable<Id> recordIds) {
@@ -566,7 +550,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private Committable toUndelete(Records records) {
-        return this.register(this.getUndeleteOperation(records.getSObjectType()), records);
+        return this.register(new UndeleteOperation(records.getSObjectType(), this.configuration), records);
     }
 
     global OperationResult undeleteImmediately(Id recordId) {
@@ -578,7 +562,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private OperationResult undeleteImmediately(Record record) {
-        return this.executeImmediately(this.getUndeleteOperation(record.getSObjectType()), record);
+        return this.executeImmediately(new UndeleteOperation(record.getSObjectType(), this.configuration), record);
     }
 
     global OperationResult undeleteImmediately(Iterable<Id> recordIds) {
@@ -590,11 +574,7 @@ global inherited sharing class DML implements Committable {
     }
 
     private OperationResult undeleteImmediately(Records records) {
-        return this.executeImmediately(this.getUndeleteOperation(records.getSObjectType()), records);
-    }
-
-    private UndeleteOperation getUndeleteOperation(SObjectType objectType) {
-        return new UndeleteOperation(objectType, this.configuration);
+        return this.executeImmediately(new UndeleteOperation(records.getSObjectType(), this.configuration), records);
     }
 
     // Merge
@@ -635,26 +615,22 @@ global inherited sharing class DML implements Committable {
 
     global Committable toPublish(SObject record) {
         Record dmlRecord = Record(record);
-        return this.register(this.getPlatformEventOperation(dmlRecord.getSObjectType()), dmlRecord);
+        return this.register(new PlatformEventOperation(dmlRecord.getSObjectType(), this.configuration), dmlRecord);
     }
 
     global Committable toPublish(List<SObject> records) {
         Records dmlRecords = Records(records);
-        return this.register(this.getPlatformEventOperation(dmlRecords.getSObjectType()), dmlRecords);
+        return this.register(new PlatformEventOperation(dmlRecords.getSObjectType(), this.configuration), dmlRecords);
     }
 
     global OperationResult publishImmediately(SObject record) {
         Record dmlRecord = Record(record);
-        return this.executeImmediately(this.getPlatformEventOperation(dmlRecord.getSObjectType()), dmlRecord);
+        return this.executeImmediately(new PlatformEventOperation(dmlRecord.getSObjectType(), this.configuration), dmlRecord);
     }
 
     global OperationResult publishImmediately(List<SObject> records) {
         Records dmlRecords = Records(records);
-        return this.executeImmediately(this.getPlatformEventOperation(dmlRecords.getSObjectType()), dmlRecords);
-    }
-
-    private PlatformEventOperation getPlatformEventOperation(SObjectType objectType) {
-        return new PlatformEventOperation(objectType, this.configuration);
+        return this.executeImmediately(new PlatformEventOperation(dmlRecords.getSObjectType(), this.configuration), dmlRecords);
     }
 
     // Helpers

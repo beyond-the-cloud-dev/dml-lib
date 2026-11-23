@@ -301,7 +301,7 @@ Sorted by priority, then effort. Easy = a few lines and one test. Medium = sever
 | [x] | 11 | Easy | ~36 | Set `Configuration` fields directly from DML's config methods; delete 9 one-line setters |
 | [ ] | 12 | Easy | ~30 | Constructors for `RecordProcessingError` and `DmlRecordResult` instead of builder setters |
 | [ ] | 13 | Easy | ~30 | Mocking: default body for `executeMockedDml`; merge `getMockedRecordErrors` and `getMockedRecordSuccesses` |
-| [ ] | 14 | Easy | ~24 | Inline the six `get*Operation()` methods |
+| [x] | 14 | Easy | ~24 | Inline the six `get*Operation()` methods |
 | [ ] | 15 | Easy | ~18 | Drop `Orchestrator.register(op, Records)`; loop once in `DML.register` |
 | [x] | 16 | Easy | ~14 | `storeResult`/`retrieveResultFor` with `??` and a typed map |
 | [ ] | 17 | Easy | ~12 | `OperationsStorage` becomes a map field; constructors call `reset()` (with bugs 5 and 9) |
