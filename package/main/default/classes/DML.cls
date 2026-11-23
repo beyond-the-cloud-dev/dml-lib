@@ -225,10 +225,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global static DML.Result retrieveResultFor(String dmlIdentifier) {
-        if (!resultByDmlIdentifier.containsKey(dmlIdentifier)) {
-            return new DmlResult();
-        }
-        return resultByDmlIdentifier.get(dmlIdentifier);
+        return resultByDmlIdentifier.get(dmlIdentifier) ?? new DmlResult();
     }
 
     global interface Mockable {
@@ -303,7 +300,7 @@ global inherited sharing class DML implements Committable {
 
     @TestVisible
     private static final RandomIdGenerator randomIdGenerator = new RandomIdGenerator();
-    private static final Map<String, Result> resultByDmlIdentifier = new Map<String, Result>();
+    private static final Map<String, DmlResult> resultByDmlIdentifier = new Map<String, DmlResult>();
     private static final Map<String, DmlMock> mockByDmlIdentifier = new Map<String, DmlMock>();
 
     @TestVisible
@@ -342,7 +339,7 @@ global inherited sharing class DML implements Committable {
 
     global DML(List<DML.OperationType> operationOrder) {
         this.configuration = new Configuration();
-        this.configuration.customOperationOrder(operationOrder);
+        this.configuration.customOperationOrder = operationOrder;
         this.operationsStorage = new OperationsStorage();
         this.orchestrator = new CustomOrderOrchestrator(this.configuration);
     }
@@ -689,7 +686,7 @@ global inherited sharing class DML implements Committable {
     // Identifier
 
     global Committable identifier(String dmlIdentifier) {
-        this.configuration.identifier(dmlIdentifier);
+        this.configuration.dmlIdentifier = dmlIdentifier;
         return this;
     }
 
@@ -710,19 +707,19 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable accessMode(System.AccessLevel accessMode) {
-        this.configuration.accessMode(accessMode);
+        this.configuration.accessMode = accessMode;
         return this;
     }
 
     // Sharing Mode
 
     global Committable withSharing() {
-        this.configuration.withSharing();
+        this.configuration.sharingExecutor = new WithSharing();
         return this;
     }
 
     global Committable withoutSharing() {
-        this.configuration.withoutSharing();
+        this.configuration.sharingExecutor = new WithoutSharing();
         return this;
     }
 
@@ -734,17 +731,17 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable skipDuplicateRules() {
-        this.configuration.skipDuplicateRules();
+        this.configuration.options.duplicateRuleHeader.allowSave = true;
         return this;
     }
 
     global Committable includeOperationIdInErrorMessage() {
-        this.configuration.includeOperationIdInErrorMessage();
+        this.configuration.includeOperationIdInErrorMessage = true;
         return this;
     }
 
     global Committable combineOnDuplicate() {
-        this.configuration.combineOnDuplicate();
+        this.configuration.duplicateCombineStrategy = new MergeDuplicateStrategy();
         return this;
     }
 
@@ -754,7 +751,7 @@ global inherited sharing class DML implements Committable {
     }
 
     global Committable chunkSize(Integer chunkSize) {
-        this.configuration.chunkSize(chunkSize);
+        this.configuration.chunkSize = chunkSize;
         return this;
     }
 
@@ -808,10 +805,6 @@ global inherited sharing class DML implements Committable {
     }
 
     private void storeResult(DmlResult result) {
-        if (String.isBlank(this.configuration.dmlIdentifier)) {
-            return;
-        }
-
         for (OperationResult operationResult : result.all()) {
             this.storeResult(operationResult);
         }
@@ -822,15 +815,8 @@ global inherited sharing class DML implements Committable {
             return;
         }
 
-        DmlResult result = (DmlResult) resultByDmlIdentifier.get(this.configuration.dmlIdentifier);
-
-        if (result == null) {
-            result = new DmlResult();
-        }
-
-        result.add(operationResult);
-
-        resultByDmlIdentifier.put(this.configuration.dmlIdentifier, result);
+        DmlResult result = resultByDmlIdentifier.get(this.configuration.dmlIdentifier) ?? new DmlResult();
+        resultByDmlIdentifier.put(this.configuration.dmlIdentifier, result.add(operationResult));
     }
 
     global Result commitTransaction() {
@@ -1252,43 +1238,15 @@ global inherited sharing class DML implements Committable {
             this.options.optAllOrNone = true;
         }
 
-        private void accessMode(System.AccessLevel accessMode) {
-            this.accessMode = accessMode;
-        }
-
-        private void withSharing() {
-            this.sharingExecutor = new WithSharing();
-        }
-
-        private void withoutSharing() {
-            this.sharingExecutor = new WithoutSharing();
-        }
-
-        private void identifier(String dmlIdentifier) {
-            this.dmlIdentifier = dmlIdentifier;
-        }
-
-        private void customOperationOrder(List<DML.OperationType> operationOrder) {
-            this.customOperationOrder = operationOrder;
-        }
-
         private void allowPartialSuccess() {
             this.allOrNone = false;
             this.options.optAllOrNone = false;
-        }
-
-        private void combineOnDuplicate() {
-            this.duplicateCombineStrategy = new MergeDuplicateStrategy();
         }
 
         private void options(Database.DmlOptions options) {
             this.options = options;
             this.options.optAllOrNone = this.options.optAllOrNone ?? this.allOrNone ?? true;
             this.allOrNone = this.options.optAllOrNone;
-        }
-
-        private void chunkSize(Integer chunkSize) {
-            this.chunkSize = chunkSize;
         }
 
         private void preview() {
@@ -1307,14 +1265,6 @@ global inherited sharing class DML implements Committable {
                     this.dmlIdentifier +
                     '\n=======================================\n'
             );
-        }
-
-        private void includeOperationIdInErrorMessage() {
-            this.includeOperationIdInErrorMessage = true;
-        }
-
-        private void skipDuplicateRules() {
-            this.options.duplicateRuleHeader.allowSave = true;
         }
     }
 
