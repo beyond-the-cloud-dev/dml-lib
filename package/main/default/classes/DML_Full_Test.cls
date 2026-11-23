@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v4.0.0
+ * v4.1.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -8472,6 +8472,205 @@ private class DML_Full_Test {
         Assert.areEqual(1, result.updatesOf(Account.SObjectType).records().size(), 'Records should be combined into one.');
         Assert.areEqual('mywebsite.com', combinedAccount.Website, 'Combined record should keep the first registration value.');
         Assert.areEqual('Combined', combinedAccount.Description, 'Combined record should keep the second registration value.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3), getAccount(4), getAccount(5) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(3, dmlStatementsAfter - dmlStatementsBefore, '3 DML statements should be executed (5 records in chunks of 2).');
+        Assert.areEqual(5, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).successes().size(), 'All records should be successful.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWithMocking() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).identifier('dmlMockId').commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+        Assert.areEqual(3, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.isNotNull(accounts[2].Id, 'Record from the last chunk should have mocked Id.');
+    }
+
+    @IsTest
+    static void insertImmediatelyWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.OperationResult result = new DML().chunkSize(2).insertImmediately(accounts);
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (3 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(DML.OperationType.INSERT_DML, result.operationType(), 'Operation result should contain insert type.');
+        Assert.areEqual(Account.SObjectType, result.objectType(), 'Operation result should contain Account object type.');
+        Assert.areEqual(3, result.records().size(), 'Operation result should contain records from all chunks.');
+    }
+
+    @IsTest
+    static void toUpdateWithChunkSize() {
+        // Setup
+        List<Account> accounts = insertAccounts();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toUpdate(DML.Records(accounts).with(Account.Website, 'mywebsite.com')).chunkSize(2).commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (3 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account WHERE Website = 'mywebsite.com'], 'All accounts should be updated in the database.');
+        Assert.areEqual(3, result.updatesOf(Account.SObjectType).records().size(), 'Updated operation result should contain records from all chunks.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWhenChunkFails() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts from the chunk executed before the failing chunk should stay in the database.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWhenChunkFailsInTransaction() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitTransaction();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'All chunks should be rolled back.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeAndPartialSuccess() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).allowPartialSuccess().commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (4 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Only valid accounts should be inserted.');
+        Assert.areEqual(4, operationResult.records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.areEqual(3, operationResult.successes().size(), 'Valid records should be successful.');
+        Assert.areEqual(1, operationResult.failures().size(), 'Record without required field should fail.');
+    }
+
+    @IsTest
+    static void loggerOnFailedChunk() {
+        // Setup
+        TestLogger testLogger = new TestLogger();
+        DML.dmlLogger = testLogger;
+
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isNotNull(testLogger.capturedResult, 'Logger should receive the failed chunk.');
+        Assert.areEqual(2, testLogger.capturedResult.records().size(), 'Logger should receive only the records of the failed chunk.');
+        Assert.areEqual(accounts[2], testLogger.capturedResult.failures()[0], 'Failed chunk should start with the record without required field.');
     }
 
     public class TestLogger implements DML.Logger {

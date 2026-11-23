@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v4.0.0
+ * v4.1.0
  *
  * PMD False Positives:
  * - MethodNamingConventions: Some methods are uppercase to indicate that they are "constructors" of other internal classes
@@ -142,6 +142,7 @@ public inherited sharing class DML implements Committable {
         Committable skipDuplicateRules();
         Committable includeOperationIdInErrorMessage();
         Committable options(Database.DmlOptions options);
+        Committable chunkSize(Integer chunkSize);
         Committable discardWork();
         Committable commitHook(DML.Hook callback);
         Committable combineOnDuplicate();
@@ -840,6 +841,12 @@ public inherited sharing class DML implements Committable {
     }
 
     @NamespaceAccessible
+    public Committable chunkSize(Integer chunkSize) {
+        this.configuration.chunkSize(chunkSize);
+        return this;
+    }
+
+    @NamespaceAccessible
     public Committable discardWork() {
         this.reset();
         return this;
@@ -1330,6 +1337,7 @@ public inherited sharing class DML implements Committable {
         private DuplicateCombineStrategy duplicateCombineStrategy = new ThrownExceptionDuplicateStrategy();
         private Boolean allOrNone = true;
         private Boolean includeOperationIdInErrorMessage = false;
+        private Integer chunkSize = null;
         private String dmlIdentifier = null;
         private List<DML.OperationType> customOperationOrder = null;
 
@@ -1372,6 +1380,10 @@ public inherited sharing class DML implements Committable {
             this.allOrNone = this.options.optAllOrNone;
         }
 
+        private void chunkSize(Integer chunkSize) {
+            this.chunkSize = chunkSize;
+        }
+
         private void preview() {
             System.debug(
                 LoggingLevel.ERROR,
@@ -1382,6 +1394,8 @@ public inherited sharing class DML implements Committable {
                     String.valueOf(this.sharingExecutor).split(':')[0] +
                     '\nAll Or None: ' +
                     this.allOrNone +
+                    '\nChunk Size: ' +
+                    this.chunkSize +
                     '\nDML Identifier: ' +
                     this.dmlIdentifier +
                     '\n=======================================\n'
@@ -1430,6 +1444,20 @@ public inherited sharing class DML implements Committable {
 
             List<SObject> recordsToProcess = this.getRecordsToProcess(records);
 
+            if (this.globalConfiguration.chunkSize == null) {
+                return this.executeChunk(recordsToProcess);
+            }
+
+            SObjectAggregatedResult result = new SObjectAggregatedResult(this.getOperationType(), this.objectType);
+
+            for (List<SObject> chunk : this.splitIntoChunks(recordsToProcess)) {
+                result.add(this.executeChunk(chunk));
+            }
+
+            return result;
+        }
+
+        private OperationResult executeChunk(List<SObject> recordsToProcess) {
             ExecutionResult result = new ExecutionResult(this.getOperationType(), this.objectType, this.operationId).setRecords(recordsToProcess);
 
             DmlMock dmlMock = mockByDmlIdentifier.get(this.globalConfiguration.dmlIdentifier);
@@ -1513,6 +1541,23 @@ public inherited sharing class DML implements Committable {
             }
 
             return recordsToProcess;
+        }
+
+        private List<List<SObject>> splitIntoChunks(List<SObject> recordsToProcess) {
+            List<List<SObject>> chunks = new List<List<SObject>>{ new List<SObject>() };
+
+            for (SObject record : recordsToProcess) {
+                List<SObject> currentChunk = chunks[chunks.size() - 1];
+
+                if (currentChunk.size() == this.globalConfiguration.chunkSize) {
+                    currentChunk = new List<SObject>();
+                    chunks.add(currentChunk);
+                }
+
+                currentChunk.add(record);
+            }
+
+            return chunks;
         }
 
         protected abstract OperationType getOperationType();

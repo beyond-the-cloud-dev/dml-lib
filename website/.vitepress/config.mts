@@ -112,7 +112,8 @@ const current = [
       { text: 'Field-Level Security', link: '/configuration/field-level-security' },
       { text: 'Sharing Mode', link: '/configuration/sharing-mode' },
       { text: 'DmlOptions', link: '/configuration/dml-options' },
-      { text: 'Operation Order', link: '/configuration/operation-order' }
+      { text: 'Operation Order', link: '/configuration/operation-order' },
+      { text: 'Chunk Size', link: '/configuration/chunk-size' }
     ]
   },
   {
