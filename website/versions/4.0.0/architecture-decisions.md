@@ -1,0 +1,11 @@
+# Savepoint
+
+Statements like:
+
+- `Savepoint savePoint = Database.setSavepoint();` 
+- `Database.rollback(savePoint);`
+- `Database.releaseSavepoint(savePoint);`
+
+issue DMLs.
+
+Due to that behavior Savepoint has to be explicitly invoked. Default Lib behavior shouldn't create savepoints.

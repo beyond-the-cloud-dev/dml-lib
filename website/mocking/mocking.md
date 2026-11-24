@@ -47,6 +47,8 @@ static void shouldCreateAccount() {
 }
 ```
 
+Commits that share an identifier add to one result, so `DML.retrieveResultFor()` returns the records, successes, failures and errors of all of them.
+
 ## Key Benefits
 
 - **Fast tests** - No database operations means faster execution
