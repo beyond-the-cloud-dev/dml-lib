@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v4.0.0
+ * v4.1.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -437,6 +437,46 @@ private class DML_Test {
 
 
     @IsTest
+    static void resultHasFailuresWhenAnyOperationFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').allInserts().exceptionOnUpdates();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toUpdate(contact1).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isTrue(result.hasFailures(), 'Result should have failures, because the Contact update failed.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain 1 failed record.');
+        Assert.areEqual(contact1, result.failures()[0], 'Result should contain the failed Contact.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain 1 error.');
+    }
+
+    @IsTest
+    static void resultHasNoFailuresWhenAllOperationsSucceed() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toInsert(contact1).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+        Assert.areEqual(0, result.failures().size(), 'Result should contain 0 failed records.');
+        Assert.areEqual(0, result.errors().size(), 'Result should contain 0 errors.');
+    }
+
+    @IsTest
     static void selfDependency() {
         // Setup
         Account account1 = getAccount(1);
@@ -478,6 +518,38 @@ private class DML_Test {
         // Verify
         Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
         Assert.isTrue(expectedException.getMessage().contains('Cyclic dependencies detected among records.'), 'Expected exception message should be thrown.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentWithMocking() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(1, result.insertsOf(Account.SObjectType).records().size(), 'Account should be inserted.');
+        Assert.areEqual(1, result.insertsOf(Asset.SObjectType).records().size(), 'Asset should be inserted.');
+        Assert.isNotNull(newAccount.Id, 'Account should have mocked Id.');
+        Assert.areEqual(newAccount.Id, newAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, newAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
     }
 
     @IsTest
@@ -3381,6 +3453,60 @@ private class DML_Test {
         Assert.areEqual(0, result.events().size(), 'Published operation result should contain 0 results.');
     }
 
+    @IsTest
+    static void retrieveResultForWhenCommittedTwiceWithSameIdentifier() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.areEqual(1, DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).successes().size(), 'Result should contain the first successful record.');
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(2, result.successes().size(), 'Result should contain successful records from both commits.');
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+    }
+
+    @IsTest
+    static void retrieveResultForWhenSecondCommitWithSameIdentifierFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.isFalse(DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).hasFailures(), 'Result should not have failures after the first commit.');
+
+        DML.mock('dmlMockId').exceptionOnInserts();
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(1, result.successes().size(), 'Result should contain the successful record from the first commit.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain the failed record from the second commit.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain the error from the second commit.');
+        Assert.isTrue(result.hasFailures(), 'Result should have failures after the second commit.');
+    }
+
 
     @IsTest
     static void sharedDmlInstanceWithMocking() {
@@ -4045,6 +4171,73 @@ private class DML_Test {
         Assert.areEqual('Combined', combinedAccount.Description, 'Combined record should keep the second registration value.');
     }
 
+    @IsTest
+    static void toInsertWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3), getAccount(4), getAccount(5) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(3, dmlStatementsAfter - dmlStatementsBefore, '3 DML statements should be executed (5 records in chunks of 2).');
+        Assert.areEqual(5, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).successes().size(), 'All records should be successful.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWithMocking() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).identifier('dmlMockId').commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+        Assert.areEqual(3, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.isNotNull(accounts[2].Id, 'Record from the last chunk should have mocked Id.');
+    }
+
+    @IsTest
+    static void insertImmediatelyWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.OperationResult result = new DML().chunkSize(2).insertImmediately(accounts);
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (3 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(DML.OperationType.INSERT_DML, result.operationType(), 'Operation result should contain insert type.');
+        Assert.areEqual(Account.SObjectType, result.objectType(), 'Operation result should contain Account object type.');
+        Assert.areEqual(3, result.records().size(), 'Operation result should contain records from all chunks.');
+    }
+
     public class TestLogger implements DML.Logger {
         private DML.OperationResult capturedResult;
 
@@ -4088,6 +4281,10 @@ private class DML_Test {
 
     static Case getCase(Integer index) {
         return new Case(Status = 'New', Origin = 'Web', Subject = 'Test ' + index);
+    }
+
+    static Asset getAsset(Integer index) {
+        return new Asset(Name = 'Test Asset ' + index);
     }
 
     @SuppressWarnings('PMD.AvoidNonRestrictiveQueries')

@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v4.0.0
+ * v4.1.0
  *
  * PMD False Positives:
  * - CyclomaticComplexity: It is a library and we tried to put everything into ONE class
@@ -433,7 +433,7 @@ private class DML_Full_Test {
     static void toUpdateSingleRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -472,7 +472,7 @@ private class DML_Full_Test {
     static void toUpdateSingleRecordTwiceWithMergeOnDuplicate() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -540,7 +540,7 @@ private class DML_Full_Test {
         // Setup
         Account newAccount = getAccount(1);
         Contact newContact = getContact(1);
-        insert newContact;
+        insert as system newContact;
 
         // Test
         Test.startTest();
@@ -562,7 +562,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -607,7 +607,7 @@ private class DML_Full_Test {
         Contact newContact2 = getContact(2);
 
         List<Contact> contactsToCreate = new List<Contact>{ newContact, newContact2 };
-        insert contactsToCreate;
+        insert as system contactsToCreate;
 
         // Test
         Test.startTest();
@@ -637,7 +637,7 @@ private class DML_Full_Test {
         Opportunity opportunity1 = getOpportunity(1);
         Lead lead1 = getLead(1);
 
-        insert new List<SObject>{ account1, opportunity1, lead1 };
+        insert as system new List<SObject>{ account1, opportunity1, lead1 };
 
         // Test
         Test.startTest();
@@ -698,7 +698,7 @@ private class DML_Full_Test {
     static void toUpdateListOfRecords() {
         // Setup
         List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
-        insert accounts;
+        insert as system accounts;
 
         // Test
         Test.startTest();
@@ -749,7 +749,7 @@ private class DML_Full_Test {
     static void updateImmediatelySingleRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
         account1.Name = 'Updated Test Account';
 
         // Test
@@ -777,7 +777,7 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         account1.Name = 'Updated Test Account 1';
         account2.Name = 'Updated Test Account 2';
@@ -809,7 +809,7 @@ private class DML_Full_Test {
     static void updateImmediatelyWithDmlRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -835,7 +835,7 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -861,7 +861,7 @@ private class DML_Full_Test {
     static void toUpsertSingleExistingRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -938,7 +938,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -989,7 +989,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -1014,7 +1014,7 @@ private class DML_Full_Test {
     static void toUpsertListOfRecords() {
         // Setup
         List<Account> existingAccounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
-        insert existingAccounts;
+        insert as system existingAccounts;
 
         // Test
         Test.startTest();
@@ -1071,7 +1071,7 @@ private class DML_Full_Test {
     static void upsertImmediatelySingleRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
         account1.Name = 'Upserted Test Account';
 
         // Test
@@ -1099,7 +1099,7 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert account1; // Make account1 existing for upsert
+        insert as system account1; // Make account1 existing for upsert
 
         account1.Name = 'Upserted Test Account 1';
         // account2 is new for upsert
@@ -1131,7 +1131,7 @@ private class DML_Full_Test {
     static void upsertImmediatelyWithDmlRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -1157,7 +1157,7 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert account1; // Make account1 existing for upsert
+        insert as system account1; // Make account1 existing for upsert
 
         // Test
         Test.startTest();
@@ -1241,7 +1241,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -1319,7 +1319,7 @@ private class DML_Full_Test {
         Opportunity opportunity1 = getOpportunity(1);
         Lead lead1 = getLead(1);
 
-        insert new List<SObject>{ account1, opportunity1, lead1 };
+        insert as system new List<SObject>{ account1, opportunity1, lead1 };
 
         // Test
         Test.startTest();
@@ -1416,7 +1416,7 @@ private class DML_Full_Test {
     static void deleteImmediatelySingleRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -1441,7 +1441,7 @@ private class DML_Full_Test {
     static void deleteImmediatelySingleRecordById() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -1467,7 +1467,7 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -1495,7 +1495,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -1578,7 +1578,7 @@ private class DML_Full_Test {
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
 
-        insert new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
 
         // Test
         Test.startTest();
@@ -1659,7 +1659,7 @@ private class DML_Full_Test {
         Opportunity opportunity1 = getOpportunity(1);
         Lead lead1 = getLead(1);
 
-        insert new List<SObject>{ account1, opportunity1, lead1 };
+        insert as system new List<SObject>{ account1, opportunity1, lead1 };
 
         // Test
         Test.startTest();
@@ -1754,7 +1754,7 @@ private class DML_Full_Test {
     static void toUndeleteSingleRecordById() {
         // Setup
         Account account = insertAccount();
-        delete account;
+        delete as system account;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
 
@@ -1774,7 +1774,7 @@ private class DML_Full_Test {
     static void toUndeleteSingleRecord() {
         // Setup
         Account account1 = insertAccount();
-        delete account1;
+        delete as system account1;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
 
@@ -1809,7 +1809,7 @@ private class DML_Full_Test {
     static void toUndeleteMultipleRecordsById() {
         // Setup
         List<Account> accounts = insertAccounts();
-        delete accounts;
+        delete as system accounts;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
@@ -1831,7 +1831,7 @@ private class DML_Full_Test {
     static void toUndeleteMultipleRecords() {
         // Setup
         List<Account> accounts = insertAccounts();
-        delete accounts;
+        delete as system accounts;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
@@ -1869,8 +1869,8 @@ private class DML_Full_Test {
         Opportunity opportunity1 = getOpportunity(1);
         Lead lead1 = getLead(1);
 
-        insert new List<SObject>{ account1, opportunity1, lead1 };
-        delete new List<SObject>{ account1, opportunity1, lead1 };
+        insert as system new List<SObject>{ account1, opportunity1, lead1 };
+        delete as system new List<SObject>{ account1, opportunity1, lead1 };
 
         // Test
         Test.startTest();
@@ -1944,8 +1944,8 @@ private class DML_Full_Test {
     static void undeleteImmediatelySingleRecord() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
-        delete account1;
+        insert as system account1;
+        delete as system account1;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
 
@@ -1970,8 +1970,8 @@ private class DML_Full_Test {
     static void undeleteImmediatelySingleRecordById() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
-        delete account1;
+        insert as system account1;
+        delete as system account1;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Account should be deleted.');
 
@@ -1997,8 +1997,8 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert new List<Account>{ account1, account2 };
-        delete new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
+        delete as system new List<Account>{ account1, account2 };
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
@@ -2025,8 +2025,8 @@ private class DML_Full_Test {
         // Setup
         Account account1 = getAccount(1);
         Account account2 = getAccount(2);
-        insert new List<Account>{ account1, account2 };
-        delete new List<Account>{ account1, account2 };
+        insert as system new List<Account>{ account1, account2 };
+        delete as system new List<Account>{ account1, account2 };
 
         Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Accounts should be deleted.');
 
@@ -2054,7 +2054,7 @@ private class DML_Full_Test {
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
 
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         // Test
         Test.startTest();
@@ -2092,7 +2092,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         // Test
         Test.startTest();
@@ -2125,7 +2125,7 @@ private class DML_Full_Test {
         Account masterAccount = getAccount(1);
         Account duplicateAccount1 = getAccount(2);
         Account duplicateAccount2 = getAccount(3);
-        insert new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
+        insert as system new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
 
         List<Account> duplicateAccounts = new List<Account>{ duplicateAccount1, duplicateAccount2 };
 
@@ -2160,7 +2160,7 @@ private class DML_Full_Test {
         Account masterAccount = getAccount(1);
         Account duplicateAccount1 = getAccount(2);
         Account duplicateAccount2 = getAccount(3);
-        insert new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
+        insert as system new List<Account>{ masterAccount, duplicateAccount1, duplicateAccount2 };
 
         Set<Id> duplicateAccountIds = new Set<Id>{ duplicateAccount1.Id, duplicateAccount2.Id };
 
@@ -2194,11 +2194,11 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         Contact contactOnDuplicate = getContact(1);
         contactOnDuplicate.AccountId = duplicateAccount.Id;
-        insert contactOnDuplicate;
+        insert as system contactOnDuplicate;
 
         // Test
         Test.startTest();
@@ -2223,7 +2223,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert duplicateAccount;
+        insert as system duplicateAccount;
 
         DmlException expectedException = null;
 
@@ -2246,7 +2246,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert masterAccount;
+        insert as system masterAccount;
 
         Exception expectedException = null;
 
@@ -2268,7 +2268,7 @@ private class DML_Full_Test {
         // Setup
         Lead masterLead = getLead(1);
         Lead duplicateLead = getLead(2);
-        insert new List<Lead>{ masterLead, duplicateLead };
+        insert as system new List<Lead>{ masterLead, duplicateLead };
 
         // Test
         Test.startTest();
@@ -2298,7 +2298,7 @@ private class DML_Full_Test {
         // Setup
         Contact masterContact = getContact(1);
         Contact duplicateContact = getContact(2);
-        insert new List<Contact>{ masterContact, duplicateContact };
+        insert as system new List<Contact>{ masterContact, duplicateContact };
 
         // Test
         Test.startTest();
@@ -2623,7 +2623,7 @@ private class DML_Full_Test {
     static void singleIdRecordWithValue() {
         // Setup
         Account newAccount = getAccount(1);
-        insert newAccount;
+        insert as system newAccount;
 
         // Test
         Test.startTest();
@@ -2783,7 +2783,7 @@ private class DML_Full_Test {
     static void resultUpdates() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -2816,7 +2816,7 @@ private class DML_Full_Test {
     static void resultUpserts() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -2849,7 +2849,7 @@ private class DML_Full_Test {
     static void resultDeletes() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -2880,8 +2880,8 @@ private class DML_Full_Test {
     static void resultUndeletes() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
-        delete account1;
+        insert as system account1;
+        delete as system account1;
 
         // Test
         Test.startTest();
@@ -2941,7 +2941,7 @@ private class DML_Full_Test {
     static void resultWhenFailure() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Exception expectedException = null;
 
@@ -2965,7 +2965,7 @@ private class DML_Full_Test {
     static void resultWhenFailureButAllowPartialSuccess() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -3003,12 +3003,32 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void resultFailuresWhenPartialSuccessAcrossOperations() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contactWithoutLastName = new Contact(FirstName = 'Test');
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toInsert(contactWithoutLastName).allowPartialSuccess().commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Account should be inserted.');
+        Assert.isTrue(result.hasFailures(), 'Result should have failures, because the Contact has no LastName.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain 1 failed record.');
+        Assert.areEqual(contactWithoutLastName, result.failures()[0], 'Result should contain the Contact without LastName.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain 1 error.');
+        Assert.areEqual(System.StatusCode.REQUIRED_FIELD_MISSING, result.errors()[0].statusCode(), 'Error should be REQUIRED_FIELD_MISSING.');
+    }
+
+    @IsTest
     static void resultMerges() {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
 
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         // Test
         Test.startTest();
@@ -3059,6 +3079,46 @@ private class DML_Full_Test {
         Assert.areEqual(0, result.undeletes().size(), 'Result should contain 0 undelete operation results.');
         Assert.areEqual(0, result.merges().size(), 'Result should contain 0 merge operation results.');
         Assert.areEqual(0, result.events().size(), 'Result should contain 0 publish operation results.');
+    }
+
+    @IsTest
+    static void resultHasFailuresWhenAnyOperationFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').allInserts().exceptionOnUpdates();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toUpdate(contact1).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isTrue(result.hasFailures(), 'Result should have failures, because the Contact update failed.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain 1 failed record.');
+        Assert.areEqual(contact1, result.failures()[0], 'Result should contain the failed Contact.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain 1 error.');
+    }
+
+    @IsTest
+    static void resultHasNoFailuresWhenAllOperationsSucceed() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toInsert(contact1).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+        Assert.areEqual(0, result.failures().size(), 'Result should contain 0 failed records.');
+        Assert.areEqual(0, result.errors().size(), 'Result should contain 0 errors.');
     }
 
     @IsTest
@@ -3132,6 +3192,116 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void toInsertWithTwoRelationshipsToSameParent() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account insert, Asset insert).');
+
+        Asset insertedAsset = [SELECT AccountId, AssetServicedById FROM Asset WHERE Id = :newAsset.Id];
+        Assert.areEqual(newAccount.Id, insertedAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, insertedAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentMultipleRecords() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset1 = getAsset(1);
+        Asset newAsset2 = getAsset(2);
+
+        List<Asset> assets = new List<Asset>{ newAsset1, newAsset2 };
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Records(assets).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlsAfter - dmlsBefore, '2 DML statements should be executed (Account insert, Asset insert).');
+        Assert.areEqual(2, [SELECT COUNT() FROM Asset WHERE AccountId = :newAccount.Id], 'Assets should be related to Account.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Asset WHERE AssetServicedById = :newAccount.Id], 'Assets should be serviced by the same Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameExistingParent() {
+        // Setup
+        Account existingAccount = getAccount(1);
+        insert as system existingAccount;
+
+        Asset newAsset = getAsset(1);
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML().toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, existingAccount).withRelationship(Asset.AssetServicedById, existingAccount)).commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(1, dmlsAfter - dmlsBefore, '1 DML statement should be executed (Asset insert).');
+
+        Asset insertedAsset = [SELECT AccountId, AssetServicedById FROM Asset WHERE Id = :newAsset.Id];
+        Assert.areEqual(existingAccount.Id, insertedAsset.AccountId, 'Asset should be related to the existing Account.');
+        Assert.areEqual(existingAccount.Id, insertedAsset.AssetServicedById, 'Asset should be serviced by the same existing Account.');
+    }
+
+    @IsTest
+    static void toInsertWithTwoRelationshipsToSameParentWithMocking() {
+        // Setup
+        Account newAccount = getAccount(1);
+        Asset newAsset = getAsset(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlsBefore = Limits.getDMLStatements();
+
+        new DML()
+            .toInsert(newAccount)
+            .toInsert(DML.Record(newAsset).withRelationship(Asset.AccountId, newAccount).withRelationship(Asset.AssetServicedById, newAccount))
+            .identifier('dmlMockId')
+            .commitWork();
+
+        Integer dmlsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        DML.Result result = DML.retrieveResultFor('dmlMockId');
+
+        // Verify
+        Assert.areEqual(0, dmlsAfter - dmlsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(1, result.insertsOf(Account.SObjectType).records().size(), 'Account should be inserted.');
+        Assert.areEqual(1, result.insertsOf(Asset.SObjectType).records().size(), 'Asset should be inserted.');
+        Assert.isNotNull(newAccount.Id, 'Account should have mocked Id.');
+        Assert.areEqual(newAccount.Id, newAsset.AccountId, 'Asset should be related to Account.');
+        Assert.areEqual(newAccount.Id, newAsset.AssetServicedById, 'Asset should be serviced by the same Account.');
+    }
+
+    @IsTest
     static void registerComplex() {
         // Setup
         DML uow = new DML();
@@ -3175,7 +3345,7 @@ private class DML_Full_Test {
     static void insertUpdateAndDeleteWithRelationships() {
         // Setup
         Account existingAccount = getAccount(1);
-        insert existingAccount;
+        insert as system existingAccount;
 
         Account newAccount = getAccount(2);
         Contact contact1 = getContact(1);
@@ -3302,7 +3472,7 @@ private class DML_Full_Test {
     static void upsertAndInsertWithRelationships() {
         // Setup
         Account existingAccount = getAccount(1);
-        insert existingAccount;
+        insert as system existingAccount;
 
         Account newAccount = getAccount(2);
         Contact contact1 = getContact(1);
@@ -3828,10 +3998,10 @@ private class DML_Full_Test {
     static void toUpdateMultipleRecordsWithMockingSpecificSObjectType() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Contact contact1 = getContact(1);
-        insert contact1;
+        insert as system contact1;
 
         DML.mock('dmlMockId').updatesFor(Account.SObjectType);
 
@@ -4275,7 +4445,7 @@ private class DML_Full_Test {
     static void toUpsertMultipleRecordsWithMockingSpecificSObjectType() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Contact contact1 = getContact(1);
 
@@ -4667,10 +4837,10 @@ private class DML_Full_Test {
     static void toDeleteMultipleRecordsWithMockingSpecificSObjectType() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Contact contact1 = getContact(1);
-        insert contact1;
+        insert as system contact1;
 
         DML.mock('dmlMockId').deletesFor(Account.SObjectType);
 
@@ -5212,12 +5382,12 @@ private class DML_Full_Test {
     static void toUndeleteMultipleRecordsWithMockingSpecificSObjectType() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
-        delete account1;
+        insert as system account1;
+        delete as system account1;
 
         Contact contact1 = getContact(1);
-        insert contact1;
-        delete contact1;
+        insert as system contact1;
+        delete as system contact1;
 
         DML.mock('dmlMockId').undeletesFor(Account.SObjectType);
 
@@ -5470,7 +5640,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         Lead masterLead = getLead(1);
         Lead duplicateLead = getLead(2);
@@ -6502,6 +6672,60 @@ private class DML_Full_Test {
     }
 
     @IsTest
+    static void retrieveResultForWhenCommittedTwiceWithSameIdentifier() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.areEqual(1, DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).successes().size(), 'Result should contain the first successful record.');
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(2, result.successes().size(), 'Result should contain successful records from both commits.');
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+    }
+
+    @IsTest
+    static void retrieveResultForWhenSecondCommitWithSameIdentifierFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Account account2 = getAccount(2);
+
+        DML.mock('dmlMockId').allInserts();
+
+        new DML().toInsert(account1).identifier('dmlMockId').commitWork();
+
+        Assert.isFalse(DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType).hasFailures(), 'Result should not have failures after the first commit.');
+
+        DML.mock('dmlMockId').exceptionOnInserts();
+
+        // Test
+        Test.startTest();
+        new DML().toInsert(account2).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult result = DML.retrieveResultFor('dmlMockId').insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, result.records().size(), 'Result should contain records from both commits.');
+        Assert.areEqual(1, result.successes().size(), 'Result should contain the successful record from the first commit.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain the failed record from the second commit.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain the error from the second commit.');
+        Assert.isTrue(result.hasFailures(), 'Result should have failures after the second commit.');
+    }
+
+    @IsTest
     static void sharedDmlInstance() {
         Account account = getAccount(1);
 
@@ -6550,7 +6774,7 @@ private class DML_Full_Test {
     static void sharedDmlInstanceMultipleOperations() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Account account2 = getAccount(2);
         Contact contact1 = getContact(1);
@@ -6715,7 +6939,7 @@ private class DML_Full_Test {
     static void toUpdateWithPartialSuccess() {
         // Setup
         List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2) };
-        insert accounts;
+        insert as system accounts;
 
         // Test
         Test.startTest();
@@ -6742,7 +6966,7 @@ private class DML_Full_Test {
     static void toUpsertWithPartialSuccess() {
         // Setup
         List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2) };
-        insert accounts;
+        insert as system accounts;
 
         // Test
         Test.startTest();
@@ -6771,7 +6995,7 @@ private class DML_Full_Test {
     static void toDeleteWithPartialSuccess() {
         // Setup
         List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2) };
-        insert accounts;
+        insert as system accounts;
 
         // Test
         Test.startTest();
@@ -6790,7 +7014,7 @@ private class DML_Full_Test {
         // Setup
         List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2) };
 
-        insert accounts;
+        insert as system accounts;
 
         // Test
         Test.startTest();
@@ -6878,7 +7102,7 @@ private class DML_Full_Test {
     static void toUpdateWithUserMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -6903,7 +7127,7 @@ private class DML_Full_Test {
     static void toUpdateWithUserModeExplicitlySet() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -6928,7 +7152,7 @@ private class DML_Full_Test {
     static void toUpdateWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -6955,7 +7179,7 @@ private class DML_Full_Test {
         Case newCase1 = getCase(1);
         Case newCase2 = getCase(2);
 
-        insert newCase1;
+        insert as system newCase1;
 
         Exception expectedException = null;
 
@@ -6986,7 +7210,7 @@ private class DML_Full_Test {
         Case newCase1 = getCase(1);
         Case newCase2 = getCase(2);
 
-        insert newCase1;
+        insert as system newCase1;
 
         Exception expectedException = null;
 
@@ -7017,7 +7241,7 @@ private class DML_Full_Test {
         Case newCase1 = getCase(1);
         Case newCase2 = getCase(2);
 
-        insert newCase1;
+        insert as system newCase1;
 
         Exception expectedException = null;
 
@@ -7046,7 +7270,7 @@ private class DML_Full_Test {
     static void toDeleteWithUserMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -7070,7 +7294,7 @@ private class DML_Full_Test {
     static void toDeleteWithUserModeExplicitlySet() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -7094,7 +7318,7 @@ private class DML_Full_Test {
     static void toDeleteWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -7118,7 +7342,7 @@ private class DML_Full_Test {
     static void toHardDeleteWithUserMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -7142,7 +7366,7 @@ private class DML_Full_Test {
     static void toHardDeleteWithSystemMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         // Test
         Test.startTest();
@@ -7160,9 +7384,9 @@ private class DML_Full_Test {
     static void toUndeleteWithUserMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
-        delete newCase;
+        delete as system newCase;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
 
@@ -7188,9 +7412,9 @@ private class DML_Full_Test {
     static void toUndeleteWithUserModeExplicitlySet() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
-        delete newCase;
+        delete as system newCase;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
 
@@ -7216,9 +7440,9 @@ private class DML_Full_Test {
     static void toUndeleteWithUserModeExplicitlySetAccessMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
-        delete newCase;
+        delete as system newCase;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
 
@@ -7245,7 +7469,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         Exception expectedException = null;
 
@@ -7285,7 +7509,7 @@ private class DML_Full_Test {
     static void toUpdateWithSystemMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         // Test
         Test.startTest();
@@ -7305,7 +7529,7 @@ private class DML_Full_Test {
     static void toUpdateWithSystemModeAndWithSharing() {
         // Setup
         Contact newContact = getContact(1);
-        insert newContact;
+        insert as system newContact;
 
         Exception expectedException = null;
 
@@ -7332,7 +7556,7 @@ private class DML_Full_Test {
         Case newCase1 = getCase(1);
         Case newCase2 = getCase(2);
 
-        insert newCase1;
+        insert as system newCase1;
 
         // Test
         Test.startTest();
@@ -7356,7 +7580,7 @@ private class DML_Full_Test {
         Contact newContact1 = getContact(1);
         Contact newContact2 = getContact(2);
 
-        insert newContact1;
+        insert as system newContact1;
 
         Exception expectedException = null;
 
@@ -7381,7 +7605,7 @@ private class DML_Full_Test {
     static void toDeleteWithSystemMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         // Test
         Test.startTest();
@@ -7398,7 +7622,7 @@ private class DML_Full_Test {
     static void toDeleteWithSystemModeAndWithSharing() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
         Exception expectedException = null;
 
@@ -7422,9 +7646,9 @@ private class DML_Full_Test {
     static void toUndeleteWithSystemMode() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
-        delete newCase;
+        delete as system newCase;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
 
@@ -7443,9 +7667,9 @@ private class DML_Full_Test {
     static void toUndeleteWithSystemModeAndWithSharing() {
         // Setup
         Case newCase = getCase(1);
-        insert newCase;
+        insert as system newCase;
 
-        delete newCase;
+        delete as system newCase;
 
         Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted.');
 
@@ -7473,7 +7697,7 @@ private class DML_Full_Test {
         // Setup
         Account masterAccount = getAccount(1);
         Account duplicateAccount = getAccount(2);
-        insert new List<Account>{ masterAccount, duplicateAccount };
+        insert as system new List<Account>{ masterAccount, duplicateAccount };
 
         // Test
         Test.startTest();
@@ -7484,6 +7708,83 @@ private class DML_Full_Test {
 
         // Verify
         Assert.areEqual(1, [SELECT COUNT() FROM Account], 'Only master account should remain after merge.');
+    }
+
+    @IsTest
+    static void toDeleteWithSystemModeAndInheritedSharing() {
+        // Setup
+        Case newCase = getCase(1);
+        insert as system newCase;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            new WithoutSharingService().deleteWithSystemMode(newCase);
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Case should be deleted, because DML inherits without sharing from the calling class.');
+    }
+
+    @IsTest
+    static void deleteImmediatelyWithSystemModeAndWithoutSharing() {
+        // Setup
+        Case newCase = getCase(1);
+        insert as system newCase;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            new DML().systemMode().withoutSharing().deleteImmediately(newCase);
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Case should be deleted, because withoutSharing() ignores sharing rules.');
+    }
+
+    @IsTest
+    static void deleteImmediatelyMultipleRecordsWithSystemModeAndWithoutSharing() {
+        // Setup
+        Case newCase1 = getCase(1);
+        Case newCase2 = getCase(2);
+        insert as system new List<Case>{ newCase1, newCase2 };
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            new DML().systemMode().withoutSharing().deleteImmediately(new List<Case>{ newCase1, newCase2 });
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, [SELECT COUNT() FROM Case], 'Cases should be deleted, because withoutSharing() ignores sharing rules.');
+    }
+
+    @IsTest
+    static void deleteImmediatelyWithSystemModeAndWithSharing() {
+        // Setup
+        Case newCase = getCase(1);
+        insert as system newCase;
+
+        Exception expectedException = null;
+
+        // Test
+        Test.startTest();
+        System.runAs(minimumAccessUser()) {
+            try {
+                new WithoutSharingService().deleteImmediatelyWithSystemModeAndWithSharing(newCase);
+            } catch (Exception e) {
+                expectedException = e;
+            }
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(1, [SELECT COUNT() FROM Case], 'Case should not be deleted, because withSharing() enforces sharing rules.');
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isTrue(expectedException.getMessage().contains('insufficient access rights on object id'), 'Expected exception message should be thrown.');
     }
 
     @IsTest
@@ -7584,7 +7885,7 @@ private class DML_Full_Test {
     static void toInsertWithExistingIds() {
         // Setup
         Account account = getAccount(1);
-        insert account;
+        insert as system account;
 
         DmlException expectedException = null;
 
@@ -7689,7 +7990,7 @@ private class DML_Full_Test {
     static void toUpdateSingleRecordTwice() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         // Test
         Test.startTest();
@@ -7967,8 +8268,8 @@ private class DML_Full_Test {
     static void customOperationOrderUndeleteBeforeUpdate() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
-        delete account1;
+        insert as system account1;
+        delete as system account1;
 
         // Test
         Test.startTest();
@@ -8245,7 +8546,7 @@ private class DML_Full_Test {
     static void toInsertWithPartialSuccessWhenParentFails() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Account account2 = new Account();
         Contact contact1 = getContact(1);
@@ -8290,11 +8591,11 @@ private class DML_Full_Test {
     static void combineOnDuplicateWithParentRelationshipField() {
         // Setup
         Account account1 = getAccount(1);
-        insert account1;
+        insert as system account1;
 
         Contact contact1 = getContact(1);
         contact1.AccountId = account1.Id;
-        insert contact1;
+        insert as system contact1;
 
         Contact queriedContact = [SELECT Id, LastName, Account.Name FROM Contact WHERE Id = :contact1.Id];
 
@@ -8474,11 +8775,220 @@ private class DML_Full_Test {
         Assert.areEqual('Combined', combinedAccount.Description, 'Combined record should keep the second registration value.');
     }
 
+    @IsTest
+    static void toInsertWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3), getAccount(4), getAccount(5) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(3, dmlStatementsAfter - dmlStatementsBefore, '3 DML statements should be executed (5 records in chunks of 2).');
+        Assert.areEqual(5, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(1, result.inserts().size(), 'Inserted operation result should contain 1 object type.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.areEqual(5, result.insertsOf(Account.SObjectType).successes().size(), 'All records should be successful.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWithMocking() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).identifier('dmlMockId').commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(0, dmlStatementsAfter - dmlStatementsBefore, 'No DML statements should be made, because of the mocking.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'No records should be inserted to the database.');
+        Assert.areEqual(3, result.insertsOf(Account.SObjectType).records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.isNotNull(accounts[2].Id, 'Record from the last chunk should have mocked Id.');
+    }
+
+    @IsTest
+    static void insertImmediatelyWithChunkSize() {
+        // Setup
+        List<Account> accounts = new List<Account>{ getAccount(1), getAccount(2), getAccount(3) };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.OperationResult result = new DML().chunkSize(2).insertImmediately(accounts);
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (3 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account], 'All accounts should be inserted in the database.');
+        Assert.areEqual(DML.OperationType.INSERT_DML, result.operationType(), 'Operation result should contain insert type.');
+        Assert.areEqual(Account.SObjectType, result.objectType(), 'Operation result should contain Account object type.');
+        Assert.areEqual(3, result.records().size(), 'Operation result should contain records from all chunks.');
+    }
+
+    @IsTest
+    static void toUpdateWithChunkSize() {
+        // Setup
+        List<Account> accounts = insertAccounts();
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toUpdate(DML.Records(accounts).with(Account.Website, 'mywebsite.com')).chunkSize(2).commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (3 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account WHERE Website = 'mywebsite.com'], 'All accounts should be updated in the database.');
+        Assert.areEqual(3, result.updatesOf(Account.SObjectType).records().size(), 'Updated operation result should contain records from all chunks.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWhenChunkFails() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'Accounts from the chunk executed before the failing chunk should stay in the database.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeWhenChunkFailsInTransaction() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitTransaction();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'All chunks should be rolled back.');
+    }
+
+    @IsTest
+    static void toInsertWithChunkSizeAndPartialSuccess() {
+        // Setup
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        // Test
+        Test.startTest();
+        Integer dmlStatementsBefore = Limits.getDMLStatements();
+
+        DML.Result result = new DML().toInsert(accounts).chunkSize(2).allowPartialSuccess().commitWork();
+
+        Integer dmlStatementsAfter = Limits.getDMLStatements();
+        Test.stopTest();
+
+        // Verify
+        DML.OperationResult operationResult = result.insertsOf(Account.SObjectType);
+
+        Assert.areEqual(2, dmlStatementsAfter - dmlStatementsBefore, '2 DML statements should be executed (4 records in chunks of 2).');
+        Assert.areEqual(3, [SELECT COUNT() FROM Account], 'Only valid accounts should be inserted.');
+        Assert.areEqual(4, operationResult.records().size(), 'Inserted operation result should contain records from all chunks.');
+        Assert.areEqual(3, operationResult.successes().size(), 'Valid records should be successful.');
+        Assert.areEqual(1, operationResult.failures().size(), 'Record without required field should fail.');
+    }
+
+    @IsTest
+    static void loggerOnFailedChunk() {
+        // Setup
+        TestLogger testLogger = new TestLogger();
+        DML.dmlLogger = testLogger;
+
+        List<Account> accounts = new List<Account>{
+            getAccount(1),
+            getAccount(2),
+            new Account(), // Name is required
+            getAccount(4)
+        };
+
+        DmlException expectedException = null;
+
+        // Test
+        Test.startTest();
+        try {
+            new DML().toInsert(accounts).chunkSize(2).commitWork();
+        } catch (DmlException e) {
+            expectedException = e;
+        }
+        Test.stopTest();
+
+        // Verify
+        Assert.isNotNull(expectedException, 'Expected exception to be thrown.');
+        Assert.isNotNull(testLogger.capturedResult, 'Logger should receive the failed chunk.');
+        Assert.areEqual(2, testLogger.capturedResult.records().size(), 'Logger should receive only the records of the failed chunk.');
+        Assert.areEqual(accounts[2], testLogger.capturedResult.failures()[0], 'Failed chunk should start with the record without required field.');
+    }
+
     public class TestLogger implements DML.Logger {
         private DML.OperationResult capturedResult;
 
         public void log(DML.OperationResult result) {
             capturedResult = result;
+        }
+    }
+
+    private without sharing class WithoutSharingService {
+        public void deleteWithSystemMode(SObject record) {
+            new DML().toDelete(record).systemMode().commitWork();
+        }
+
+        public void deleteImmediatelyWithSystemModeAndWithSharing(SObject record) {
+            new DML().systemMode().withSharing().deleteImmediately(record);
         }
     }
 
@@ -8519,9 +9029,13 @@ private class DML_Full_Test {
         return new Case(Status = 'New', Origin = 'Web', Subject = 'Test ' + index);
     }
 
+    static Asset getAsset(Integer index) {
+        return new Asset(Name = 'Test Asset ' + index);
+    }
+
     static Account insertAccount() {
         Account account = new Account(Name = 'Test Account');
-        insert account;
+        insert as system account;
 
         return account;
     }
@@ -8533,7 +9047,7 @@ private class DML_Full_Test {
 
     static List<Account> insertAccounts() {
         List<Account> accounts = new List<Account>{ new Account(Name = 'Test Account 1'), new Account(Name = 'Test Account 2'), new Account(Name = 'Test Account 3') };
-        insert accounts;
+        insert as system accounts;
 
         return accounts;
     }

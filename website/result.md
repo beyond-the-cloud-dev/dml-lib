@@ -50,6 +50,9 @@ erDiagram
         OperationResult undeletesOf(SObjectType)
         OperationResult mergesOf(SObjectType)
         OperationResult eventsOf(SObjectType)
+        Boolean hasFailures()
+        List~SObject~ failures()
+        List~Error~ errors()
     }
 
     OperationResult {
@@ -159,6 +162,36 @@ DML.Result result = new DML()
 DML.OperationResult accountResults = result.insertsOf(Account.SObjectType);
 DML.OperationResult contactResults = result.insertsOf(Contact.SObjectType);
 ```
+
+### Check Failures
+
+Check the whole result for failures, across every operation and SObject type.
+
+**Signatures**
+
+```apex
+Boolean hasFailures();    // True if any operation result has failures
+List<SObject> failures(); // Failed records from all operation results
+List<Error> errors();     // Errors from all operation results
+```
+
+**Example**
+
+```apex
+DML.Result result = new DML()
+    .toInsert(accounts)
+    .toUpdate(contacts)
+    .allowPartialSuccess()
+    .commitWork();
+
+if (result.hasFailures()) {
+    for (DML.Error error : result.errors()) {
+        System.debug(error.statusCode() + ': ' + error.message());
+    }
+}
+```
+
+`failures()` and `errors()` follow the order of `all()`. To see which error belongs to which record, use `recordResults()` on each `OperationResult`.
 
 ## OperationResult Interface
 
@@ -460,12 +493,10 @@ DML.Result result = new DML()
     .allowPartialSuccess()
     .commitWork();
 
-for (DML.OperationResult operationResult : result.all()) {
-    if (operationResult.hasFailures()) {
-        // Handle failures appropriately
-        for (DML.Error error : operationResult.errors()) {
-            System.debug('Error: ' + error.message());
-        }
+if (result.hasFailures()) {
+    // Handle failures appropriately
+    for (DML.Error error : result.errors()) {
+        System.debug('Error: ' + error.message());
     }
 }
 ```

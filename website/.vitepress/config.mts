@@ -7,9 +7,78 @@ const siteUrl = 'https://dml.beyondthecloud.dev'
 const siteTitle = 'DML Lib'
 const siteDescription = 'Open-source Apex library for Salesforce DML operations. Fluent API for insert, update, upsert, delete, undelete and publish, with relationship handling, FLS and sharing control, and DML mocking in unit tests. Free, MIT licensed, part of Apex Fluently by Beyond The Cloud.'
 
-const latest = '3.2.0'
+const latest = '4.1.0'
 
 // Frozen: an old version's pages never change again.
+const v400 = [
+  {
+    text: 'Docs',
+    items: [
+      { text: 'Introduction', link: '/4.0.0/introduction' },
+      { text: 'Installation', link: '/4.0.0/installation' },
+      { text: 'Examples', link: '/4.0.0/examples' }
+    ]
+  },
+  {
+    text: 'DMLs',
+    collapsed: false,
+    items: [
+      { text: 'Insert', link: '/4.0.0/dml/insert' },
+      { text: 'Update', link: '/4.0.0/dml/update' },
+      { text: 'Upsert', link: '/4.0.0/dml/upsert' },
+      { text: 'Delete', link: '/4.0.0/dml/delete' },
+      { text: 'Hard Delete', link: '/4.0.0/dml/hard-delete' },
+      { text: 'Undelete', link: '/4.0.0/dml/undelete' },
+      { text: 'Merge', link: '/4.0.0/dml/merge' },
+      { text: 'Publish', link: '/4.0.0/dml/publish' },
+      { text: 'Record & Records', link: '/4.0.0/dml/record-builders' },
+      { text: 'Result', link: '/4.0.0/result' }
+    ]
+  },
+  {
+    text: 'Mocking',
+    collapsed: true,
+    items: [
+      { text: 'Introduction', link: '/4.0.0/mocking/mocking' },
+      { text: 'Insert', link: '/4.0.0/mocking/insert' },
+      { text: 'Update', link: '/4.0.0/mocking/update' },
+      { text: 'Upsert', link: '/4.0.0/mocking/upsert' },
+      { text: 'Delete', link: '/4.0.0/mocking/delete' },
+      { text: 'Undelete', link: '/4.0.0/mocking/undelete' },
+      { text: 'Merge', link: '/4.0.0/mocking/merge' },
+      { text: 'Publish', link: '/4.0.0/mocking/publish' }
+    ]
+  },
+  {
+    text: 'Configuration',
+    collapsed: true,
+    items: [
+      { text: 'Field-Level Security', link: '/4.0.0/configuration/field-level-security' },
+      { text: 'Sharing Mode', link: '/4.0.0/configuration/sharing-mode' },
+      { text: 'DmlOptions', link: '/4.0.0/configuration/dml-options' },
+      { text: 'Operation Order', link: '/4.0.0/configuration/operation-order' }
+    ]
+  },
+  {
+    text: 'Advanced',
+    collapsed: true,
+    items: [
+      { text: 'Shared Instance', link: '/4.0.0/advanced/shared-instance' },
+      { text: 'Commit Hooks', link: '/4.0.0/advanced/commit-hooks' },
+      { text: 'Execution Control', link: '/4.0.0/advanced/execution-control' },
+      { text: 'Error Logger', link: '/4.0.0/advanced/logger' }
+    ]
+  },
+  {
+    text: 'Architecture',
+    collapsed: true,
+    items: [
+      { text: 'Rollback', link: '/4.0.0/architecture/rollback' },
+      { text: 'Registration', link: '/4.0.0/architecture/registration' }
+    ]
+  }
+]
+
 const v310 = [
   {
     text: 'Docs',
@@ -112,7 +181,8 @@ const current = [
       { text: 'Field-Level Security', link: '/configuration/field-level-security' },
       { text: 'Sharing Mode', link: '/configuration/sharing-mode' },
       { text: 'DmlOptions', link: '/configuration/dml-options' },
-      { text: 'Operation Order', link: '/configuration/operation-order' }
+      { text: 'Operation Order', link: '/configuration/operation-order' },
+      { text: 'Chunk Size', link: '/configuration/chunk-size' }
     ]
   },
   {
@@ -137,8 +207,8 @@ const current = [
 
 /** Routes each version serves, so the switcher can hold your place across versions. */
 const routes = (sidebar, home) => [home, ...sidebar.flatMap((g) => g.items.map((i) => i.link))]
-const pages = { [latest]: routes(current, '/'), '3.1.0': routes(v310, '/3.1.0/') }
-const versions = ['3.1.0']
+const pages = { [latest]: routes(current, '/'), '4.0.0': routes(v400, '/4.0.0/'), '3.1.0': routes(v310, '/3.1.0/') }
+const versions = ['4.0.0', '3.1.0']
 
 export default withMermaid({
   cleanUrls: true,
@@ -218,7 +288,7 @@ export default withMermaid({
       ['meta', { property: 'og:description', content: pageData.frontmatter.description || pageData.description || siteDescription }]
     )
     // Keep archived versions out of search engines; they stay reachable via the switcher.
-    if (pageData.relativePath.startsWith('versions/')) {
+    if (pageData.filePath.startsWith('versions/')) {
       pageData.frontmatter.head.push(['meta', { name: 'robots', content: 'noindex, follow' }])
     }
   },
@@ -243,7 +313,7 @@ export default withMermaid({
         }
       }
     },
-    sidebar: { '/3.1.0/': v310, '/': current },
+    sidebar: { '/4.0.0/': v400, '/3.1.0/': v310, '/': current },
     footer: false,
     socialLinks: [
       { icon: 'github', link: 'https://github.com/beyond-the-cloud-dev/dml-lib' },

@@ -1,0 +1,187 @@
+---
+outline: deep
+---
+
+# Registration
+
+## Deduplication Strategy 
+
+When records with the same ID are added to a list and an update is attempted, Salesforce throws the error `System.ListException: Duplicate id in list`.
+
+**Standard DML**
+
+```apex
+Account account = [SELECT Id, Name FROM Account LIMIT 1];
+
+List<Account> accountsToUpdate = new List<Account>();
+
+Account account1 = new Account(Id = account.Id, Name = 'New Account 1', Website = 'mywebsite.com');
+accountsToUpdate.add(account1);
+
+Account account2 = new Account(Id = account.Id, Name = 'New Account 2');
+accountsToUpdate.add(account2);
+
+update accountsToUpdate; // Throws: System.ListException: Duplicate id in list
+```
+
+The same behavior applies in DML Lib. By default, an error will be thrown when the same record is registered multiple times.
+
+**DML Lib (Default Behavior)**
+
+```apex
+Account account = [SELECT Id, Name FROM Account LIMIT 1];
+
+new DML()
+    .toUpdate(new Account(Id = account.Id, Name = 'New Account 1', Website = 'mywebsite.com'))
+    .toUpdate(new Account(Id = account.Id, Name = 'New Account 2')) // Throws: Duplicate records found during registration. Fix the code or use the combineOnDuplicate() method.
+    .commitWork();
+```
+
+### combineOnDuplicate
+
+Use `combineOnDuplicate()` to automatically merge duplicate registrations into a single record. When the same record ID is registered multiple times, field values from later registrations override earlier ones, while preserving fields that are only set in earlier registrations. Relationships declared with `withRelationship()` on a combined registration are carried over to the surviving record, and the method can appear anywhere in the chain — before or after the registrations it applies to.
+
+::: info
+`combineOnDuplicate()` applies to update, merge, delete, undelete and publish. Inserts and upserts are resolved through the dependency graph, where a record registered twice is always rejected.
+:::
+
+**Signature**
+
+```apex
+Committable combineOnDuplicate();
+```
+
+**Example**
+
+```apex
+Account account = [SELECT Id, Name FROM Account LIMIT 1];
+
+new DML()
+    .combineOnDuplicate()
+    .toUpdate(new Account(Id = account.Id, Name = 'New Account 1', Website = 'mywebsite.com'))
+    .toUpdate(new Account(Id = account.Id, Name = 'New Account 2'))
+    .commitWork();
+```
+
+The two records will be merged into one before the DML operation:
+
+| Field | First Registration | Second Registration | Final Value |
+|-------|-------------------|---------------------|-------------|
+| Id | account.Id | account.Id | account.Id |
+| Name | 'New Account 1' | 'New Account 2' | 'New Account 2' |
+| Website | 'mywebsite.com' | - | 'mywebsite.com' |
+
+Result: `new Account(Id = account.Id, Name = 'New Account 2', Website = 'mywebsite.com')` will be updated.
+
+## Registration Order
+
+DML Lib uses Kahn's algorithm (topological sort) to resolve dependencies between records and commit them in the correct order. You can register records in any order — DML Lib will automatically determine the proper execution sequence.
+
+**Example**
+
+```apex
+Account account = new Account(Name = 'Acme');
+Contact newContact = new Contact(LastName = 'Smith');
+Opportunity newOpportunity = new Opportunity(Name = 'Deal', StageName = 'New', CloseDate = Date.today());
+
+new DML()
+    .toInsert(account)
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
+    .toInsert(DML.Record(newOpportunity).withRelationship(Opportunity.AccountId, account))
+    .commitWork();
+```
+
+## Deferred Validation
+
+Record validation (such as "a record must have an Id to be updated or deleted") runs when `commitWork()` executes each operation — not when the record is registered. Because all inserts and upserts execute before updates, merges, deletes, undeletes, and publishes, a record inserted in a unit of work already has its Id by the time a later operation on it executes.
+
+This makes it possible to insert a record and update or delete it within the same `commitWork()`:
+
+**Example**
+
+```apex
+Account newAccount = new Account(Name = 'Acme');
+Contact newContact = new Contact(LastName = 'Smith');
+
+new DML()
+    .toInsert(newAccount)
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, newAccount))
+    .toUpdate(DML.Record(newAccount).with(Account.Description, 'Updated via UoW'))
+    .commitWork(); // Account insert, Contact insert, Account update — 3 DML statements
+```
+
+When a validation rule is still violated at execution time (for example, updating a record that never receives an Id), the same `DmlException` messages are thrown from `commitWork()`:
+
+| Operation | Exception Message |
+|-----------|-------------------|
+| `toInsert` | `Only records without an Id can be registered as new.` |
+| `toUpdate` | `Only existing records can be updated.` |
+| `toDelete` / `toHardDelete` | `Only existing records can be registered as deleted.` |
+| `toUndelete` | `Only deleted records can be undeleted.` |
+| `toMerge` | `Only existing records can be merged.` |
+
+Two checks still run at registration time:
+
+- The `toMerge` merge-to record must have an Id when `toMerge()` is called — the master record identifies the merge operation itself, so it cannot receive its Id from an insert in the same unit of work.
+- [Duplicate detection](#deduplication-strategy) rejects the same record registered twice, for every operation. Update, merge, delete, undelete and publish support `combineOnDuplicate()`, so their message points to it. Inserts and upserts are dependency-resolved and cannot be combined, so they throw `Duplicate records found during registration. Fix the code.` Records that merely hold equal field values are not duplicates — they are separate records and are inserted separately, matching standard DML.
+
+::: warning
+`commitWork()` does not use a savepoint. If a validation exception is thrown mid-commit, operations that already executed stay committed. Use `commitTransaction()` when the whole unit of work must be atomic — see [Rollback](/4.0.0/architecture/rollback).
+:::
+
+## Minimal DMLs
+
+DML Lib minimizes the number of DML statements by building a dependency graph and grouping records into execution buckets.
+
+### How It Works
+
+1. **Graph Construction** - When you register records using `toInsert()`, `toUpdate()`, etc., each record becomes a node in a dependency graph. Relationships defined via `withRelationship()` create edges between nodes.
+
+2. **Dependency Resolution** - Kahn's algorithm (topological sort) processes the graph, ensuring parent records are committed before their dependents.
+
+3. **Bucket Assignment** - During graph resolution, records are grouped into buckets based on their operation characteristics:
+   - **Operation type** - INSERT, UPDATE, UPSERT, DELETE, UNDELETE, MERGE, PUBLISH
+   - **SObject type** - Account, Contact, Opportunity, etc.
+   - **Additional identifiers** - Upsert external ID field, merge master record ID
+
+Records sharing the same characteristics are placed in the same bucket and executed in a single DML statement.
+
+### Example
+
+```apex
+new DML()
+    .toInsert(account1)
+    .toUpsert(DML.Record(account2).withRelationship(Account.ParentId, account1))
+    .toUpsert(DML.Record(account4).withRelationship(Account.ParentId, account2))
+    .toInsert(DML.Record(account5).withRelationship(Account.ParentId, account2))
+    .toUpsert(DML.Record(account3).withRelationship(Account.ParentId, account5))
+    .toInsert(DML.Record(account6).withRelationship(Account.ParentId, account5))
+    .toInsert(DML.Record(account7).withRelationship(Account.ParentId, account5))
+    .toInsert(account8)
+    .toInsert(DML.Record(contact1).withRelationship(Contact.AccountId, account2))
+    .toInsert(DML.Record(contact2).withRelationship(Contact.AccountId, account3))
+    .toInsert(DML.Record(contact3).withRelationship(Contact.AccountId, account6))
+    .toInsert(DML.Record(contact4).withRelationship(Contact.AccountId, account6))
+    .toInsert(DML.Record(opportunity1).withRelationship(Opportunity.AccountId, account1))
+    .toInsert(DML.Record(opportunity2).withRelationship(Opportunity.AccountId, account4))
+    .toInsert(DML.Record(opportunity3).withRelationship(Opportunity.AccountId, account6))
+    .toInsert(DML.Record(opportunity4).withRelationship(Opportunity.AccountId, account6))
+    .toInsert(lead1)
+    .commitWork();
+
+// Result: 12 DML statements executed
+```
+
+**Interactive Dependency Graph**
+
+Use the controls below to step through the DML execution order. Watch how records are committed in layers based on their dependencies.
+
+**Legend:** A = Account, C = Contact, O = Opportunity, L = Lead
+
+<DmlGraph />
+
+Despite registering 17 records, only **12 DML statements** are executed.
+
+::: tip
+No matter how you register records - in any order, across multiple method calls, or with complex relationships - DML Lib guarantees the minimal number of DML statements while respecting all dependencies.
+:::

@@ -92,7 +92,7 @@ Print the current configuration to the debug logs.
 void preview();
 ```
 
-`preview()` debug-prints the `Database.DmlOptions` as pretty JSON, the sharing executor in effect, the `allOrNone` flag, and the DML identifier. It does not list registered records.
+`preview()` debug-prints the `Database.DmlOptions` as pretty JSON, the sharing executor in effect, the `allOrNone` flag, the [chunk size](/configuration/chunk-size), and the DML identifier. It does not list registered records.
 
 **Example**
 

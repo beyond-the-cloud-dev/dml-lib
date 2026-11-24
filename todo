@@ -272,3 +272,73 @@ Status | Priority | Feature | Effort | Impact |
 
 
 `sf org create scratch -a dml-lib -f './config/project-scratch-def.json' -d --duration-days 30 --target-dev-hub beyondthecloud-devhub`
+
+---
+
+## DML.cls review (v4.1.0)
+
+Sorted by priority, then effort. Easy = a few lines and one test. Medium = several classes or a design decision. Lines = saved per copy; every change goes into both DML.cls copies.
+
+### Bugs
+
+| Status | # | Priority | Effort | Bug | Fix |
+|--------|---|----------|--------|-----|-----|
+| [x] | 1 | High | Easy | A record pointing at the same parent twice (e.g. `Asset.AccountId` + `AssetServicedById`) failed with "Cyclic dependencies detected among records." | Count each parent once in `addDependency` (dfbf154) |
+| [x] | 2 | High | Easy | `*Immediately` ignored `withSharing()`/`withoutSharing()` in `systemMode()` (broken since v3.0.0) | `executeImmediately` goes through `commitWork` and the sharing executor (b05dccc) |
+| [ ] | 3 | High | Easy | `dryRun()` then `commitWork()` on the same instance throws "Duplicate records found during registration." (`DependencyOrchestrator` keeps its map and graph) | Create the two fields at the top of `DependencyOrchestrator.execute()` |
+| [ ] | 4 | High | Medium | After `dryRun()` or a failed `commitTransaction()`, records keep rolled-back Ids, so committing them fails with "Only records without an Id can be registered as new."; examples.md "Validating Before Committing" always fails | Clear Ids of records that had none after the rollback (both orchestrator paths), never after a failed `commitWork()`; update the two `selfDependency` asserts. Stopgap: fix the docs example |
+| [ ] | 5 | Medium | Easy | Operations outlive commits: same Error ID / `operationId()` across commits on one instance (e.g. `DML.Shared`); a later `toMerge` with the same master Id merges the first master record | Create the operation storage in `reset()` |
+| [x] | 6 | Medium | Easy | `retrieveResultFor(id)` went stale after the first read (`successes()`, `failures()`, `errors()`, `hasFailures()`) | Fill the lists as results are added, no cache (c057668) |
+| [ ] | 7 | Medium | Easy | In an org with a top-level `DML.Logger`, it replaces the injected test logger; `loggerOnFailedDml`, `loggerOnPartialSuccess`, `loggerOnFailedChunk` fail in subscriber orgs | `dmlLogger` setter also sets `isLoggerInitialized = true` |
+| [ ] | 8 | Low | Easy | `DML.Records(...).withRelationship(field, externalIdField, value)` describes 2 fields per record on every commit | Describe once in the `ExternalRelationship` constructor |
+| [ ] | 9 | Low | Easy | `new DML(null)` throws a NullPointerException | Clear `DmlException` or default order; decide with 17 |
+| [ ] | 10 | Low | Easy | `chunkSize(0)` runs an extra empty chunk; a negative value turns chunking off | Leave, or treat values below 1 like `null` |
+
+### Simplifications (same behaviour)
+
+| Status | # | Effort | Lines | Change |
+|--------|---|--------|-------|--------|
+| [x] | 11 | Easy | ~36 | Set `Configuration` fields directly from DML's config methods; delete 9 one-line setters |
+| [ ] | 12 | Easy | ~30 | Constructors for `RecordProcessingError` and `DmlRecordResult` instead of builder setters |
+| [ ] | 13 | Easy | ~30 | Mocking: default body for `executeMockedDml`; merge `getMockedRecordErrors` and `getMockedRecordSuccesses` |
+| [x] | 14 | Easy | ~24 | Inline the six `get*Operation()` methods |
+| [ ] | 15 | Easy | ~18 | Drop `Orchestrator.register(op, Records)`; loop once in `DML.register` |
+| [x] | 16 | Easy | ~14 | `storeResult`/`retrieveResultFor` with `??` and a typed map |
+| [ ] | 17 | Easy | ~12 | `OperationsStorage` becomes a map field; constructors call `reset()` (with bugs 5 and 9) |
+| [ ] | 18 | Easy | ~11 | Drop the private `toMerge` pass-through methods |
+| [ ] | 19 | Easy | ~6 | `ParentRelationship` holds the parent SObject |
+| [ ] | 20 | Easy | ~50 | Small cleanups: unreachable null checks, trivial getters/setters, graph bookkeeping, `void add()`, redundant `isSuccess(false)`, private `Orchestrator` interface |
+| [ ] | 21 | Medium | ~55 | Merge `LinearOrchestrator` into `CustomOrderOrchestrator` (order passed to the constructor); keep `inherited sharing`; do 15 and 17 first |
+| [ ] | 22 | Medium | ~50 | Pass `OperationType` and the result adapter to the `DmlOperation` constructor; delete 14 overrides in 7 classes |
+| [ ] | 23 | Medium | ~25 | Duplicate strategy classes become a Boolean; stop passing `Configuration` through orchestrators and buckets |
+| [ ] | 24 | Medium | ~21 | Fold `resolveObjectType` into the `DmlRecords` constructor loop |
+| [ ] | 25 | Medium | ~20 | Merge `getRowErrors` into `getFailedRecordResults` |
+| [ ] | 26 | Medium | ~18 | Merge `ExecutionResult` and `SObjectAggregatedResult` |
+| [ ] | 27 | Medium | ~15 | Shared base for `ParentRelationship` and `ExternalRelationship`, one list (resolve order differs only when a resolve throws) |
+
+### Behaviour changes (decide first)
+
+| Status | # | Lines | Change | What changes | Take |
+|--------|---|-------|--------|--------------|------|
+| [ ] | 28 | ~40 | Rewrite the dependency sort with one prerequisite map | Later waves run in a different order | Skip |
+| [ ] | 29 | ~45 | Collapse the 5 result adapters into one `instanceof` check | Runtime type checks instead of types; conflicts with 22 | Skip |
+| [ ] | 30 | ~16 | `DML.Records(...).with()`/`withRelationship()` write to records immediately | Field writes at call time instead of registration | Not in 4.1 |
+| [ ] | 31 | ~25 | `EnhancedRecord` implements `Record`; delete `DmlRecord` | New `global` methods, permanent once released | Skip |
+| [ ] | 32 | ~6 | Leave already-saved parents out of the dependency graph | Saves a DML statement in some cases, adds one in others | Skip |
+| [ ] | 33 | ~16 | Run dependency waves through the merged orchestrator | Statement order | Skip |
+| [ ] | 34 | ~8 | `null` in mock config means every object type | Meaning of `insertsFor(null)` | Skip |
+| [ ] | 35 | ~3 | Drop `Configuration.allOrNone` | Operations read the live `DmlOptions` value | Skip |
+| [ ] | 36 | ~7 | Validate inside `getRecordsToProcess` | Which error shows when two records fail | Optional |
+| [ ] | 37 | ~4 | One `execute()` path for chunked and unchunked runs | Undoes the `chunkSize == null` fast path | Skip |
+
+### Follow-ups from the fix reviews
+
+- [ ] `toDeleteWithSystemModeAndWithSharing` calls `withoutSharing()`; make it a real `withSharing()` test through `WithoutSharingService` (at API 68 no commitWork test catches an ignored `withSharing()`)
+- [ ] Optional: call the two `deleteImmediately...WithoutSharing` tests from an explicit `with sharing` class instead of relying on the API 68 default
+- [ ] Optional: `deleteImmediatelyWithSystemModeAndInheritedSharing` test
+- [ ] Why-comment on the read before the second commit in the two `retrieveResultFor...SameIdentifier` tests (both test files)
+- [ ] Optional: `cyclicDependencyWithDuplicatedRelationship` guard test
+- [ ] Optional: rename the `SObjectAggregatedResult.add` parameter `recordResult` to `operationResult`
+- [ ] website/release.md: add v4.1.0 (chunkSize, bugs 1, 2 and 6 incl. the `*Immediately` sharing behaviour change, API 68.0); restore v66.0 under v4.0.0
+- [ ] Optional docs: results under one identifier accumulate across commits; a sharing setting on `DML.Shared` also applies to its `*Immediately` calls
+- [ ] Optional: formatting-only prettier commit for DML_Test.cls and DML_Full_Test.cls

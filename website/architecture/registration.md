@@ -91,6 +91,21 @@ new DML()
     .commitWork();
 ```
 
+A record can reference the same parent through more than one field. The parent is still one dependency: it is inserted first, and the child gets every lookup.
+
+```apex
+Account account = new Account(Name = 'Acme');
+Asset newAsset = new Asset(Name = 'Router');
+
+new DML()
+    .toInsert(account)
+    .toInsert(DML.Record(newAsset)
+        .withRelationship(Asset.AccountId, account)
+        .withRelationship(Asset.AssetServicedById, account)
+    )
+    .commitWork();
+```
+
 ## Deferred Validation
 
 Record validation (such as "a record must have an Id to be updated or deleted") runs when `commitWork()` executes each operation — not when the record is registered. Because all inserts and upserts execute before updates, merges, deletes, undeletes, and publishes, a record inserted in a unit of work already has its Id by the time a later operation on it executes.
