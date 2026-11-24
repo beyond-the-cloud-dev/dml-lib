@@ -437,6 +437,46 @@ private class DML_Test {
 
 
     @IsTest
+    static void resultHasFailuresWhenAnyOperationFails() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+        contact1.Id = DML.randomIdGenerator.get(Contact.SObjectType);
+
+        DML.mock('dmlMockId').allInserts().exceptionOnUpdates();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toUpdate(contact1).allowPartialSuccess().identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isTrue(result.hasFailures(), 'Result should have failures, because the Contact update failed.');
+        Assert.areEqual(1, result.failures().size(), 'Result should contain 1 failed record.');
+        Assert.areEqual(contact1, result.failures()[0], 'Result should contain the failed Contact.');
+        Assert.areEqual(1, result.errors().size(), 'Result should contain 1 error.');
+    }
+
+    @IsTest
+    static void resultHasNoFailuresWhenAllOperationsSucceed() {
+        // Setup
+        Account account1 = getAccount(1);
+        Contact contact1 = getContact(1);
+
+        DML.mock('dmlMockId').allInserts();
+
+        // Test
+        Test.startTest();
+        DML.Result result = new DML().toInsert(account1).toInsert(contact1).identifier('dmlMockId').commitWork();
+        Test.stopTest();
+
+        // Verify
+        Assert.isFalse(result.hasFailures(), 'Result should not have failures.');
+        Assert.areEqual(0, result.failures().size(), 'Result should contain 0 failed records.');
+        Assert.areEqual(0, result.errors().size(), 'Result should contain 0 errors.');
+    }
+
+    @IsTest
     static void selfDependency() {
         // Setup
         Account account1 = getAccount(1);

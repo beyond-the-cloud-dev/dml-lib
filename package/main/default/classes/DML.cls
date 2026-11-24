@@ -183,6 +183,10 @@ global inherited sharing class DML implements Committable {
         OperationResult undeletesOf(SObjectType objectType);
         OperationResult mergesOf(SObjectType objectType);
         OperationResult eventsOf(SObjectType objectType);
+        // Failures
+        Boolean hasFailures();
+        List<SObject> failures();
+        List<Error> errors();
     }
 
     global interface OperationResult {
@@ -1196,6 +1200,30 @@ global inherited sharing class DML implements Committable {
             }
 
             return allResults;
+        }
+
+        public Boolean hasFailures() {
+            return !this.failures().isEmpty();
+        }
+
+        public List<SObject> failures() {
+            List<SObject> failures = new List<SObject>();
+
+            for (OperationResult operationResult : this.all()) {
+                failures.addAll(operationResult.failures());
+            }
+
+            return failures;
+        }
+
+        public List<Error> errors() {
+            List<Error> errors = new List<Error>();
+
+            for (OperationResult operationResult : this.all()) {
+                errors.addAll(operationResult.errors());
+            }
+
+            return errors;
         }
     }
 
