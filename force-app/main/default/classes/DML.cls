@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Beyond The Cloud Sp. z o.o. (BeyondTheCloud.Dev)
  * Licensed under the MIT License (https://github.com/beyond-the-cloud-dev/dml-lib/blob/main/LICENSE)
  *
- * v4.1.0
+ * v4.1.1
  *
  * PMD False Positives:
  * - MethodNamingConventions: Some methods are uppercase to indicate that they are "constructors" of other internal classes
@@ -1757,7 +1757,7 @@ public inherited sharing class DML implements Committable {
         }
 
         protected override List<Object> executeDml(List<SObject> recordsToProcess) {
-            return EventBus.publish(recordsToProcess);
+            return EventBus.publishWithAccessLevel(recordsToProcess, this.globalConfiguration.accessMode);
         }
 
         protected override DmlRecordResult executeMockedDml(SObject record) {
