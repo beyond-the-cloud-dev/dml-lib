@@ -1664,7 +1664,7 @@ global inherited sharing class DML implements Committable {
         }
 
         protected override List<Object> executeDml(List<SObject> recordsToProcess) {
-            return EventBus.publish(recordsToProcess);
+            return EventBus.publishWithAccessLevel(recordsToProcess, this.globalConfiguration.accessMode);
         }
 
         protected override DmlRecordResult executeMockedDml(SObject record) {
