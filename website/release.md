@@ -4,6 +4,16 @@ outline: deep
 
 # Changelog
 
+## v4.1.1
+
+**Fixes**
+
+- **Access mode for platform events** — from API 67.0, `EventBus.publish` runs in user mode. The library called it without an access level, so `toPublish()` and `publishImmediately()` ignored `systemMode()` and `accessMode(System.AccessLevel.SYSTEM_MODE)` and always published in user mode. Events are now published with `EventBus.publishWithAccessLevel` and the configured access mode, like the other DML operations. See [Field-Level Security](/configuration/field-level-security).
+
+**Changes**
+
+- Publishing after `systemMode()` now skips the running user's permissions on the platform event. Code that does not call `systemMode()` still publishes in user mode, the default.
+
 ## v4.1.0
 
 **New Features**
