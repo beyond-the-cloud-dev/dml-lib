@@ -18,31 +18,86 @@
 
 # Getting Started
 
-The DML Lib provides functional constructs for DML statements in Apex.
+DML Lib is a lightweight Apex library with a fluent API for DML operations: insert, update, upsert, delete, undelete, merge and publish platform events.
 
 DML Lib is part of [Apex Fluently](https://apexfluently.beyondthecloud.dev/), a suite of production-ready Salesforce libraries by [Beyond the Cloud](https://blog.beyondthecloud.dev/blog).
 
-For more details, please refer to the [documentation](https://dml.beyondthecloud.dev).
+## Why DML Lib?
 
-**Insert DML**
+- **Fluent API** - register records and commit them in one readable chain
+- **Relationship handling** - parent IDs are set on child records automatically, in any registration order
+- **Fewer DML statements** - records are grouped into one statement per object type
+- **Security control** - user mode by default, system mode with or without sharing when you need it
+- **Transactions** - roll back everything on failure with `commitTransaction()`, validate first with `dryRun()`
+- **Detailed results** - successes, failures and errors for every operation and record
+- **Mocking** - test DML logic without touching the database
 
-```java
+## Examples
+
+**Insert related records**
+
+```apex
+Account account = new Account(Name = 'Acme Corp');
+Contact newContact = new Contact(LastName = 'Smith');
+
 new DML()
-    .toInsert(new Account(Name = 'My Account'))
+    .toInsert(account)
+    .toInsert(DML.Record(newContact).withRelationship(Contact.AccountId, account))
+    .commitWork();
+
+// newContact.AccountId is set to account.Id
+```
+
+**Combine operations in one unit of work**
+
+```apex
+new DML()
+    .toInsert(newAccounts)
+    .toUpdate(existingContacts)
+    .toDelete(obsoleteTasks)
     .commitWork();
 ```
 
-**Update DML**
+**Run in system mode**
 
-```java
-Account account = [SELECT Id FROM Account LIMIT 1];
-
+```apex
 new DML()
-    .toUpdate(new Account(Id = account.Id, Name = 'New Name'))
+    .toUpdate(accounts)
+    .systemMode()
+    .withoutSharing()
     .commitWork();
 ```
 
-## Deploy to Salesforce
+**Mock DML in unit tests**
+
+```apex
+public class AccountService {
+    public void createAccount() {
+        new DML()
+            .toInsert(new Account(Name = 'Acme'))
+            .identifier('AccountService.createAccount')
+            .commitWork();
+    }
+}
+```
+
+```apex
+@IsTest
+static void shouldCreateAccount() {
+    DML.mock('AccountService.createAccount').allInserts();
+
+    Test.startTest();
+    new AccountService().createAccount();
+    Test.stopTest();
+
+    DML.Result result = DML.retrieveResultFor('AccountService.createAccount');
+    Assert.areEqual(1, result.insertsOf(Account.SObjectType).successes().size());
+}
+```
+
+## Installation
+
+Install DML Lib as an unlocked package (`btcdev` namespace), as an unmanaged package, or deploy the source directly. Package links are on the [Installation](https://dml.beyondthecloud.dev/installation) page.
 
 <a href="https://githubsfdeploy.herokuapp.com?owner=beyond-the-cloud-dev&repo=dml-lib&ref=main">
   <img alt="Deploy to Salesforce"
@@ -51,7 +106,7 @@ new DML()
 
 ## Documentation
 
-Visit the [documentation](https://dml.beyondthecloud.dev) to view the full documentation.
+Everything else (all DML operations, mocking, results, configuration and advanced features) is covered in the [documentation](https://dml.beyondthecloud.dev).
 
 ## Contributors
 
